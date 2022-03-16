@@ -7,6 +7,7 @@ using EnhancedStreamChat.Graphics;
 using EnhancedStreamChat.HarmonyPatches;
 using EnhancedStreamChat.Utilities;
 using HMUI;
+using IPA.Utilities;
 using System;
 using System.Collections;
 using System.Collections.Concurrent;

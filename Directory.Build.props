@@ -1,14 +1,12 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <!-- This file contains project properties used by the build. -->
 <Project>
-  <PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">
-    <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
-    <DisableCopyToPlugins>true</DisableCopyToPlugins>
-    <DisableZipRelease>true</DisableZipRelease>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(NCrunch)' == '1'">
-    <ContinuousIntegrationBuild>false</ContinuousIntegrationBuild>
-    <DisableCopyToPlugins>true</DisableCopyToPlugins>
-    <DisableZipRelease>true</DisableZipRelease>
-  </PropertyGroup>
+	<PropertyGroup>
+		<ImportBSMTTargets>True</ImportBSMTTargets>
+		<BSMTProjectType>BSIPA</BSMTProjectType>
+	</PropertyGroup>
+	<ItemGroup>
+		<OutputCopy Include="$(TargetPath)" OutputPath="Plugins\$(TargetName).dll" />
+		<OutputCopy Include="FontAssets\mplus-1m-medium sdf.assets" OutputPath="UserData\FontAssets\Main\mplus-1m-medium sdf.assets" />
+	</ItemGroup>
 </Project>
