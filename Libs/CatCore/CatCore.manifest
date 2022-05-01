@@ -1,0 +1,24 @@
+{
+   "$schema" : "https://raw.githubusercontent.com/bsmg/BSIPA-MetadataFileSchema/master/Schema.json",
+   "id" : "CatCore",
+   "name" : "CatCore",
+   "author" : "Eris",
+   "version" : "1.0.0",
+   "description" : "CatCore is a .NET Standard 2.0 library which provides a shared connection to mods and other applications for Twitch (and other future streaming platforms).",
+   "files" : [
+      "Libs/CatCore.dll"
+   ],
+   "conflictsWith" : {
+      "CatCore" : "*"
+   },
+   "loadBefore" : [
+      "CatCore"
+   ],
+   "links" : {
+      "project-source" : "https://github.com/ErisApps/CatCore",
+      "donate" : "https://www.patreon.com/erisapps"
+   },
+   "misc" : {
+      "generated-by" : "BSMT.Tasks/2.0.0.0"
+   }
+}

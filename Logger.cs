@@ -9,7 +9,7 @@ namespace EnhancedStreamChat
     internal static class Logger
     {
         internal static IPALogger Log { get; set; }
-        internal static IPALogger cclog => Log.GetChildLogger("ChatCore");
+        internal static IPALogger cclog => Log.GetChildLogger("CatCore");
         public static void Debug(string message, [CallerFilePath] string path = null, [CallerMemberName] string member = null, [CallerLineNumber] int? num = null) => Log.Debug($"{Path.GetFileName(path)}[{member}({num})] : {message}");
 
         public static void Debug(Exception e, [CallerFilePath] string path = null, [CallerMemberName] string member = null, [CallerLineNumber] int? num = null) => Log.Debug($"{Path.GetFileName(path)}[{member}({num})] : {e}");

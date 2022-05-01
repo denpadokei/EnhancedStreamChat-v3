@@ -7,6 +7,7 @@
 	</PropertyGroup>
 	<ItemGroup>
 		<OutputCopy Include="$(TargetPath)" OutputPath="Plugins\$(TargetName).dll" />
+		<OutputCopy Include="$(ProjectDir)$(OutputPath)EnhancedStreamChat.pdb" OutputPath="Plugins\$(TargetName).pdb" />
 		<OutputCopy Include="FontAssets\mplus-1m-medium sdf.assets" OutputPath="UserData\FontAssets\Main\mplus-1m-medium sdf.assets" />
 	</ItemGroup>
 </Project>

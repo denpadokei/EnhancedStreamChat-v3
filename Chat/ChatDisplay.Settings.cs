@@ -12,7 +12,7 @@ using UnityEngine.UI;
 
 namespace EnhancedStreamChat.Chat
 {
-    public partial class ChatDisplay : BSMLAutomaticViewController
+    public partial class ChatDisplay : BSMLAutomaticViewController, IChatDisplaySetting
     {
         private bool SetProperty<T>(ref T oldValue, T newValue, [CallerMemberName] string name = null)
         {
@@ -82,68 +82,74 @@ namespace EnhancedStreamChat.Chat
         [UIComponent("text-color-setting")]
         private readonly ColorSetting _textColorSetting;
 
+        private Color _accentColor;
         [UIValue("accent-color")]
         public Color AccentColor
         {
-            get => this._chatConfig.AccentColor;
+            get => this._accentColor;
+
             set
             {
-                this.SetProperty(ref this._chatConfig.AccentColor, value);
+                this.SetProperty(ref this._accentColor, value);
                 this.UpdateMessages();
             }
         }
-
+        private Color _highlightColor;
         [UIValue("highlight-color")]
         public Color HighlightColor
         {
-            get => this._chatConfig.HighlightColor;
+            get => this._highlightColor;
             set
             {
-                this.SetProperty(ref this._chatConfig.HighlightColor, value);
+                this.SetProperty(ref this._highlightColor, value);
                 this.UpdateMessages();
             }
         }
 
+        private Color _pingColor;
         [UIValue("ping-color")]
         public Color PingColor
         {
-            get => this._chatConfig.PingColor;
+            get => this._pingColor;
             set
             {
-                this.SetProperty(ref this._chatConfig.PingColor, value);
+                this.SetProperty(ref this._pingColor, value);
                 this.UpdateMessages();
             }
         }
 
+        private Color _backGroundColor;
         [UIValue("background-color")]
         public Color BackgroundColor
         {
-            get => this._chatConfig.BackgroundColor;
+            get => this._backGroundColor;
             set
             {
-                this.SetProperty(ref this._chatConfig.BackgroundColor, value);
+                this.SetProperty(ref this._backGroundColor, value);
                 this._chatScreen.GetComponentsInChildren<ImageView>().FirstOrDefault(x => x.name == "bg").color = value;
             }
         }
 
+        private Color _textColor;
         [UIValue("text-color")]
         public Color TextColor
         {
-            get => this._chatConfig.TextColor;
+            get => this._textColor;
             set
             {
-                this.SetProperty(ref this._chatConfig.TextColor, value);
+                this.SetProperty(ref this._textColor, value);
                 this.UpdateMessages();
             }
         }
 
+        private float _fontsize;
         [UIValue("font-size")]
         public float FontSize
         {
-            get => this._chatConfig.FontSize;
+            get => this._fontsize;
             set
             {
-                this.SetProperty(ref this._chatConfig.FontSize, value);
+                this.SetProperty(ref this._fontsize, value);
                 this.UpdateMessages();
             }
         }
@@ -156,98 +162,89 @@ namespace EnhancedStreamChat.Chat
             set => this.SetProperty(ref this._settingsWidth, value);
         }
 
+        private int _chatWidth;
         [UIValue("chat-width")]
         public int ChatWidth
         {
-            get => this._chatConfig.ChatWidth;
+            get => this._chatWidth;
             set
             {
-                this.SetProperty(ref this._chatConfig.ChatWidth, value);
+                this.SetProperty(ref this._chatWidth, value);
                 this._chatScreen.ScreenSize = new Vector2(this.ChatWidth, this.ChatHeight);
                 this._chatContainer.GetComponent<RectMask2D>().rectTransform.sizeDelta = new Vector2(this.ChatWidth, this.ChatHeight);
                 this.UpdateMessages();
             }
         }
 
+        private int _chatHeight;
         [UIValue("chat-height")]
         public int ChatHeight
         {
-            get => this._chatConfig.ChatHeight;
+            get => this._chatHeight;
             set
             {
-                this.SetProperty(ref this._chatConfig.ChatHeight, value);
+                this.SetProperty(ref this._chatHeight, value);
                 this._chatScreen.ScreenSize = new Vector2(this.ChatWidth, this.ChatHeight);
                 this._chatContainer.GetComponent<RectMask2D>().rectTransform.sizeDelta = new Vector2(this.ChatWidth, this.ChatHeight);
                 this.UpdateMessages();
             }
         }
 
+        private Vector3 _chatPosition;
         [UIValue("chat-position")]
         public Vector3 ChatPosition
         {
-            get => this._isInGame ? this._chatConfig.Song_ChatPosition : this._chatConfig.Menu_ChatPosition;
+            get => this._chatPosition;
             set
             {
+                this.SetProperty(ref this._chatPosition, value);
                 this._chatScreen.ScreenPosition = value;
-                if (this._isInGame || this.SyncOrientation) {
-                    this.SetProperty(ref this._chatConfig.Song_ChatPosition, value);
-                }
-
-                if (!this._isInGame || this.SyncOrientation) {
-                    this.SetProperty(ref this._chatConfig.Menu_ChatPosition, value);
-                }
             }
         }
 
+        private Vector3 _chatRotation;
         [UIValue("chat-rotation")]
         public Vector3 ChatRotation
         {
-            get => this._isInGame ? this._chatConfig.Song_ChatRotation : this._chatConfig.Menu_ChatRotation;
+            get => this._chatRotation;
             set
             {
+                this.SetProperty(ref _chatRotation, value);
                 this._chatScreen.ScreenRotation = Quaternion.Euler(value);
-                if (this._isInGame || this.SyncOrientation) {
-                    this.SetProperty(ref this._chatConfig.Song_ChatRotation, value);
-                }
-
-                if (!this._isInGame || this.SyncOrientation) {
-                    this.SetProperty(ref this._chatConfig.Menu_ChatRotation, value);
-                }
             }
         }
 
+        private bool _allowMovement;
         [UIValue("allow-movement")]
         public bool AllowMovement
         {
-            get => this._chatConfig.AllowMovement;
+            get => this._allowMovement;
             set
             {
-                this.SetProperty(ref this._chatConfig.AllowMovement, value);
+                this.SetProperty(ref this._allowMovement, value);
                 this._chatScreen.ShowHandle = value;
             }
         }
 
+        private bool _syncOrientation;
         [UIValue("sync-orientation")]
         public bool SyncOrientation
         {
-            get => this._chatConfig.SyncOrientation;
+            get => this._syncOrientation;
             set
             {
-                this.SetProperty(ref this._chatConfig.SyncOrientation, value);
-                if (value) {
-                    this.ChatPosition = this.ChatPosition;
-                    this.ChatRotation = this.ChatRotation;
-                }
+                this.SetProperty(ref this._syncOrientation, value);
             }
         }
 
+        private bool _reverseChatOrder;
         [UIValue("reverse-chat-order")]
         public bool ReverseChatOrder
         {
-            get => this._chatConfig.ReverseChatOrder;
+            get => this._reverseChatOrder;
             set
             {
-                this.SetProperty(ref this._chatConfig.ReverseChatOrder, value);
+                this.SetProperty(ref this._reverseChatOrder, value);
                 this.UpdateMessages();
             }
         }
@@ -256,7 +253,7 @@ namespace EnhancedStreamChat.Chat
         public string ModVersion => Plugin.Version;
 
         [UIAction("launch-web-app")]
-        private void LaunchWebApp() => ChatManager.instance._chatCoreInstance.LaunchWebApp();
+        private void LaunchWebApp() => this._catCoreManager.LaunchWebPortal();
 
         [UIAction("launch-kofi")]
         private void LaunchKofi() => Application.OpenURL("https://ko-fi.com/brian91292");
@@ -271,11 +268,67 @@ namespace EnhancedStreamChat.Chat
         private void OnHideSettings()
         {
             Logger.Info("Saving settings!");
-            this._chatConfig.Save();
+            this.Save();
         }
 
         private void HideSettings() => this.parserParams.EmitEvent("hide-settings");
 
         private void ShowSettings() => this.parserParams.EmitEvent("show-settings");
+
+        private void Save()
+        {
+            this._chatConfig.AccentColor = this.AccentColor;
+            this._chatConfig.TextColor = this.TextColor;
+            this._chatConfig.BackgroundColor = this.BackgroundColor;
+            this._chatConfig.AllowMovement = this.AllowMovement;
+            this._chatConfig.ChatHeight = this.ChatHeight;
+            this._chatConfig.ChatWidth = this.ChatWidth;
+            if (this._isInGame) {
+                this._chatConfig.Song_ChatPosition = this.ChatPosition;
+                this._chatConfig.Song_ChatRotation = this.ChatRotation;
+            }
+            else {
+                this._chatConfig.Menu_ChatPosition = this.ChatPosition;
+                this._chatConfig.Menu_ChatRotation = this.ChatRotation;
+            }
+            this._chatConfig.FontSize = this.FontSize;
+            this._chatConfig.HighlightColor = this.HighlightColor;
+            this._chatConfig.PingColor = this.PingColor;
+            this._chatConfig.ReverseChatOrder = this.ReverseChatOrder;
+            this._chatConfig.SyncOrientation = this.SyncOrientation;
+            if (this.SyncOrientation) {
+                if (this._isInGame) {
+                    this._chatConfig.Menu_ChatPosition = this._chatConfig.Song_ChatPosition;
+                    this._chatConfig.Menu_ChatRotation = this._chatConfig.Song_ChatRotation;
+                }
+                else {
+                    this._chatConfig.Song_ChatPosition = this._chatConfig.Menu_ChatPosition;
+                    this._chatConfig.Song_ChatRotation = this._chatConfig.Menu_ChatRotation;
+                }
+            }
+        }
+
+        private void Load()
+        {
+            this.AccentColor = this._chatConfig.AccentColor;
+            this.TextColor = this._chatConfig.TextColor;
+            this.BackgroundColor = this._chatConfig.BackgroundColor;
+            this.AllowMovement = this._chatConfig.AllowMovement;
+            this.ChatHeight = this._chatConfig.ChatHeight;
+            this.ChatWidth = this._chatConfig.ChatWidth;
+            if (this._isInGame) {
+                this.ChatPosition = this._chatConfig.Song_ChatPosition;
+                this.ChatRotation = this._chatConfig.Song_ChatRotation;
+            }
+            else {
+                this.ChatPosition = this._chatConfig.Menu_ChatPosition;
+                this.ChatRotation = this._chatConfig.Menu_ChatRotation;
+            }
+            this.FontSize = this._chatConfig.FontSize;
+            this.HighlightColor = this._chatConfig.HighlightColor;
+            this.PingColor = this._chatConfig.PingColor;
+            this.ReverseChatOrder = this._chatConfig.ReverseChatOrder;
+            this.SyncOrientation = this._chatConfig.SyncOrientation;
+        }
     }
 }

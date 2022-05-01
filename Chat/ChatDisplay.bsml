@@ -31,9 +31,9 @@
         </tab>
         <tab tags ='settings-tab' tab-name='Login/Channels'>
           <vertical pad='10' pad-top='70' vertical-fit='PreferredSize' child-expand-height='false' child-align='MiddleCenter' pref-width='~settings-width'>
-            <text text='Login and channel configuration are currently done via your default browser in the new ChatCore webapp.' font-size='5' word-wrapping='true' align='Center'></text>
+            <text text='Login and channel configuration are currently done via your default browser in the new CatCore webapp.' font-size='5' word-wrapping='true' align='Center'></text>
             <horizontal child-expand-width='false' child-align='MiddleCenter' pad-top='10'>
-              <text text='To launch the ChatCore web app,&#xA0;' font-size='5'></text>
+              <text text='To launch the CatCore web app,&#xA0;' font-size='5'></text>
               <clickable-text text='click here' default-color='#00bcff' on-click='launch-web-app' highlight-color='cyan' font-size='5'></clickable-text>
               <text text='.'  font-size='5'></text>
             </horizontal>

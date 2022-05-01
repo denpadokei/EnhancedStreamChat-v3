@@ -1,0 +1,889 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<doc>
+    <assembly>
+        <name>CatCore</name>
+    </assembly>
+    <members>
+        <member name="M:CatCore.CatCoreInstance.RunAllServices">
+            <summary>
+            Starts all services if they haven't been already.
+            </summary>
+            <returns>A reference to the generic chat multiplexer</returns>
+        </member>
+        <member name="M:CatCore.CatCoreInstance.StopAllServices">
+            <summary>
+            Stops all services as soon as there aren't registered assemblies anymore.
+            </summary>
+            <remarks>
+            Make sure to unregister any callbacks first!
+            </remarks>
+        </member>
+        <member name="M:CatCore.CatCoreInstance.RunTwitchServices">
+            <summary>
+            Starts the Twitch services if they haven't been already.
+            </summary>
+            <returns>A reference to the Twitch service</returns>
+        </member>
+        <member name="M:CatCore.CatCoreInstance.StopTwitchServices">
+            <summary>
+            Stops the Twitch services as soon as there aren't registered assemblies anymore.
+            </summary>
+            <remarks>
+            Make sure to unregister any callbacks first!
+            </remarks>
+        </member>
+        <member name="M:CatCore.CatCoreInstance.LaunchWebPortal">
+            <summary>
+            Initializes the internal API (if that hasn't been done yet before) and launches the web portal.
+            </summary>
+        </member>
+        <member name="T:CatCore.Helpers.Converters.JsonStringEnumConverter`1">
+            <remarks>
+            Based upon https://github.com/dotnet/runtime/issues/31081#issuecomment-848697673
+            </remarks>
+        </member>
+        <member name="T:CatCore.Helpers.Synchronization">
+            <summary>
+            Utilities for inter-thread synchronization. All Locker method acquire their object immediately,
+            and should only be used with <see langword="using" /> to automatically release them.
+            </summary>
+            <example>
+                <para>
+            The canonical usage of *all* of the member functions is as follows, substituting <see cref="M:CatCore.Helpers.Synchronization.Lock(System.Threading.SemaphoreSlim)" />
+            with whichever member you want to use, according to your lock type.
+            </para>
+                <code>
+            using var _locker = Synchronization.Lock(semaphoreSlim);
+            </code>
+            </example>
+            <remarks>
+            This code is roughly based upon the Synchronization class in BSIPA.
+            https://github.com/bsmg/BeatSaber-IPA-Reloaded/blob/fd5b082feceef5d9ee6878b13a9db1865afad61f/IPA.Loader/Utilities/Async/Synchronization.cs
+            </remarks>
+        </member>
+        <member name="M:CatCore.Helpers.Synchronization.Lock(System.Threading.Semaphore)">
+            <summary>
+            Creates a locker for a semaphore.
+            </summary>
+            <param name="s">the semaphore to acquire</param>
+            <returns>the locker to use with <see langword="using" /></returns>
+        </member>
+        <member name="M:CatCore.Helpers.Synchronization.Lock(System.Threading.SemaphoreSlim)">
+            <summary>
+            Creates a locker for a slim semaphore.
+            </summary>
+            <param name="ss">the slim semaphore to acquire</param>
+            <returns>the locker to use with <see langword="using" /></returns>
+        </member>
+        <member name="M:CatCore.Helpers.Synchronization.LockAsync(System.Threading.SemaphoreSlim)">
+            <summary>
+            Creates a locker for a slim semaphore asynchronously.
+            </summary>
+            <param name="ss">the slim semaphore to acquire async</param>
+            <returns>the locker to use with <see langword="using" /></returns>
+        </member>
+        <member name="M:CatCore.Helpers.Synchronization.LockRead(System.Threading.ReaderWriterLockSlim)">
+            <summary>
+            Creates a locker for a read lock on a <see cref="T:System.Threading.ReaderWriterLockSlim" />.
+            </summary>
+            <param name="rwl">the lock to acquire in read mode</param>
+            <returns>the locker to use with <see langword="using" /></returns>
+        </member>
+        <member name="M:CatCore.Helpers.Synchronization.LockWrite(System.Threading.ReaderWriterLockSlim)">
+            <summary>
+            Creates a locker for a write lock <see cref="T:System.Threading.ReaderWriterLockSlim" />.
+            </summary>
+            <param name="rwl">the lock to acquire in write mode</param>
+            <returns>the locker to use with <see langword="using" /></returns>
+        </member>
+        <member name="M:CatCore.Helpers.Synchronization.LockReadUpgradable(System.Threading.ReaderWriterLockSlim)">
+            <summary>
+            Creates a locker for an upgradable read lock on a <see cref="T:System.Threading.ReaderWriterLockSlim" />.
+            </summary>
+            <param name="rwl">the lock to acquire in upgradable read mode</param>
+            <returns>the locker to use with <see langword="using" /></returns>
+        </member>
+        <member name="T:CatCore.Helpers.ThreadSafeRandomFactory">
+            <summary>
+            Convenience class for dealing with randomness.
+            </summary>
+            <remarks>
+            Adapted from https://codeblog.jonskeet.uk/2009/11/04/revisiting-randomness/
+            </remarks>
+        </member>
+        <member name="F:CatCore.Helpers.ThreadSafeRandomFactory._globalRandom">
+            <summary>
+            Random number generator used to generate seeds,
+            which are then used to create new random number
+            generators on a per-thread basis.
+            </summary>
+        </member>
+        <member name="F:CatCore.Helpers.ThreadSafeRandomFactory._threadRandom">
+            <summary>
+            ThreadLocal random number generator
+            </summary>
+        </member>
+        <member name="M:CatCore.Helpers.ThreadSafeRandomFactory.CreateNewRandom">
+            <summary>
+            Creates a new instance of Random. The seed is derived from a global (static) instance of Random, rather than time.
+            </summary>
+        </member>
+        <member name="P:CatCore.Helpers.ThreadSafeRandomFactory.Instance">
+            <summary>
+            Returns an instance of Random which can be used freely within the current thread.
+            </summary>
+        </member>
+        <member name="M:CatCore.Logging.SinkExtensions.Actionable(Serilog.Configuration.LoggerSinkConfiguration,System.Action{Serilog.Events.LogEvent},Serilog.Events.LogEventLevel,Serilog.Core.LoggingLevelSwitch)">
+            <summary>
+            Writes log events to the EventHandler defined in <see cref="T:CatCore.CatCoreInstance" />.
+            </summary>
+            <param name="sinkConfiguration">Logger sink configuration.</param>
+            <param name="logEventHandler">The action that will handle the event</param>
+            <param name="restrictedToMinimumLevel">The minimum level for
+            events passed through the sink. Ignored when <paramref name="levelSwitch" /> is specified.</param>
+            <param name="levelSwitch">A switch allowing the pass-through minimum level
+            to be changed at runtime.</param>
+            <returns>Configuration object allowing method chaining.</returns>
+        </member>
+        <member name="P:CatCore.Models.Api.Requests.TwitchStateRequestDto.AdditionalChannelsData">
+            <remark>
+            Key being the actual userId and the value being the loginname
+            </remark>
+        </member>
+        <member name="P:CatCore.Models.Shared.IChatChannel`2.Id">
+            <summary>
+            The id of the channel
+            </summary>
+        </member>
+        <member name="P:CatCore.Models.Shared.IChatChannel`2.Name">
+            <summary>
+            The name of the channel
+            </summary>
+        </member>
+        <member name="M:CatCore.Models.Shared.IChatChannel`2.SendMessage(System.String)">
+            <summary>
+            Sends a message to channel that this instance represents
+            </summary>
+            <param name="message">The actual message that will be send to said channel</param>
+        </member>
+        <member name="P:CatCore.Models.Shared.IChatMessage`2.Id">
+            <summary>
+            The internal identifier for this chat message
+            </summary>
+        </member>
+        <member name="P:CatCore.Models.Shared.IChatMessage`2.IsSystemMessage">
+            <summary>
+            True if this message was generated by the underlying chat service, and not by another user.
+            </summary>
+        </member>
+        <member name="P:CatCore.Models.Shared.IChatMessage`2.IsActionMessage">
+            <summary>
+            True if the message is a /me message, or whatever the equivalent is on the current chat service.
+            </summary>
+        </member>
+        <member name="P:CatCore.Models.Shared.IChatMessage`2.IsMentioned">
+            <summary>
+            True if the logged in user was mentioned/tagged/pinged in this message.
+            </summary>
+        </member>
+        <member name="P:CatCore.Models.Shared.IChatMessage`2.Message">
+            <summary>
+            The exact message the user sent into the chat, *with* any custom formatting applied by the chat service.
+            </summary>
+        </member>
+        <member name="P:CatCore.Models.Shared.IChatMessage`2.Sender">
+            <summary>
+            The user who sent this message
+            </summary>
+        </member>
+        <member name="P:CatCore.Models.Shared.IChatMessage`2.Channel">
+            <summary>
+            The channel this message was sent in
+            </summary>
+        </member>
+        <member name="P:CatCore.Models.Shared.IChatMessage`2.Emotes">
+            <summary>
+            The emotes that are contained in this message.
+            </summary>
+        </member>
+        <member name="P:CatCore.Models.Shared.IChatMessage`2.Metadata">
+            <summary>
+            All the raw metadata associated with this message. This contains platform-specific data for devs who want to access any extra data that may not have been parsed.
+            </summary>
+        </member>
+        <member name="P:CatCore.Models.Twitch.Helix.Responses.UserData.Email">
+            <remark>
+            Returned if the request includes the user:read:email scope.
+            </remark>
+        </member>
+        <member name="T:CatCore.Models.Twitch.IRC.IrcMessageTags">
+            <summary>
+            All IRC message tag keys that are publicly described by Twitch documentation
+            </summary>
+            <remarks>See also: https://dev.twitch.tv/docs/irc/tags</remarks>
+        </member>
+        <member name="F:CatCore.Models.Twitch.IRC.MessageSendingRateLimit.Normal">
+            <summary>
+            Applies to everyone who doesn't have broadcaster/moderator permissions in the channel to which the message will be send
+            </summary>
+        </member>
+        <member name="F:CatCore.Models.Twitch.IRC.MessageSendingRateLimit.Relaxed">
+            <summary>
+            Applies to the broadcaster and moderators of the channel to which the message will be send
+            </summary>
+        </member>
+        <member name="P:CatCore.Models.Twitch.IRC.TwitchMessage.Id">
+            <inheritdoc />
+        </member>
+        <member name="P:CatCore.Models.Twitch.IRC.TwitchMessage.IsSystemMessage">
+            <inheritdoc />
+        </member>
+        <member name="P:CatCore.Models.Twitch.IRC.TwitchMessage.IsActionMessage">
+            <inheritdoc />
+        </member>
+        <member name="P:CatCore.Models.Twitch.IRC.TwitchMessage.IsMentioned">
+            <inheritdoc />
+        </member>
+        <member name="P:CatCore.Models.Twitch.IRC.TwitchMessage.Message">
+            <inheritdoc />
+        </member>
+        <member name="P:CatCore.Models.Twitch.IRC.TwitchMessage.Sender">
+            <inheritdoc />
+        </member>
+        <member name="P:CatCore.Models.Twitch.IRC.TwitchMessage.Channel">
+            <inheritdoc />
+        </member>
+        <member name="P:CatCore.Models.Twitch.IRC.TwitchMessage.Emotes">
+            <inheritdoc />
+        </member>
+        <member name="P:CatCore.Models.Twitch.IRC.TwitchMessage.Metadata">
+            <inheritdoc />
+        </member>
+        <member name="P:CatCore.Models.Twitch.IRC.TwitchMessage.Type">
+            <summary>
+            The IRC message type for this TwitchMessage
+            </summary>
+        </member>
+        <member name="P:CatCore.Models.Twitch.IRC.TwitchMessage.Bits">
+            <summary>
+            The number of bits in this message, if any.
+            </summary>
+        </member>
+        <member name="P:CatCore.Models.Twitch.IRC.TwitchRoomState.RoomId">
+            <summary>
+            The id of the channel to which the room state belongs.
+            </summary>
+        </member>
+        <member name="P:CatCore.Models.Twitch.IRC.TwitchRoomState.EmoteOnly">
+            <summary>
+            If enabled, only emotes are allowed in chat.
+            </summary>
+        </member>
+        <member name="P:CatCore.Models.Twitch.IRC.TwitchRoomState.FollowersOnly">
+            <summary>
+            If enabled, controls which followers can chat.
+            </summary>
+        </member>
+        <member name="P:CatCore.Models.Twitch.IRC.TwitchRoomState.SubscribersOnly">
+            <summary>
+            If enabled, only subscribers and moderators can chat.
+            </summary>
+        </member>
+        <member name="P:CatCore.Models.Twitch.IRC.TwitchRoomState.R9K">
+            <summary>
+            If enabled, messages with more than 9 characters must be unique.
+            </summary>
+        </member>
+        <member name="P:CatCore.Models.Twitch.IRC.TwitchRoomState.SlowModeInterval">
+            <summary>
+            The number of seconds a chatter without moderator privileges must wait between sending messages.
+            </summary>
+        </member>
+        <member name="P:CatCore.Models.Twitch.IRC.TwitchRoomState.MinFollowTime">
+            <summary>
+            If FollowersOnly is true, this specifies the number of minutes a user must be following before they can chat.
+            </summary>
+        </member>
+        <member name="P:CatCore.Models.Twitch.PubSub.Responses.ChannelPointsChannelV1.Reward.TemplateId">
+            <remarks>
+            return type unsure
+            </remarks>&gt;
+        </member>
+        <member name="P:CatCore.Models.Twitch.PubSub.Responses.ChannelPointsChannelV1.Reward.CooldownExpiresAtRaw">
+            <remarks>
+            TODO: Figure out return type
+            </remarks>&gt;
+        </member>
+        <member name="P:CatCore.Models.Twitch.TwitchChannel.Id">
+            <inheritdoc />
+        </member>
+        <member name="E:CatCore.Services.Interfaces.IChatService`3.OnAuthenticatedStateChanged">
+            <summary>
+            Callback that occurs when the authentication state changes for the provided streaming service
+            </summary>
+        </member>
+        <member name="E:CatCore.Services.Interfaces.IChatService`3.OnChatConnected">
+            <summary>
+            Callback that occurs when the provided streaming service successfully connected to the chat
+            </summary>
+        </member>
+        <member name="E:CatCore.Services.Interfaces.IChatService`3.OnJoinChannel">
+            <summary>
+            Callback that occurs when the user joins a chat channel
+            </summary>
+        </member>
+        <member name="E:CatCore.Services.Interfaces.IChatService`3.OnRoomStateUpdated">
+            <summary>
+            Callback that occurs when a chat channel receives updated info
+            </summary>
+        </member>
+        <member name="E:CatCore.Services.Interfaces.IChatService`3.OnLeaveChannel">
+            <summary>
+            Callback that occurs when the user leaves a chat channel
+            </summary>
+        </member>
+        <member name="E:CatCore.Services.Interfaces.IChatService`3.OnTextMessageReceived">
+            <summary>
+            Callback that occurs when a text message is received
+            </summary>
+        </member>
+        <member name="E:CatCore.Services.Interfaces.IChatService`3.OnMessageDeleted">
+            <summary>
+            Callback that occurs when a chat message gets deleted
+            </summary>
+        </member>
+        <member name="E:CatCore.Services.Interfaces.IChatService`3.OnChatCleared">
+            <summary>
+            Callback that occurs when the chat of a particular channel or all messages of a user in a channel gets cleared
+            </summary>
+        </member>
+        <member name="P:CatCore.Services.Interfaces.IPlatformService`3.LoggedIn">
+            <summary>
+            Indicates whether the user is authenticated for this service
+            </summary>
+        </member>
+        <member name="P:CatCore.Services.Interfaces.IPlatformService`3.DefaultChannel">
+            <summary>
+            Returns the default channel for this service
+            </summary>
+        </member>
+        <member name="E:CatCore.Services.Multiplexer.ChatServiceMultiplexer.OnAuthenticatedStateChanged">
+            <inheritdoc />
+        </member>
+        <member name="E:CatCore.Services.Multiplexer.ChatServiceMultiplexer.OnChatConnected">
+            <inheritdoc />
+        </member>
+        <member name="E:CatCore.Services.Multiplexer.ChatServiceMultiplexer.OnTextMessageReceived">
+            <inheritdoc />
+        </member>
+        <member name="E:CatCore.Services.Multiplexer.ChatServiceMultiplexer.OnJoinChannel">
+            <inheritdoc />
+        </member>
+        <member name="E:CatCore.Services.Multiplexer.ChatServiceMultiplexer.OnLeaveChannel">
+            <inheritdoc />
+        </member>
+        <member name="E:CatCore.Services.Multiplexer.ChatServiceMultiplexer.OnRoomStateUpdated">
+            <inheritdoc />
+        </member>
+        <member name="E:CatCore.Services.Multiplexer.ChatServiceMultiplexer.OnMessageDeleted">
+            <inheritdoc />
+        </member>
+        <member name="E:CatCore.Services.Multiplexer.ChatServiceMultiplexer.OnChatCleared">
+            <inheritdoc />
+        </member>
+        <member name="M:CatCore.Services.Multiplexer.ChatServiceMultiplexer.GetTwitchPlatformService">
+            <summary>
+            Returns the Twitch service. Gives access to Twitch-specific features.
+            </summary>
+            <returns>Returns the Twitch service</returns>
+        </member>
+        <member name="P:CatCore.Services.Multiplexer.MultiplexedChannel.Id">
+            <inheritdoc />
+        </member>
+        <member name="P:CatCore.Services.Multiplexer.MultiplexedChannel.Name">
+            <inheritdoc />
+        </member>
+        <member name="M:CatCore.Services.Multiplexer.MultiplexedChannel.SendMessage(System.String)">
+            <inheritdoc />
+        </member>
+        <member name="M:CatCore.Services.Twitch.Interfaces.ITwitchHelixApiService.FetchUserInfo(System.String[],System.String[],System.Threading.CancellationToken)">
+            <summary>
+            Gets information about one or more specified Twitch users.
+            Users are identified by optional user IDs and/or login name. If neither a user ID nor a login name is specified, the user is looked up by Bearer token.
+            </summary>
+            <param name="userIds">List of ids of the users for which you want to request data</param>
+            <param name="loginNames">List of login names of the users for which you want to request data</param>
+            <param name="cancellationToken">CancellationToken that can be used to cancel the call</param>
+            <returns>Response containing userdata</returns>
+            <exception cref="T:CatCore.Exceptions.TwitchNotAuthenticatedException">Gets thrown when the user isn't authenticated, either make sure the user is logged in or try again later.</exception>
+            <exception cref="T:System.ArgumentException">Gets thrown when validation regarding one of the arguments fails.</exception>
+            <remarks>
+                <a href="https://dev.twitch.tv/docs/api/reference#get-users">Check out the Twitch API Reference docs.</a>
+            </remarks>
+        </member>
+        <member name="M:CatCore.Services.Twitch.Interfaces.ITwitchHelixApiService.CreateStreamMarker(System.String,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Creates a marker in the stream of a user specified by user ID.
+            A marker is an arbitrary point in a stream that the broadcaster wants to mark; e.g., to easily return to later.
+            The marker is created at the current timestamp in the live broadcast when the request is processed.
+            Markers can be created by the stream owner or editors.
+            </summary>
+            <param name="userId">ID of the broadcaster in whose live stream the marker is created.</param>
+            <param name="description">Description of or comments on the marker. Max length is 140 characters.</param>
+            <param name="cancellationToken">CancellationToken that can be used to cancel the call</param>
+            <returns>Response containing data regarding the created stream marker.</returns>
+            <exception cref="T:CatCore.Exceptions.TwitchNotAuthenticatedException">Gets thrown when the user isn't authenticated, either make sure the user is logged in or try again later.</exception>
+            <exception cref="T:System.ArgumentException">Gets thrown when validation regarding one of the arguments fails.</exception>
+            <remarks>
+                <a href="https://dev.twitch.tv/docs/api/reference#create-stream-marker">Check out the Twitch API Reference docs.</a>
+            </remarks>
+        </member>
+        <member name="M:CatCore.Services.Twitch.Interfaces.ITwitchHelixApiService.SearchChannels(System.String,System.Nullable{System.UInt32},System.Nullable{System.Boolean},System.String,System.Threading.CancellationToken)">
+            <summary>
+            Returns a list of channels (users who have streamed within the past 6 months) that match the query via channel name or description either entirely or partially.
+            Results include both live and offline channels. Online channels will have additional metadata (e.g. StartedAt, TagIds).
+            </summary>
+            <param name="query">Query used to search channels</param>
+            <param name="limit">Maximum number of results to return. Maximum: 100 Default: 20</param>
+            <param name="liveOnly">Filter results for live streams only</param>
+            <param name="continuationCursor">Cursor for forward pagination: tells the server where to start fetching the next set of results, in a multi-page response</param>
+            <param name="cancellationToken">CancellationToken that can be used to cancel the call</param>
+            <returns>Response containing channels matching the provided query</returns>
+            <exception cref="T:CatCore.Exceptions.TwitchNotAuthenticatedException">Gets thrown when the user isn't authenticated, either make sure the user is logged in or try again later.</exception>
+            <exception cref="T:System.ArgumentException">Gets thrown when validation regarding one of the arguments fails.</exception>
+            <remarks>
+                <a href="https://dev.twitch.tv/docs/api/reference#search-channels">Check out the Twitch API Reference docs.</a>
+            </remarks>
+        </member>
+        <member name="M:CatCore.Services.Twitch.Interfaces.ITwitchHelixApiService.GetPolls(System.Collections.Generic.List{System.String},System.Nullable{System.UInt32},System.String,System.Threading.CancellationToken)">
+            <summary>
+            Get information about all polls or specific polls for a Twitch channel. Poll information is available for 90 days.
+            </summary>
+            <param name="pollIds">Filters results to one or more specific polls. Not providing one or more IDs will return the full list of polls for the authenticated channel. Maximum: 100</param>
+            <param name="limit">Maximum number of results to return. Maximum: 20 Default: 20</param>
+            <param name="continuationCursor">Cursor for forward pagination: tells the server where to start fetching the next set of results, in a multi-page response</param>
+            <param name="cancellationToken">CancellationToken that can be used to cancel the call</param>
+            <returns>Response containing data of 0, 1 or more more polls</returns>
+            <exception cref="T:CatCore.Exceptions.TwitchNotAuthenticatedException">Gets thrown when the user isn't authenticated, either make sure the user is logged in or try again later.</exception>
+            <exception cref="T:System.ArgumentException">Gets thrown when validation regarding one of the arguments fails.</exception>
+            <remarks>
+                <a href="https://dev.twitch.tv/docs/api/reference#get-polls">Check out the Twitch API Reference docs.</a>
+            </remarks>
+        </member>
+        <member name="M:CatCore.Services.Twitch.Interfaces.ITwitchHelixApiService.CreatePoll(System.String,System.Collections.Generic.List{System.String},System.UInt32,System.Nullable{System.Boolean},System.Nullable{System.UInt32},System.Nullable{System.Boolean},System.Nullable{System.UInt32},System.Threading.CancellationToken)">
+            <summary>
+            Create a poll for a specific Twitch channel.
+            </summary>
+            <param name="title">Question displayed for the poll. Maximum: 60 characters.</param>
+            <param name="choices">Array of possible poll choices. Minimum: 2 choices. Maximum: 5 choices.</param>
+            <param name="duration">Total duration for the poll (in seconds). Minimum: 15. Maximum: 1800.</param>
+            <param name="bitsVotingEnabled">Indicates if Bits can be used for voting.</param>
+            <param name="bitsPerVote">Number of Bits required to vote once with Bits. Minimum: 1. Maximum: 10000.</param>
+            <param name="channelPointsVotingEnabled">Indicates if Channel Points can be used for voting.</param>
+            <param name="channelPointsPerVote">Number of Channel Points required to vote once with Channel Points. Minimum: 1. Maximum: 1000000.</param>
+            <param name="cancellationToken">CancellationToken that can be used to cancel the call</param>
+            <returns>Response containing data of the newly created poll</returns>
+            <exception cref="T:CatCore.Exceptions.TwitchNotAuthenticatedException">Gets thrown when the user isn't authenticated, either make sure the user is logged in or try again later.</exception>
+            <exception cref="T:System.ArgumentException">Gets thrown when validation regarding one of the arguments fails.</exception>
+            <remarks>
+                <a href="https://dev.twitch.tv/docs/api/reference#create-poll">Check out the Twitch API Reference docs.</a>
+            </remarks>
+        </member>
+        <member name="M:CatCore.Services.Twitch.Interfaces.ITwitchHelixApiService.EndPoll(System.String,CatCore.Models.Twitch.Shared.PollStatus,System.Threading.CancellationToken)">
+            <summary>
+            End a poll that is currently active.
+            </summary>
+            <param name="pollId">Id of the poll.</param>
+            <param name="pollStatus">The poll status to be set. Valid values:
+            <list type="bullet"><item><description><see cref="F:CatCore.Models.Twitch.Shared.PollStatus.Terminated" />: End the poll manually, but allow it to be viewed publicly.</description></item><item><description><see cref="F:CatCore.Models.Twitch.Shared.PollStatus.Archived" />: End the poll manually and do not allow it to be viewed publicly.</description></item></list></param>
+            <param name="cancellationToken">CancellationToken that can be used to cancel the call</param>
+            <returns>Response containing data of the ended poll</returns>
+            <exception cref="T:CatCore.Exceptions.TwitchNotAuthenticatedException">Gets thrown when the user isn't authenticated, either make sure the user is logged in or try again later.</exception>
+            <exception cref="T:System.ArgumentException">Gets thrown when validation regarding one of the arguments fails.</exception>
+            <remarks>
+                <a href="https://dev.twitch.tv/docs/api/reference#end-poll">Check out the Twitch API Reference docs.</a>
+            </remarks>
+        </member>
+        <member name="M:CatCore.Services.Twitch.Interfaces.ITwitchHelixApiService.GetPredictions(System.Collections.Generic.List{System.String},System.Nullable{System.UInt32},System.String,System.Threading.CancellationToken)">
+            <summary>
+            Get information about all Channel Points Predictions or specific Channel Points Predictions for a Twitch channel.
+            Results are ordered by most recent, so it can be assumed that the currently active or locked Prediction will be the first item.
+            </summary>
+            <param name="predictionIds">Filters results to one or more specific predictions. Not providing one or more IDs will return the full list of polls for the authenticated channel. Maximum: 100</param>
+            <param name="limit">Maximum number of results to return. Maximum: 20 Default: 20</param>
+            <param name="continuationCursor">Cursor for forward pagination: tells the server where to start fetching the next set of results, in a multi-page response</param>
+            <param name="cancellationToken">CancellationToken that can be used to cancel the call</param>
+            <returns>Response containing data of 0, 1 or more more predictions</returns>
+            <exception cref="T:CatCore.Exceptions.TwitchNotAuthenticatedException">Gets thrown when the user isn't authenticated, either make sure the user is logged in or try again later.</exception>
+            <exception cref="T:System.ArgumentException">Gets thrown when validation regarding one of the arguments fails.</exception>
+            <remarks>
+                <a href="https://dev.twitch.tv/docs/api/reference#get-predictions">Check out the Twitch API Reference docs.</a>
+            </remarks>
+        </member>
+        <member name="M:CatCore.Services.Twitch.Interfaces.ITwitchHelixApiService.CreatePrediction(System.String,System.Collections.Generic.List{System.String},System.UInt32,System.Threading.CancellationToken)">
+            <summary>
+            Create a Channel Points Prediction for a specific Twitch channel.
+            </summary>
+            <param name="title">Title for the Prediction. May not exceed a length of 45 characters.</param>
+            <param name="outcomes">
+            Array of outcome objects with titles for the Prediction. Array size must be 2.
+            The first outcome object is the “blue” outcome and the second outcome object is the “pink” outcome when viewing the Prediction on Twitch.
+            Outcome entries may not exceed a length of 25 characters.
+            </param>
+            <param name="duration">Total duration for the Prediction (in seconds). Minimum: 1. Maximum: 1800.</param>
+            <param name="cancellationToken">CancellationToken that can be used to cancel the call</param>
+            <returns>Response containing data of the newly created prediction</returns>
+            <exception cref="T:CatCore.Exceptions.TwitchNotAuthenticatedException">Gets thrown when the user isn't authenticated, either make sure the user is logged in or try again later.</exception>
+            <exception cref="T:System.ArgumentException">Gets thrown when validation regarding one of the arguments fails.</exception>
+            <remarks>
+                <a href="https://dev.twitch.tv/docs/api/reference#create-prediction">Check out the Twitch API Reference docs.</a>
+            </remarks>
+        </member>
+        <member name="M:CatCore.Services.Twitch.Interfaces.ITwitchHelixApiService.EndPrediction(System.String,CatCore.Models.Twitch.Shared.PredictionStatus,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Lock, resolve, or cancel a Channel Points Prediction. Active Predictions can be updated to be <see cref="F:CatCore.Models.Twitch.Shared.PredictionStatus.Locked" />, <see cref="F:CatCore.Models.Twitch.Shared.PredictionStatus.Resolved" />,
+            or <see cref="F:CatCore.Models.Twitch.Shared.PredictionStatus.Cancelled" />. Locked Predictions can be updated to be <see cref="F:CatCore.Models.Twitch.Shared.PredictionStatus.Resolved" /> or <see cref="F:CatCore.Models.Twitch.Shared.PredictionStatus.Cancelled" />.
+            </summary>
+            <param name="predictionId">Id of the Prediction.</param>
+            <param name="predictionStatus">The Prediction status to be set. Valid values:
+            <list type="bullet"><item><description><see cref="F:CatCore.Models.Twitch.Shared.PredictionStatus.Resolved" />: A winning outcome has been chosen and the Channel Points have been distributed to the users who predicted the correct outcome.</description></item><item><description><see cref="F:CatCore.Models.Twitch.Shared.PredictionStatus.Cancelled" />: The Prediction has been canceled and the Channel Points have been refunded to participants.</description></item><item><description><see cref="F:CatCore.Models.Twitch.Shared.PredictionStatus.Locked" />: The Prediction has been locked and viewers can no longer make predictions.</description></item></list></param>
+            <param name="winningOutcomeId">Id of the winning outcome for the Prediction. This parameter is required if <paramref name="predictionStatus" /> is being set to <see cref="F:CatCore.Models.Twitch.Shared.PredictionStatus.Resolved" />.</param>
+            <param name="cancellationToken">CancellationToken that can be used to cancel the call</param>
+            <returns>Response containing data of the ended prediction</returns>
+            <exception cref="T:CatCore.Exceptions.TwitchNotAuthenticatedException">Gets thrown when the user isn't authenticated, either make sure the user is logged in or try again later.</exception>
+            <exception cref="T:System.ArgumentException">Gets thrown when validation regarding one of the arguments fails.</exception>
+            <remarks>
+                <a href="https://dev.twitch.tv/docs/api/reference#end-prediction">Check out the Twitch API Reference docs.</a>
+            </remarks>
+        </member>
+        <member name="M:CatCore.Services.Twitch.Interfaces.ITwitchHelixApiService.GetCheermotes(System.String,System.Threading.CancellationToken)">
+            <summary>
+            Retrieves the list of available Cheermotes, animated emotes to which viewers can assign Bits, to cheer in chat.
+            Cheermotes returned are available throughout Twitch, in all Bits-enabled channels.
+            </summary>
+            <param name="userId">Id of the channel for which to retrieve Cheermotes. When no userId is passed or null, it will return all globally available Cheermotes.</param>
+            <param name="cancellationToken">CancellationToken that can be used to cancel the call</param>
+            <returns>Response containing data of cheermotes</returns>
+            <exception cref="T:CatCore.Exceptions.TwitchNotAuthenticatedException">Gets thrown when the user isn't authenticated, either make sure the user is logged in or try again later.</exception>
+            <remarks>
+                <a href="https://dev.twitch.tv/docs/api/reference#get-cheermotes">Check out the Twitch API Reference docs.</a>
+            </remarks>
+        </member>
+        <member name="M:CatCore.Services.Twitch.Interfaces.ITwitchHelixApiService.GetGlobalBadges(System.Threading.CancellationToken)">
+            <summary>
+            Gets a list of chat badges that can be used in chat for any channel.
+            </summary>
+            <param name="cancellationToken">CancellationToken that can be used to cancel the call</param>
+            <returns>Response containing data of globally available custom chat badges</returns>
+            <exception cref="T:CatCore.Exceptions.TwitchNotAuthenticatedException">Gets thrown when the user isn't authenticated, either make sure the user is logged in or try again later.</exception>
+            <remarks>
+                <a href="https://dev.twitch.tv/docs/api/reference#get-global-chat-badges">Check out the Twitch API Reference docs.</a>
+            </remarks>
+        </member>
+        <member name="M:CatCore.Services.Twitch.Interfaces.ITwitchHelixApiService.GetBadgesForChannel(System.String,System.Threading.CancellationToken)">
+            <summary>
+            Gets a list of custom chat badges that can be used in chat for the specified channel. This includes <a href="https://help.twitch.tv/s/article/subscriber-badge-guide">subscriber badges</a>
+            and <a href="https://help.twitch.tv/s/article/custom-bit-badges-guide">Bit badges</a>.
+            </summary>
+            <param name="userId">Id of the channel for which to retrieve the custom chat badges.</param>
+            <param name="cancellationToken">CancellationToken that can be used to cancel the call</param>
+            <returns>Response containing data of custom chat badges</returns>
+            <exception cref="T:CatCore.Exceptions.TwitchNotAuthenticatedException">Gets thrown when the user isn't authenticated, either make sure the user is logged in or try again later.</exception>
+            <remarks>
+                <a href="https://dev.twitch.tv/docs/api/reference#get-channel-chat-badges">Check out the Twitch API Reference docs.</a>
+            </remarks>
+        </member>
+        <member name="M:CatCore.Services.Twitch.Interfaces.ITwitchHelixApiService.GetFollowedStreams(System.Nullable{System.UInt32},System.String,System.Threading.CancellationToken)">
+            <summary>
+            Gets information about active streams belonging to channels that the authenticated user follows. Streams are returned sorted by number of current viewers, in descending order.
+            Across multiple pages of results, there may be duplicate or missing streams, as viewers join and leave streams.
+            </summary>
+            <param name="limit">Maximum number of results to return. Maximum: 100 Default: 100</param>
+            <param name="continuationCursor">Cursor for forward pagination: tells the server where to start fetching the next set of results, in a multi-page response</param>
+            <param name="cancellationToken">CancellationToken that can be used to cancel the call</param>
+            <returns>Response containing data of 0, 1 or more more followed streams</returns>
+            <exception cref="T:CatCore.Exceptions.TwitchNotAuthenticatedException">Gets thrown when the user isn't authenticated, either make sure the user is logged in or try again later.</exception>
+            <exception cref="T:System.ArgumentException">Gets thrown when validation regarding one of the arguments fails.</exception>
+            <remarks>
+                <a href="https://dev.twitch.tv/docs/api/reference#get-followed-streams">Check out the Twitch API Reference docs.</a>
+            </remarks>
+        </member>
+        <member name="M:CatCore.Services.Twitch.Interfaces.ITwitchHelixApiService.GetStreams(System.String[],System.String[],System.String[],System.String[],System.Nullable{System.UInt32},System.String,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Gets information about active streams. Streams are returned sorted by number of current viewers, in descending order.
+            Across multiple pages of results, there may be duplicate or missing streams, as viewers join and leave streams.
+            </summary>
+            <param name="userIds">Returns streams broadcast by one or more specified user IDs. You can specify up to 100 IDs.</param>
+            <param name="loginNames">Returns streams broadcast by one or more specified user login names. You can specify up to 100 names.</param>
+            <param name="gameIds">Returns streams broadcasting a specified game ID. You can specify up to 100 IDs.</param>
+            <param name="languages">
+            Stream language. You can specify up to 100 languages.
+            A language value must be either the <a href="https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes">ISO 639-1</a> two-letter code for a
+            <a href="https://help.twitch.tv/s/article/languages-on-twitch#streamlang">supported stream language</a> or “other”.
+            </param>
+            <param name="limit">Maximum number of results to return. Maximum: 100 Default: 20</param>
+            <param name="continuationCursorBefore">Cursor for backward pagination: tells the server where to start fetching the next set of results, in a multi-page response</param>
+            <param name="continuationCursorAfter">Cursor for forward pagination: tells the server where to start fetching the next set of results, in a multi-page response</param>
+            <param name="cancellationToken">CancellationToken that can be used to cancel the call</param>
+            <returns>Response containing data of 0, 1 or more more active streams</returns>
+            <exception cref="T:CatCore.Exceptions.TwitchNotAuthenticatedException">Gets thrown when the user isn't authenticated, either make sure the user is logged in or try again later.</exception>
+            <exception cref="T:System.ArgumentException">Gets thrown when validation regarding one of the arguments fails.</exception>
+            <remarks>
+                <a href="https://dev.twitch.tv/docs/api/reference#get-streams">Check out the Twitch API Reference docs.</a>
+            </remarks>
+        </member>
+        <member name="M:CatCore.Services.Twitch.Interfaces.ITwitchHelixApiService.GetGlobalEmotes(System.Threading.CancellationToken)">
+            <summary>
+            Gets all <a href="https://www.twitch.tv/creatorcamp/en/learn-the-basics/emotes/">global emotes</a>. Global emotes are Twitch-created emoticons that users can use in any Twitch chat.
+            </summary>
+            <param name="cancellationToken">CancellationToken that can be used to cancel the call</param>
+            <returns>Response containing data of globally available chat emotes</returns>
+            <exception cref="T:CatCore.Exceptions.TwitchNotAuthenticatedException">Gets thrown when the user isn't authenticated, either make sure the user is logged in or try again later.</exception>
+            <remarks>
+                <a href="https://dev.twitch.tv/docs/api/reference#get-global-emotes">Check out the Twitch API Reference docs.</a>
+            </remarks>
+        </member>
+        <member name="M:CatCore.Services.Twitch.Interfaces.ITwitchHelixApiService.GetChannelEmotes(System.String,System.Threading.CancellationToken)">
+            <summary>
+            Gets all emotes that the specified Twitch channel created. Broadcasters create these custom emotes for users who subscribe to or follow the channel, or cheer Bits in the channel’s chat
+            window. For information about the custom emotes, see <a href="https://help.twitch.tv/s/article/subscriber-emote-guide">subscriber emotes</a>,
+            <a href="https://help.twitch.tv/s/article/custom-bit-badges-guide?language=bg#slots">Bits tier emotes</a>, and
+            <a href="https://blog.twitch.tv/en/2021/06/04/kicking-off-10-years-with-our-biggest-emote-update-ever/">follower emotes</a>.
+            <b>NOTE:</b> With the exception of custom follower emotes, users may use custom emotes in any Twitch chat.
+            </summary>
+            <param name="userId">Id of the channel for which to retrieve the custom chat emotes.</param>
+            <param name="cancellationToken">CancellationToken that can be used to cancel the call</param>
+            <returns>Response containing data of custom chat emotes</returns>
+            <exception cref="T:CatCore.Exceptions.TwitchNotAuthenticatedException">Gets thrown when the user isn't authenticated, either make sure the user is logged in or try again later.</exception>
+            <remarks>
+                <a href="https://dev.twitch.tv/docs/api/reference#get-channel-chat-badges">Check out the Twitch API Reference docs.</a>
+            </remarks>
+        </member>
+        <member name="E:CatCore.Services.Twitch.Interfaces.ITwitchPubSubServiceManager.OnViewCountUpdated">
+            <summary>
+            Fired whenever there's an update of the count of live viewers for a specific channel.
+            First argument of the callback is the channelId on which the event was triggered.
+            Second argument of the callback is additional data regarding the view count update.
+            </summary>
+        </member>
+        <member name="E:CatCore.Services.Twitch.Interfaces.ITwitchPubSubServiceManager.OnStreamUp">
+            <summary>
+            Fired whenever a channel goes live.
+            First argument of the callback is the channelId on which the event was triggered.
+            Second argument of the callback is additional data regarding the StreamUp event.
+            </summary>
+        </member>
+        <member name="E:CatCore.Services.Twitch.Interfaces.ITwitchPubSubServiceManager.OnStreamDown">
+            <summary>
+            Fired whenever a channel stops streaming.
+            First argument of the callback is the channelId on which the event was triggered.
+            Second argument of the callback is additional data regarding the StreamDown event.
+            </summary>
+        </member>
+        <member name="E:CatCore.Services.Twitch.Interfaces.ITwitchPubSubServiceManager.OnCommercial">
+            <summary>
+            Fired whenever a commercial is started on a specific channel.
+            First argument of the callback is the channelId on which the event was triggered.
+            Second argument of the callback is additional data regarding the OnCommercial event.
+            </summary>
+        </member>
+        <member name="E:CatCore.Services.Twitch.Interfaces.ITwitchPubSubServiceManager.OnFollow">
+            <summary>
+            Fired whenever a channel receives a new follower.
+            First argument of the callback is the channelId on which the event was triggered.
+            Second argument of the callback is additional data regarding the new follower.
+            </summary>
+        </member>
+        <member name="E:CatCore.Services.Twitch.Interfaces.ITwitchPubSubServiceManager.OnPoll">
+            <summary>
+            Fired whenever a channel starts a poll or when there's an update regarding an ongoing one.
+            First argument of the callback is the channelId on which the event was triggered.
+            Second argument of the callback is additional data regarding the poll.
+            </summary>
+        </member>
+        <member name="E:CatCore.Services.Twitch.Interfaces.ITwitchPubSubServiceManager.OnPrediction">
+            <summary>
+            Fired whenever a channel starts a prediction or when there's an update regarding an ongoing one.
+            First argument of the callback is the channelId on which the event was triggered.
+            Second argument of the callback is additional data regarding the prediction.
+            </summary>
+        </member>
+        <member name="E:CatCore.Services.Twitch.Interfaces.ITwitchPubSubServiceManager.OnRewardRedeemed">
+            <summary>
+            Fired whenever a viewer redeems a reward on a specific channel.
+            First argument of the callback is the channelId on which the event was triggered.
+            Second argument of the callback is additional data regarding the redeemed reward and redeemer.
+            </summary>
+        </member>
+        <member name="M:CatCore.Services.Twitch.Interfaces.ITwitchRoomStateTrackerService.GetRoomState(System.String)">
+            <summary>
+            Returns the RoomState for the specified channelName.
+            </summary>
+            <remarks>This is only available when the channel is successfully joined over IRC</remarks>
+            <returns>RoomState for the specified channel</returns>
+        </member>
+        <member name="M:CatCore.Services.Twitch.Interfaces.ITwitchService.GetPubSubService">
+            <summary>
+            Returns the PubSub service manager. Allows you to subscribe to various events.
+            </summary>
+            <returns>Returns the PubSub service manager</returns>
+        </member>
+        <member name="M:CatCore.Services.Twitch.Interfaces.ITwitchService.GetHelixApiService">
+            <summary>
+            Returns the Helix API service. Allows you to interact with the Twitch Helix API.
+            </summary>
+            <returns />
+        </member>
+        <member name="M:CatCore.Services.Twitch.Interfaces.ITwitchService.GetRoomStateTrackerService">
+            <summary>
+            Returns the RoomState tracker service. Keeps track of the state of the currently subscribed channels.
+            </summary>
+            <returns>Returns the RoomState tracker service</returns>
+        </member>
+        <member name="M:CatCore.Services.Twitch.Interfaces.ITwitchService.GetUserStateTrackerService">
+            <summary>
+            Returns the UserState tracker service. Keeps track of the state of the user, both global and channel-specific.
+            </summary>
+            <returns>Returns the UserState tracker service</returns>
+        </member>
+        <member name="M:CatCore.Services.Twitch.Interfaces.ITwitchService.GetChannelManagementService">
+            <summary>
+            Returns the Channel management service. Keeps track of all channels that were registered through the webportal.
+            </summary>
+            <returns>Returns the Channel management service</returns>
+        </member>
+        <member name="P:CatCore.Services.Twitch.TwitchAuthService.TokenIsValid">
+            <remark>
+            Consider token as not valid anymore when it has less than 5 minutes remaining
+            </remark>
+        </member>
+        <member name="M:CatCore.Services.Twitch.TwitchHelixApiService.FetchUserInfo(System.String[],System.String[],System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:CatCore.Services.Twitch.TwitchHelixApiService.CreateStreamMarker(System.String,System.String,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:CatCore.Services.Twitch.TwitchHelixApiService.SearchChannels(System.String,System.Nullable{System.UInt32},System.Nullable{System.Boolean},System.String,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:CatCore.Services.Twitch.TwitchHelixApiService.GetPolls(System.Collections.Generic.List{System.String},System.Nullable{System.UInt32},System.String,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:CatCore.Services.Twitch.TwitchHelixApiService.CreatePoll(System.String,System.Collections.Generic.List{System.String},System.UInt32,System.Nullable{System.Boolean},System.Nullable{System.UInt32},System.Nullable{System.Boolean},System.Nullable{System.UInt32},System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:CatCore.Services.Twitch.TwitchHelixApiService.EndPoll(System.String,CatCore.Models.Twitch.Shared.PollStatus,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:CatCore.Services.Twitch.TwitchHelixApiService.GetPredictions(System.Collections.Generic.List{System.String},System.Nullable{System.UInt32},System.String,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:CatCore.Services.Twitch.TwitchHelixApiService.CreatePrediction(System.String,System.Collections.Generic.List{System.String},System.UInt32,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:CatCore.Services.Twitch.TwitchHelixApiService.EndPrediction(System.String,CatCore.Models.Twitch.Shared.PredictionStatus,System.String,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:CatCore.Services.Twitch.TwitchHelixApiService.GetCheermotes(System.String,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:CatCore.Services.Twitch.TwitchHelixApiService.GetGlobalBadges(System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:CatCore.Services.Twitch.TwitchHelixApiService.GetBadgesForChannel(System.String,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:CatCore.Services.Twitch.TwitchHelixApiService.GetFollowedStreams(System.Nullable{System.UInt32},System.String,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:CatCore.Services.Twitch.TwitchHelixApiService.GetStreams(System.String[],System.String[],System.String[],System.String[],System.Nullable{System.UInt32},System.String,System.String,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:CatCore.Services.Twitch.TwitchHelixApiService.GetGlobalEmotes(System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:CatCore.Services.Twitch.TwitchHelixApiService.GetChannelEmotes(System.String,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="F:CatCore.Services.Twitch.TwitchIrcService.MESSAGE_SENDING_TIME_WINDOW_TICKS">
+            <remark>
+            According to the official documentation, the rate limiting window interval is 30 seconds.
+            However, due to delays in the connection/Twitch servers and this library being too precise time-wise,
+            it might result in going over the rate limit again when it should have been reset.
+            Resulting in a global temporary chat ban of 30 minutes, hence why we pick an internal time window of 32 seconds.
+            </remark>
+        </member>
+        <member name="E:CatCore.Services.Twitch.TwitchPubSubServiceManager.OnViewCountUpdated">
+            <inheritdoc />
+        </member>
+        <member name="E:CatCore.Services.Twitch.TwitchPubSubServiceManager.OnStreamUp">
+            <inheritdoc />
+        </member>
+        <member name="E:CatCore.Services.Twitch.TwitchPubSubServiceManager.OnStreamDown">
+            <inheritdoc />
+        </member>
+        <member name="E:CatCore.Services.Twitch.TwitchPubSubServiceManager.OnCommercial">
+            <inheritdoc />
+        </member>
+        <member name="E:CatCore.Services.Twitch.TwitchPubSubServiceManager.OnFollow">
+            <inheritdoc />
+        </member>
+        <member name="E:CatCore.Services.Twitch.TwitchPubSubServiceManager.OnPoll">
+            <inheritdoc />
+        </member>
+        <member name="E:CatCore.Services.Twitch.TwitchPubSubServiceManager.OnPrediction">
+            <inheritdoc />
+        </member>
+        <member name="E:CatCore.Services.Twitch.TwitchPubSubServiceManager.OnRewardRedeemed">
+            <inheritdoc />
+        </member>
+        <member name="M:CatCore.Services.Twitch.TwitchRoomStateTrackerService.GetRoomState(System.String)">
+            <inheritdoc />
+        </member>
+        <member name="M:CatCore.Services.Twitch.TwitchService.GetPubSubService">
+            <inheritdoc />
+        </member>
+        <member name="M:CatCore.Services.Twitch.TwitchService.GetHelixApiService">
+            <inheritdoc />
+        </member>
+        <member name="M:CatCore.Services.Twitch.TwitchService.GetRoomStateTrackerService">
+            <inheritdoc />
+        </member>
+        <member name="M:CatCore.Services.Twitch.TwitchService.GetUserStateTrackerService">
+            <inheritdoc />
+        </member>
+        <member name="M:CatCore.Services.Twitch.TwitchService.GetChannelManagementService">
+            <inheritdoc />
+        </member>
+        <member name="P:CatCore.Services.Twitch.TwitchService.LoggedIn">
+            <inheritdoc />
+        </member>
+        <member name="P:CatCore.Services.Twitch.TwitchService.DefaultChannel">
+            <inheritdoc />
+        </member>
+        <member name="E:CatCore.Services.Twitch.TwitchService.OnAuthenticatedStateChanged">
+            <inheritdoc />
+        </member>
+        <member name="E:CatCore.Services.Twitch.TwitchService.OnChatConnected">
+            <inheritdoc />
+        </member>
+        <member name="E:CatCore.Services.Twitch.TwitchService.OnJoinChannel">
+            <inheritdoc />
+        </member>
+        <member name="E:CatCore.Services.Twitch.TwitchService.OnLeaveChannel">
+            <inheritdoc />
+        </member>
+        <member name="E:CatCore.Services.Twitch.TwitchService.OnRoomStateUpdated">
+            <inheritdoc />
+        </member>
+        <member name="E:CatCore.Services.Twitch.TwitchService.OnTextMessageReceived">
+            <inheritdoc />
+        </member>
+        <member name="E:CatCore.Services.Twitch.TwitchService.OnMessageDeleted">
+            <inheritdoc />
+        </member>
+        <member name="E:CatCore.Services.Twitch.TwitchService.OnChatCleared">
+            <inheritdoc />
+        </member>
+    </members>
+</doc>

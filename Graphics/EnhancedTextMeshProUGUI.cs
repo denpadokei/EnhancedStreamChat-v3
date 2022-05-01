@@ -1,66 +1,80 @@
 ﻿using BeatSaberMarkupLanguage.Animations;
-using ChatCore.Interfaces;
 using EnhancedStreamChat.Chat;
+using EnhancedStreamChat.Interfaces;
 using EnhancedStreamChat.Utilities;
 using System;
 using System.Collections.Concurrent;
+using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using Zenject;
 
 namespace EnhancedStreamChat.Graphics
 {
-    public class EnhancedTextMeshProUGUI : TextMeshProUGUI
+    public class EnhancedTextMeshProUGUI : TextMeshProUGUI, IInitializable
     {
-        public IChatMessage ChatMessage { get; set; } = null;
+        public IESCChatMessage ChatMessage { get; set; } = null;
         public EnhancedFontInfo FontInfo { get; private set; }
         public event Action OnLatePreRenderRebuildComplete;
+        private MemoryPoolContainer<EnhancedImage> _imagePool;
+        private ESCFontManager _fontManager;
 
-        private static readonly ObjectMemoryComponentPool<EnhancedImage> _imagePool = new ObjectMemoryComponentPool<EnhancedImage>(64,
-            constructor: () =>
-            {
-                var img = new GameObject().AddComponent<EnhancedImage>();
-                DontDestroyOnLoad(img.gameObject);
-                img.gameObject.SetActive(false);
-                img.raycastTarget = false;
-                img.color = Color.white;
-                img.rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
-                img.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
-                img.rectTransform.pivot = new Vector2(0, 0);
-                img.animStateUpdater = img.gameObject.AddComponent<AnimationStateUpdater>();
-                img.animStateUpdater.image = img;
-                img.SetAllDirty();
-                return img;
-            },
-            onFree: img =>
-            {
-                try {
-                    img.gameObject.SetActive(false);
-                    img.animStateUpdater.controllerData = null;
-                    img.rectTransform.SetParent(null);
-                    img.sprite = null;
-                }
-                catch (Exception ex) {
-                    Logger.Error($"Exception while freeing EnhancedImage in EnhancedTextMeshProUGUI. {ex.ToString()}");
-                }
-            }
-        );
+        //private static readonly ObjectMemoryComponentPool<EnhancedImage> _imagePool = new ObjectMemoryComponentPool<EnhancedImage>(64,
+        //    constructor: () =>
+        //    {
+        //        var img = new GameObject().AddComponent<EnhancedImage>();
+        //        DontDestroyOnLoad(img.gameObject);
+        //        img.gameObject.SetActive(false);
+        //        img.raycastTarget = false;
+        //        img.color = Color.white;
+        //        img.rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
+        //        img.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
+        //        img.rectTransform.pivot = new Vector2(0, 0);
+        //        img.animStateUpdater = img.gameObject.AddComponent<AnimationStateUpdater>();
+        //        img.animStateUpdater.image = img;
+        //        img.SetAllDirty();
+        //        return img;
+        //    },
+        //    onFree: img =>
+        //    {
+        //        try {
+        //            img.gameObject.SetActive(false);
+        //            img.animStateUpdater.controllerData = null;
+        //            img.rectTransform.SetParent(null);
+        //            img.sprite = null;
+        //        }
+        //        catch (Exception ex) {
+        //            Logger.Error($"Exception while freeing EnhancedImage in EnhancedTextMeshProUGUI. {ex.ToString()}");
+        //        }
+        //    }
+        //);
+
+        [Inject]
+        public void Constract(EnhancedImage.Pool image, ESCFontManager fontManager)
+        {
+            this._imagePool = new MemoryPoolContainer<EnhancedImage>(image);
+            this._fontManager = fontManager;
+        }
+
+        public void Initialize()
+        {
+            this.FontInfo = this._fontManager.FontInfo;
+        }
 
         protected override void Awake()
         {
             base.Awake();
-            this.FontInfo = ESCFontManager.instance.FontInfo;
             this.raycastTarget = false;
         }
 
         public void ClearImages()
         {
-            while (this._currentImages.TryTake(out var image)) {
-                _imagePool.Free(image);
+            while (this._imagePool.activeItems.Any()) {
+                _imagePool.Despawn(this._imagePool.activeItems[0]);
             }
         }
-
-        private readonly ConcurrentBag<EnhancedImage> _currentImages = new ConcurrentBag<EnhancedImage>();
+        
         public override void Rebuild(CanvasUpdate update)
         {
             if (update == CanvasUpdate.LatePreRender) {
@@ -88,7 +102,7 @@ namespace EnhancedStreamChat.Graphics
 
                     MainThreadInvoker.Invoke(() =>
                     {
-                        var img = _imagePool.Alloc();
+                        var img = _imagePool.Spawn();
                         try {
                             if (imageInfo.AnimControllerData != null) {
                                 img.animStateUpdater.controllerData = imageInfo.AnimControllerData;
@@ -105,11 +119,10 @@ namespace EnhancedStreamChat.Graphics
                             img.rectTransform.localRotation = Quaternion.identity;
                             img.gameObject.SetActive(true);
                             img.SetAllDirty();
-                            this._currentImages.Add(img);
                         }
                         catch (Exception ex) {
                             Logger.Error($"Exception while trying to overlay sprite. {ex.ToString()}");
-                            _imagePool.Free(img);
+                            _imagePool.Despawn(img);
                         }
                     });
                 }
@@ -118,6 +131,11 @@ namespace EnhancedStreamChat.Graphics
             if (update == CanvasUpdate.LatePreRender) {
                 MainThreadInvoker.Invoke(OnLatePreRenderRebuildComplete);
             }
+        }
+
+        public class Pool : MonoMemoryPool<EnhancedTextMeshProUGUI>
+        {
+            
         }
     }
 }

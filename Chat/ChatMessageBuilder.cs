@@ -1,7 +1,7 @@
-﻿using ChatCore.Interfaces;
-using ChatCore.Models;
-using ChatCore.Models.Twitch;
+﻿using CatCore.Models.Twitch.IRC;
+using CatCore.Models.Twitch.Media;
 using EnhancedStreamChat.Graphics;
+using EnhancedStreamChat.Interfaces;
 using EnhancedStreamChat.Utilities;
 using System;
 using System.Collections.Concurrent;
@@ -14,11 +14,11 @@ namespace EnhancedStreamChat.Chat
 {
     public class ChatMessageBuilder
     {
-        public static ObjectMemoryPool<ConcurrentStack<EnhancedImageInfo>> ImageStackPool { get; }
+        private MemoryPoolContainer<ConcurrentStack<EnhancedImageInfo>> _imageStackPool;
 
-        static ChatMessageBuilder()
+        public ChatMessageBuilder(EnhancedImageInfo.Pool pool)
         {
-            ImageStackPool = new ObjectMemoryPool<ConcurrentStack<EnhancedImageInfo>>(5, null, null, null, f => f.Clear());
+            this._imageStackPool = new MemoryPoolContainer<ConcurrentStack<EnhancedImageInfo>>(pool);
         }
 
 
@@ -27,7 +27,7 @@ namespace EnhancedStreamChat.Chat
         /// </summary>
         /// <param name="msg">The chat message to get images from</param>
         /// <param name="font">The font to register these images to</param>
-        public static bool PrepareImages(IChatMessage msg, EnhancedFontInfo font)
+        public static bool PrepareImages(IESCChatMessage msg, EnhancedFontInfo font)
         {
             var tasks = new List<Task<EnhancedImageInfo>>();
             var pendingEmoteDownloads = new HashSet<string>();
@@ -39,79 +39,61 @@ namespace EnhancedStreamChat.Chat
                 if (!font.CharacterLookupTable.ContainsKey(emote.Id)) {
                     pendingEmoteDownloads.Add(emote.Id);
                     var tcs = new TaskCompletionSource<EnhancedImageInfo>();
-                    switch (emote.Type) {
-                        case EmoteType.SingleImage:
-                            SharedCoroutineStarter.instance.StartCoroutine(ChatImageProvider.instance.TryCacheSingleImage(emote.Id, emote.Uri, emote.IsAnimated, (info) =>
-                            {
-                                if (info != null) {
-                                    if (!font.TryRegisterImageInfo(info, out var character)) {
-                                        Logger.Warn($"Failed to register emote \"{emote.Id}\" in font {font.Font.name}.");
-                                    }
-                                }
-                                tcs.SetResult(info);
-                            }, forcedHeight: 110));
-                            break;
-                        case EmoteType.SpriteSheet:
-                            SharedCoroutineStarter.instance.StartCoroutine(ChatImageProvider.instance.TryCacheSpriteSheetImage(emote.Id, emote.Uri, emote.UVs, (info) =>
-                            {
-                                if (info != null) {
-                                    if (!font.TryRegisterImageInfo(info, out var character)) {
-                                        Logger.Warn($"Failed to register emote \"{emote.Id}\" in font {font.Font.name}.");
-                                    }
-                                }
-                                tcs.SetResult(info);
-                            }, forcedHeight: 110));
-                            break;
-                        default:
-                            tcs.SetResult(null);
-                            break;
-                    }
-                    tasks.Add(tcs.Task);
-                }
-            }
-
-            foreach (var badge in msg.Sender.Badges) {
-                if (string.IsNullOrEmpty(badge.Id) || pendingEmoteDownloads.Contains(badge.Id)) {
-                    continue;
-                }
-
-                if (!font.CharacterLookupTable.ContainsKey(badge.Id)) {
-                    pendingEmoteDownloads.Add(badge.Id);
-                    var tcs = new TaskCompletionSource<EnhancedImageInfo>();
-                    SharedCoroutineStarter.instance.StartCoroutine(ChatImageProvider.instance.TryCacheSingleImage(badge.Id, badge.Uri, false, (info) =>
+                    SharedCoroutineStarter.instance.StartCoroutine(ChatImageProvider.instance.TryCacheSingleImage(emote.Id, emote.Url, emote.Animated, (info) =>
                     {
                         if (info != null) {
                             if (!font.TryRegisterImageInfo(info, out var character)) {
-                                Logger.Warn($"Failed to register badge \"{badge.Id}\" in font {font.Font.name}.");
+                                Logger.Warn($"Failed to register emote \"{emote.Id}\" in font {font.Font.name}.");
                             }
                         }
                         tcs.SetResult(info);
-                    }, forcedHeight: 100));
+                    }, forcedHeight: 110));
                     tasks.Add(tcs.Task);
                 }
             }
 
+            if (msg.Sender is TwitchUser twitchUser) {
+                foreach (var badge in twitchUser.Badges) {
+                    if (string.IsNullOrEmpty(badge.Id) || pendingEmoteDownloads.Contains(badge.Id)) {
+                        continue;
+                    }
+                    if (!font.CharacterLookupTable.ContainsKey(badge.Id)) {
+                        pendingEmoteDownloads.Add(badge.Id);
+                        var tcs = new TaskCompletionSource<EnhancedImageInfo>();
+                        SharedCoroutineStarter.instance.StartCoroutine(ChatImageProvider.instance.TryCacheSingleImage(badge.Id, badge.Uri, false, (info) =>
+                        {
+                            if (info != null) {
+                                if (!font.TryRegisterImageInfo(info, out var character)) {
+                                    Logger.Warn($"Failed to register badge \"{badge.Id}\" in font {font.Font.name}.");
+                                }
+                            }
+                            tcs.SetResult(info);
+                        }, forcedHeight: 100));
+                        tasks.Add(tcs.Task);
+                    }
+                }
+            }
             // Wait on all the resources to be ready
             return Task.WaitAll(tasks.ToArray(), 15000);
         }
 
-        public static Task<string> BuildMessage(IChatMessage msg, EnhancedFontInfo font) => Task.Run(() =>
+        public Task<string> BuildMessage(IESCChatMessage msg, EnhancedFontInfo font) => Task.Run(() =>
         {
             try {
                 if (!PrepareImages(msg, font)) {
                     Logger.Warn($"Failed to prepare some/all images for msg \"{msg.Message}\"!");
                     //return msg.Message;
                 }
-
-                var badges = ImageStackPool.Alloc();
-                foreach (var badge in msg.Sender.Badges) {
-                    if (!ChatImageProvider.instance.CachedImageInfo.TryGetValue(badge.Id, out var badgeInfo)) {
-                        Logger.Warn($"Failed to find cached image info for badge \"{badge.Id}\"!");
-                        continue;
+                var badges = this._imageStackPool.Spawn();
+                if (msg.Sender is TwitchUser twitchUser) {
+                    foreach (var badge in twitchUser.Badges) {
+                        if (!ChatImageProvider.instance.CachedImageInfo.TryGetValue(badge.Id, out var badgeInfo)) {
+                            Logger.Warn($"Failed to find cached image info for badge \"{badge.Id}\"!");
+                            continue;
+                        }
+                        badges.Push(badgeInfo);
                     }
-                    badges.Push(badgeInfo);
                 }
-
                 var sb = new StringBuilder(msg.Message); // Replace all instances of < with a zero-width non-breaking character
 
                 // Escape all html tags in the message
@@ -119,7 +101,7 @@ namespace EnhancedStreamChat.Chat
 
                 foreach (var emote in msg.Emotes) {
                     if (!ChatImageProvider.instance.CachedImageInfo.TryGetValue(emote.Id, out var replace)) {
-                        Logger.Warn($"Emote {emote.Name} was missing from the emote dict! The request to {emote.Uri} may have timed out?");
+                        Logger.Warn($"Emote {emote.Name} was missing from the emote dict! The request to {emote.Url} may have timed out?");
                         continue;
                     }
                     //Logger.Info($"Emote: {emote.Name}, StartIndex: {emote.StartIndex}, EndIndex: {emote.EndIndex}, Len: {sb.Length}");
@@ -168,19 +150,20 @@ namespace EnhancedStreamChat.Chat
                         // Insert username w/ color
                         sb.Insert(0, $"<color={nameColorCode}><b>{msg.Sender.DisplayName}</b></color>: ");
                     }
-
-                    for (var i = 0; i < msg.Sender.Badges.Length; i++) {
-                        // Insert user badges at the beginning of the string in reverse order
-                        if (badges.TryPop(out var badge) && font.TryGetCharacter(badge.ImageId, out var character)) {
-                            sb.Insert(0, $"{char.ConvertFromUtf32((int)character)} ");
+                    if (msg.Sender is TwitchUser twitchUser1) {
+                        for (var i = 0; i < twitchUser1.Badges.Count; i++) {
+                            // Insert user badges at the beginning of the string in reverse order
+                            if (badges.TryPop(out var badge) && font.TryGetCharacter(badge.ImageId, out var character)) {
+                                sb.Insert(0, $"{char.ConvertFromUtf32((int)character)} ");
+                            }
                         }
                     }
-                    ImageStackPool.Free(badges);
+                    this._imageStackPool.Despawn(badges);
                 }
                 return sb.ToString();
             }
             catch (Exception ex) {
-                Logger.Error($"An exception occurred in ChatMessageBuilder while parsing msg with {msg.Emotes.Length} emotes. Msg: \"{msg.Message}\". {ex.ToString()}");
+                Logger.Error($"An exception occurred in ChatMessageBuilder while parsing msg with {msg.Emotes.Count} emotes. Msg: \"{msg.Message}\". {ex.ToString()}");
             }
             return msg.Message;
         });
