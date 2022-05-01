@@ -13,13 +13,8 @@ namespace EnhancedStreamChat.Graphics
         public int Height { get; internal set; }
         public AnimationControllerData AnimControllerData { get; internal set; }
 
-        public class Pool : MemoryPool<ConcurrentStack<EnhancedImageInfo>>
+        public class Pool : MemoryPool<EnhancedImageInfo>
         {
-            protected override void OnDespawned(ConcurrentStack<EnhancedImageInfo> item)
-            {
-                base.OnDespawned(item);
-                item.Clear();
-            }
         }
     }
 }

@@ -14,7 +14,7 @@ namespace EnhancedStreamChat.Graphics
         {
             protected override void OnCreated(EnhancedImage img)
             {
-                base.Reinitialize(img);
+                base.OnCreated(img);
                 img.gameObject.SetActive(false);
                 img.raycastTarget = false;
                 img.color = Color.white;

@@ -34,20 +34,22 @@ namespace EnhancedStreamChat.Graphics
 
         public bool TryRegisterImageInfo(EnhancedImageInfo imageInfo, out uint replaceCharacter)
         {
-            if (!this.CharacterLookupTable.ContainsKey(imageInfo.ImageId)) {
-                uint next;
-                do {
-                    next = this.GetNextReplaceChar();
+            lock (_lock) {
+                if (!this.CharacterLookupTable.ContainsKey(imageInfo.ImageId)) {
+                    uint next;
+                    do {
+                        next = this.GetNextReplaceChar();
+                    }
+                    while (this.Font.characterLookupTable.ContainsKey(next));
+                    this.Font.characterLookupTable.Add(next, new TMP_Character(next, new Glyph(next, new GlyphMetrics(0, 0, 0, 0, imageInfo.Width), new GlyphRect(0, 0, 0, 0))));
+                    this.CharacterLookupTable.TryAdd(imageInfo.ImageId, next);
+                    this.ImageInfoLookupTable.TryAdd(next, imageInfo);
+                    replaceCharacter = next;
+                    return true;
                 }
-                while (this.Font.characterLookupTable.ContainsKey(next));
-                this.Font.characterLookupTable.Add(next, new TMP_Character(next, new Glyph(next, new GlyphMetrics(0, 0, 0, 0, imageInfo.Width), new GlyphRect(0, 0, 0, 0))));
-                this.CharacterLookupTable.TryAdd(imageInfo.ImageId, next);
-                this.ImageInfoLookupTable.TryAdd(next, imageInfo);
-                replaceCharacter = next;
-                return true;
+                replaceCharacter = 0;
+                return false;
             }
-            replaceCharacter = 0;
-            return false;
         }
 
         public bool TryUnregisterImageInfo(string id, out uint unregisteredCharacter)

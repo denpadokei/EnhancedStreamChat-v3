@@ -1,9 +1,7 @@
-﻿using BeatSaberMarkupLanguage.Animations;
-using EnhancedStreamChat.Chat;
+﻿using EnhancedStreamChat.Chat;
 using EnhancedStreamChat.Interfaces;
 using EnhancedStreamChat.Utilities;
 using System;
-using System.Collections.Concurrent;
 using System.Linq;
 using TMPro;
 using UnityEngine;
@@ -71,10 +69,10 @@ namespace EnhancedStreamChat.Graphics
         public void ClearImages()
         {
             while (this._imagePool.activeItems.Any()) {
-                _imagePool.Despawn(this._imagePool.activeItems[0]);
+                this._imagePool.Despawn(this._imagePool.activeItems[0]);
             }
         }
-        
+
         public override void Rebuild(CanvasUpdate update)
         {
             if (update == CanvasUpdate.LatePreRender) {
@@ -102,7 +100,7 @@ namespace EnhancedStreamChat.Graphics
 
                     MainThreadInvoker.Invoke(() =>
                     {
-                        var img = _imagePool.Spawn();
+                        var img = this._imagePool.Spawn();
                         try {
                             if (imageInfo.AnimControllerData != null) {
                                 img.animStateUpdater.controllerData = imageInfo.AnimControllerData;
@@ -122,7 +120,7 @@ namespace EnhancedStreamChat.Graphics
                         }
                         catch (Exception ex) {
                             Logger.Error($"Exception while trying to overlay sprite. {ex.ToString()}");
-                            _imagePool.Despawn(img);
+                            this._imagePool.Despawn(img);
                         }
                     });
                 }
@@ -135,7 +133,7 @@ namespace EnhancedStreamChat.Graphics
 
         public class Pool : MonoMemoryPool<EnhancedTextMeshProUGUI>
         {
-            
+
         }
     }
 }
