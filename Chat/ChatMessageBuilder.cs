@@ -28,12 +28,10 @@ namespace EnhancedStreamChat.Chat
         /// <param name="font">The font to register these images to</param>
         public async Task<bool> PrepareImages(IESCChatMessage msg, EnhancedFontInfo font)
         {
-            Logger.Debug($"{msg.Message}");
             var tasks = new List<Task<EnhancedImageInfo>>();
             var pendingEmoteDownloads = new HashSet<string>();
 
             foreach (var emote in msg.Emotes.OfType<TwitchEmote>()) {
-                Logger.Debug($"{emote.Id}");
                 if (string.IsNullOrEmpty(emote.Id) || pendingEmoteDownloads.Contains(emote.Id)) {
                     continue;
                 }
@@ -84,7 +82,6 @@ namespace EnhancedStreamChat.Chat
             return Task.Run(async () =>
             {
                 try {
-                    Logger.Debug($"{msg.Message}");
                     if (!await this.PrepareImages(msg, font)) {
                         Logger.Warn($"Failed to prepare some/all images for msg \"{msg.Message}\"!");
                         //return msg.Message;
@@ -108,13 +105,13 @@ namespace EnhancedStreamChat.Chat
                             Logger.Warn($"Emote {emote.Name} was missing from the emote dict! The request to {emote.Url} may have timed out?");
                             continue;
                         }
-                        Logger.Info($"replase id {replace.ImageId}");
-                        Logger.Info($"Emote: {emote.Name}, StartIndex: {emote.StartIndex}, EndIndex: {emote.EndIndex}, Len: {sb.Length}");
+                        //Logger.Info($"replase id {replace.ImageId}");
+                        //Logger.Info($"Emote: {emote.Name}, StartIndex: {emote.StartIndex}, EndIndex: {emote.EndIndex}, Len: {sb.Length}");
                         if (!font.TryGetCharacter(replace.ImageId, out var character)) {
                             Logger.Warn($"Emote {emote.Name} was missing from the character dict! Font hay have run out of usable characters.");
                             continue;
                         }
-                        Logger.Info($"target char {character}");
+                        //Logger.Info($"target char {character}");
                         try {
                             // Replace emotes by index, in reverse order (msg.Emotes is sorted by emote.StartIndex in descending order)
                             //sb.Replace(emote.Name, emote switch
@@ -141,7 +138,6 @@ namespace EnhancedStreamChat.Chat
                     }
                     else {
                         var nameColorCode = msg.Sender.Color;
-                        Logger.Debug(nameColorCode);
                         if (ColorUtility.TryParseHtmlString(msg.Sender.Color.Substring(0, 7), out var nameColor)) {
                             Color.RGBToHSV(nameColor, out var h, out var s, out var v);
                             if (v < 0.85f) {
@@ -168,12 +164,11 @@ namespace EnhancedStreamChat.Chat
                                     sb.Insert(0, $"{char.ConvertFromUtf32((int)character)} ");
                                 }
                                 else {
-                                    Logger.Warn("バッジが取得できてない。");
+                                    Logger.Warn("Undefind badge");
                                 }
                             }
                         }
                     }
-                    Logger.Debug($"{sb}");
                     return sb.ToString();
                 }
                 catch (Exception ex) {

@@ -10,7 +10,9 @@ namespace EnhancedStreamChat.HarmonyPatches
     {
         public static void Prefix(ref string rawMessage)
         {
+#if DEBUG
             Logger.Debug(rawMessage);
+#endif
         }
     }
 }

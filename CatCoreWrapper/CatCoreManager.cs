@@ -135,6 +135,7 @@ namespace EnhancedStreamChat.CatCoreWrapper
         #region // 構築・破棄
         public CatCoreManager()
         {
+#if DEBUG
             this._instance = CatCoreInstance.
             Create((level, context, message) => Logger.Log
                 .GetChildLogger("CatCore")
@@ -148,6 +149,9 @@ namespace EnhancedStreamChat.CatCoreWrapper
                     CustomLogLevel.Critical => IPA.Logging.Logger.Level.Critical,
                     _ => IPA.Logging.Logger.Level.Debug
                 }, $"{context} | {message}"));
+#else
+            this._instance = CatCoreInstance.Create();
+#endif
         }
 
         protected virtual void Dispose(bool disposing)

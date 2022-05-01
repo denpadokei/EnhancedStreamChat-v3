@@ -39,16 +39,12 @@ namespace EnhancedStreamChat
             });
             zenjector.Install<ESCAppInstaller>(Location.App);
             zenjector.Install<ESCMenuAndGameInstaller>(Location.Menu);
-            Font.textureRebuilt += this.Font_textureRebuilt;
             this.harmony = new Harmony(HARMONY_ID);
         }
         [OnStart]
         public void OnStart()
         {
         }
-
-
-        private void Font_textureRebuilt(Font obj) => Logger.Log.Debug($"FontTexture({obj.name}) width: {obj.material.mainTexture.width}, height: {obj.material.mainTexture.height}");
 
         [OnEnable]
         public void OnEnable()
@@ -63,6 +59,9 @@ namespace EnhancedStreamChat
         }
 
         [OnExit]
-        public void OnExit() => Font.textureRebuilt -= this.Font_textureRebuilt;
+        public void OnExit()
+        {
+
+        }
     }
 }

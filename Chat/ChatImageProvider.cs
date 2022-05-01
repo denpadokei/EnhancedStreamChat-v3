@@ -53,7 +53,6 @@ namespace EnhancedStreamChat.Chat
                 yield return new WaitUntil(() => activeDownload.IsCompleted);
                 yield break;
             }
-            Logger.Debug($"{uri}");
             using (var wr = UnityWebRequest.Get(uri)) {
                 activeDownload = new ActiveDownload()
                 {
@@ -108,7 +107,6 @@ namespace EnhancedStreamChat.Chat
 
         public IEnumerator TryCacheSingleImage(string id, string uri, bool isAnimated, Action<EnhancedImageInfo> Finally = null, int forcedHeight = -1)
         {
-            Logger.Debug($"TryCacheSingleImage, {id}, {uri}, {isAnimated}");
             if (this.CachedImageInfo.TryGetValue(id, out var info)) {
                 Finally?.Invoke(info);
                 yield break;
@@ -120,7 +118,6 @@ namespace EnhancedStreamChat.Chat
 
         public IEnumerator OnSingleImageCached(byte[] bytes, string id, bool isAnimated, Action<EnhancedImageInfo> Finally = null, int forcedHeight = -1)
         {
-            Logger.Debug($"OnSingleImageCached");
             if (bytes.Length == 0) {
                 Finally(null);
                 yield break;
@@ -155,7 +152,6 @@ namespace EnhancedStreamChat.Chat
                 if (forcedHeight != -1) {
                     this.SetImageHeight(ref spriteWidth, ref spriteHeight, forcedHeight);
                 }
-                Logger.Debug($"{id}, {sprite}, {spriteWidth}, {spriteHeight}, {animControllerData}");
                 ret.ImageId = id;
                 ret.Sprite = sprite;
                 ret.Width = spriteWidth;
@@ -168,47 +164,6 @@ namespace EnhancedStreamChat.Chat
             }
             Finally?.Invoke(ret);
         }
-
-        //public IEnumerator TryCacheSpriteSheetImage(string id, string uri, ImageRect rect, Action<EnhancedImageInfo> Finally = null, int forcedHeight = -1)
-        //{
-        //    if (this.CachedImageInfo.TryGetValue(id, out var info)) {
-        //        Finally?.Invoke(info);
-        //        yield break;
-        //    }
-        //    if (!this._cachedSpriteSheets.TryGetValue(uri, out var tex) || tex == null) {
-        //        yield return this.DownloadContent(uri, (bytes) => tex = GraphicUtils.LoadTextureRaw(bytes));
-        //        this._cachedSpriteSheets[uri] = tex;
-        //    }
-        //    this.CacheSpriteSheetImage(id, rect, tex, Finally, forcedHeight);
-        //}
-
-        //private void CacheSpriteSheetImage(string id, ImageRect rect, Texture2D tex, Action<EnhancedImageInfo> Finally = null, int forcedHeight = -1)
-        //{
-        //    if (tex == null) {
-        //        Finally?.Invoke(null);
-        //        return;
-        //    }
-        //    int spriteWidth = rect.Width, spriteHeight = rect.Height;
-        //    var sprite = Sprite.Create(tex, new Rect(rect.X, tex.height - rect.Y - spriteHeight, spriteWidth, spriteHeight), new Vector2(0, 0));
-        //    sprite.texture.wrapMode = TextureWrapMode.Clamp;
-        //    EnhancedImageInfo ret = null;
-        //    if (sprite != null) {
-        //        if (forcedHeight != -1) {
-        //            this.SetImageHeight(ref spriteWidth, ref spriteHeight, forcedHeight);
-        //        }
-        //        ret = new EnhancedImageInfo()
-        //        {
-        //            ImageId = id,
-        //            Sprite = sprite,
-        //            Width = spriteWidth,
-        //            Height = spriteHeight,
-        //            AnimControllerData = null
-        //        };
-        //        this.CachedImageInfo.TryAdd(id, ret);
-        //    }
-        //    Finally?.Invoke(ret);
-        //}
-
         internal void ClearCache()
         {
             if (this.CachedImageInfo.Count > 0) {

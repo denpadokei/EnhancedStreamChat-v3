@@ -45,7 +45,6 @@ namespace EnhancedStreamChat.Chat
         #region // パブリックメソッド
         public async Task InitializeAsync(CancellationToken token)
         {
-            Logger.Debug($"InitializeAsync");
             while (!this._fontManager.IsInitialized) {
                 await Task.Delay(100);
             }
@@ -58,43 +57,6 @@ namespace EnhancedStreamChat.Chat
                 }
             }
             (this.transform as RectTransform).pivot = new Vector2(0.5f, 0f);
-            //this.TextPool = new ObjectMemoryComponentPool<EnhancedTextMeshProUGUIWithBackground>(64,
-            //    constructor: () =>
-            //    {
-            //        var go = new GameObject(nameof(EnhancedTextMeshProUGUIWithBackground), typeof(EnhancedTextMeshProUGUIWithBackground));
-            //        DontDestroyOnLoad(go);
-            //        go.SetActive(false);
-            //        var msg = go.GetComponent<EnhancedTextMeshProUGUIWithBackground>();
-            //        msg.Text.enableWordWrapping = true;
-            //        msg.Text.autoSizeTextContainer = false;
-            //        msg.SubText.enableWordWrapping = true;
-            //        msg.SubText.autoSizeTextContainer = false;
-            //        (msg.transform as RectTransform).pivot = new Vector2(0.5f, 0);
-            //        msg.transform.SetParent(this._chatContainer.transform, false);
-            //        this.UpdateMessage(msg);
-            //        return msg;
-            //    },
-            //    onFree: (msg) =>
-            //    {
-            //        try {
-            //            msg.gameObject.SetActive(false);
-            //            (msg.transform as RectTransform).localPosition = Vector3.zero;
-            //            msg.OnLatePreRenderRebuildComplete -= this.OnRenderRebuildComplete;
-            //            msg.HighlightEnabled = false;
-            //            msg.AccentEnabled = false;
-            //            msg.SubTextEnabled = false;
-            //            msg.Text.text = "";
-            //            msg.Text.ChatMessage = null;
-            //            msg.SubText.text = "";
-            //            msg.SubText.ChatMessage = null;
-            //            msg.Text.ClearImages();
-            //            msg.SubText.ClearImages();
-            //        }
-            //        catch (Exception ex) {
-            //            Logger.Error($"An exception occurred while trying to free CustomText object. {ex.ToString()}");
-            //        }
-            //    }
-            //);
             while (_backupMessageQueue.TryDequeue(out var msg)) {
                 await this.OnTextMessageReceived(msg.Value, msg.Key);
             }
@@ -171,7 +133,6 @@ namespace EnhancedStreamChat.Chat
         }
         private void SetupScreens()
         {
-            Logger.Debug($"Screemn setup");
             if (this._chatScreen == null) {
                 var screenSize = new Vector2(this.ChatWidth, this.ChatHeight);
                 this._chatScreen = FloatingScreen.CreateFloatingScreen(screenSize, true, this.ChatPosition, Quaternion.identity, 0f, true);

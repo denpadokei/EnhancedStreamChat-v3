@@ -15,9 +15,9 @@
             <bool-setting text='Allow Movement' pref-height='6' value='allow-movement' apply-on-change='true' bind-value='true'></bool-setting>
             <bool-setting text='Same position in-game/menu' pref-height='6' value='sync-orientation' apply-on-change='true' bind-value='true'/>
             <bool-setting text='Reverse Chat Order' pref-height='6' value='reverse-chat-order' apply-on-change='true' bind-value='true'></bool-setting>
-            <slider-setting text='Chat Width' min='5' max='1000' increment='5' pref-height='6' value='chat-width' apply-on-change='true' integer-only='true'></slider-setting>
-            <slider-setting text='Chat Height' min='5' max='1000' increment='5' pref-height='6' value='chat-height' apply-on-change='true' integer-only='true'></slider-setting>
-            <slider-setting text='Font Size' min='1' max='20' increment='0.1' pref-height='6' value='font-size' apply-on-change='true'></slider-setting>
+            <slider-setting text='Chat Width' min='5' max='1000' increment='5' pref-height='6' value='chat-width' apply-on-change='true' integer-only='true' bind-value='true'></slider-setting>
+            <slider-setting text='Chat Height' min='5' max='1000' increment='5' pref-height='6' value='chat-height' apply-on-change='true' integer-only='true' bind-value='true'></slider-setting>
+            <slider-setting text='Font Size' min='1' max='20' increment='0.1' pref-height='6' value='font-size' apply-on-change='true' bind-value='true'></slider-setting>
           </vertical>
         </tab>
         <tab tags ='settings-tab' tab-name='Colors'>
