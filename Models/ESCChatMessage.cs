@@ -1,10 +1,7 @@
 ﻿using CatCore.Models.Shared;
 using CatCore.Models.Twitch.IRC;
 using EnhancedStreamChat.Interfaces;
-using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Text;
 
 namespace EnhancedStreamChat.Models
 {

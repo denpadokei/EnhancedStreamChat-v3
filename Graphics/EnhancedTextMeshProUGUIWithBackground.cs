@@ -7,7 +7,7 @@ using Zenject;
 
 namespace EnhancedStreamChat.Graphics
 {
-    public class EnhancedTextMeshProUGUIWithBackground : MonoBehaviour, IInitializable
+    public class EnhancedTextMeshProUGUIWithBackground : MonoBehaviour
     {
         public EnhancedTextMeshProUGUI Text { get; internal set; }
         public EnhancedTextMeshProUGUI SubText { get; internal set; }
@@ -97,48 +97,48 @@ namespace EnhancedStreamChat.Graphics
             OnLatePreRenderRebuildComplete?.Invoke();
         }
 
-        public void Initialize()
-        {
-            this._highlight = this.gameObject.GetComponent<ImageView>();
-            this._highlight.raycastTarget = false;
-            this._highlight.material = BeatSaberUtils.UINoGlowMaterial;
-            
-            this.Text = this._textContainer.Spawn();
-            this.Text.OnLatePreRenderRebuildComplete += this.Text_OnLatePreRenderRebuildComplete;
-
-            this.SubText = this._textContainer.Spawn();
-            this.SubText.OnLatePreRenderRebuildComplete += this.Text_OnLatePreRenderRebuildComplete;
-
-            this._accent = new GameObject().AddComponent<ImageView>();
-            this._accent.raycastTarget = false;
-            DontDestroyOnLoad(this._accent.gameObject);
-            this._accent.material = BeatSaberUtils.UINoGlowMaterial;
-            this._accent.color = Color.yellow;
-
-            this._verticalLayoutGroup = this.gameObject.GetComponent<VerticalLayoutGroup>();
-            this._verticalLayoutGroup.childAlignment = TextAnchor.MiddleLeft;
-            this._verticalLayoutGroup.spacing = 1;
-
-            var highlightFitter = this._accent.gameObject.AddComponent<LayoutElement>();
-            highlightFitter.ignoreLayout = true;
-            var textFitter = this.Text.gameObject.AddComponent<ContentSizeFitter>();
-            textFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-            var backgroundFitter = this.gameObject.GetComponent<ContentSizeFitter>();
-            backgroundFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-
-            this.SubTextEnabled = false;
-            this.HighlightEnabled = false;
-            this.AccentEnabled = false;
-            this._accent.gameObject.transform.SetParent(this.gameObject.transform, false);
-            (this._accent.gameObject.transform as RectTransform).anchorMin = new Vector2(0, 0.5f);
-            (this._accent.gameObject.transform as RectTransform).anchorMax = new Vector2(0, 0.5f);
-            (this._accent.gameObject.transform as RectTransform).sizeDelta = new Vector2(1, 10);
-            (this._accent.gameObject.transform as RectTransform).pivot = new Vector2(0, 0.5f);
-            this.Text.rectTransform.SetParent(this.gameObject.transform, false);
-        }
-
         public class Pool : MonoMemoryPool<EnhancedTextMeshProUGUIWithBackground>
         {
+            protected override void OnCreated(EnhancedTextMeshProUGUIWithBackground item)
+            {
+                base.OnCreated(item);
+                item._highlight = item.gameObject.GetComponent<ImageView>();
+                item._highlight.raycastTarget = false;
+                item._highlight.material = BeatSaberUtils.UINoGlowMaterial;
+
+                item.Text = item._textContainer.Spawn();
+                item.Text.OnLatePreRenderRebuildComplete += item.Text_OnLatePreRenderRebuildComplete;
+
+                item.SubText = item._textContainer.Spawn();
+                item.SubText.OnLatePreRenderRebuildComplete += item.Text_OnLatePreRenderRebuildComplete;
+
+                item._accent = new GameObject().AddComponent<ImageView>();
+                item._accent.raycastTarget = false;
+                item._accent.material = BeatSaberUtils.UINoGlowMaterial;
+                item._accent.color = Color.yellow;
+
+                item._verticalLayoutGroup = item.gameObject.GetComponent<VerticalLayoutGroup>();
+                item._verticalLayoutGroup.childAlignment = TextAnchor.MiddleLeft;
+                item._verticalLayoutGroup.spacing = 1;
+
+                var highlightFitter = item._accent.gameObject.AddComponent<LayoutElement>();
+                highlightFitter.ignoreLayout = true;
+                var textFitter = item.Text.gameObject.AddComponent<ContentSizeFitter>();
+                textFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+                var backgroundFitter = item.gameObject.GetComponent<ContentSizeFitter>();
+                backgroundFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+                item.SubTextEnabled = false;
+                item.HighlightEnabled = false;
+                item.AccentEnabled = false;
+                item._accent.gameObject.transform.SetParent(item.gameObject.transform, false);
+                (item._accent.gameObject.transform as RectTransform).anchorMin = new Vector2(0, 0.5f);
+                (item._accent.gameObject.transform as RectTransform).anchorMax = new Vector2(0, 0.5f);
+                (item._accent.gameObject.transform as RectTransform).sizeDelta = new Vector2(1, 10);
+                (item._accent.gameObject.transform as RectTransform).pivot = new Vector2(0, 0.5f);
+                item.Text.rectTransform.SetParent(item.gameObject.transform, false);
+            }
+
             protected override void Reinitialize(EnhancedTextMeshProUGUIWithBackground msg)
             {
                 base.Reinitialize(msg);

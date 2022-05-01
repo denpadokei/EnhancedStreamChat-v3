@@ -1,10 +1,12 @@
 ﻿using CatCore;
+using CatCore.Logging;
 using CatCore.Models.Twitch.IRC;
 using CatCore.Models.Twitch.PubSub.Responses;
 using CatCore.Models.Twitch.PubSub.Responses.ChannelPointsChannelV1;
 using CatCore.Services.Multiplexer;
 using CatCore.Services.Twitch.Interfaces;
 using EnhancedStreamChat.Interfaces;
+using IPA.Logging;
 using System;
 using Zenject;
 
@@ -133,7 +135,19 @@ namespace EnhancedStreamChat.CatCoreWrapper
         #region // 構築・破棄
         public CatCoreManager()
         {
-            this._instance = CatCoreInstance.Create();
+            this._instance = CatCoreInstance.
+            Create((level, context, message) => Logger.Log
+                .GetChildLogger("CatCore")
+                .Log(level switch
+                {
+                    CustomLogLevel.Trace => IPA.Logging.Logger.Level.Trace,
+                    CustomLogLevel.Debug => IPA.Logging.Logger.Level.Debug,
+                    CustomLogLevel.Information => IPA.Logging.Logger.Level.Info,
+                    CustomLogLevel.Warning => IPA.Logging.Logger.Level.Warning,
+                    CustomLogLevel.Error => IPA.Logging.Logger.Level.Error,
+                    CustomLogLevel.Critical => IPA.Logging.Logger.Level.Critical,
+                    _ => IPA.Logging.Logger.Level.Debug
+                }, $"{context} | {message}"));
         }
 
         protected virtual void Dispose(bool disposing)

@@ -113,7 +113,6 @@ namespace EnhancedStreamChat.Chat
             this._messages.Enqueue(newMsg);
             this.ClearOldMessages();
         }
-
         public void OnMessageCleared(string messageId)
         {
             if (messageId != null) {
@@ -149,6 +148,8 @@ namespace EnhancedStreamChat.Chat
             MainThreadInvoker.Invoke(() =>
             {
                 var newMsg = this._textPoolContaner.Spawn();
+                newMsg.transform.SetParent(this._chatContainer.transform, false);
+                this.UpdateMessage(newMsg);
                 newMsg.Text.text = $"<color=#bbbbbbbb>[{arg2.Name}] Success joining {arg2.Id}</color>";
                 newMsg.HighlightEnabled = true;
                 newMsg.HighlightColor = Color.gray.ColorWithAlpha(0.05f);
@@ -440,6 +441,7 @@ namespace EnhancedStreamChat.Chat
         }
         private void CreateMessage(IESCChatMessage msg, DateTime date, string parsedMessage)
         {
+            Logger.Info($"{msg.Id}, {msg.Message}");
             if (this._lastMessage != null && !msg.IsSystemMessage && this._lastMessage.Text.ChatMessage.Id == msg.Id) {
                 // If the last message received had the same id and isn't a system message, then this was a sub-message of the original and may need to be highlighted along with the original message
                 this._lastMessage.SubText.text = parsedMessage;
@@ -449,6 +451,8 @@ namespace EnhancedStreamChat.Chat
             }
             else {
                 var newMsg = this._textPoolContaner.Spawn();
+                newMsg.transform.SetParent(this._chatContainer.transform, false);
+                this.UpdateMessage(newMsg);
                 newMsg.gameObject.SetActive(true);
                 newMsg.Text.ChatMessage = msg;
                 newMsg.Text.text = parsedMessage;
