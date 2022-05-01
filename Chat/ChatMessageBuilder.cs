@@ -97,9 +97,6 @@ namespace EnhancedStreamChat.Chat
                         }
                     }
                     var sb = new StringBuilder(msg.Message); // Replace all instances of < with a zero-width non-breaking character
-
-                    // Escape all html tags in the message
-                    sb.Replace("<", "<\u2060");
                     foreach (var emote in msg.Emotes) {
                         if (!this._chatImageProvider.CachedImageInfo.TryGetValue(emote.Id, out var replace)) {
                             Logger.Warn($"Emote {emote.Name} was missing from the emote dict! The request to {emote.Url} may have timed out?");
@@ -114,12 +111,6 @@ namespace EnhancedStreamChat.Chat
                         //Logger.Info($"target char {character}");
                         try {
                             // Replace emotes by index, in reverse order (msg.Emotes is sorted by emote.StartIndex in descending order)
-                            //sb.Replace(emote.Name, emote switch
-                            //{
-                            //    TwitchEmote t when t.Bits > 0 => $"{char.ConvertFromUtf32((int)character)}\u00A0<color={t.Color}><size=77%><b>{t.Bits}\u00A0</b></size></color>",
-                            //    _ => char.ConvertFromUtf32((int)character)
-                            //},
-                            //emote.StartIndex, emote.EndIndex - emote.StartIndex + 1);
                             sb.Replace(emote.Name, emote switch
                             {
                                 TwitchEmote t when t.Bits > 0 => $"{char.ConvertFromUtf32((int)character)}\u00A0<color={t.Color}><size=77%><b>{t.Bits}\u00A0</b></size></color>",
@@ -130,6 +121,8 @@ namespace EnhancedStreamChat.Chat
                             Logger.Error($"An unknown error occurred while trying to swap emote {emote.Name} into string of length {sb.Length} at location ({emote.StartIndex}, {emote.EndIndex})\r\n{ex}");
                         }
                     }
+                    // Escape all html tags in the message
+                    sb.Replace("<", "<\u2060");
 
                     if (msg.IsSystemMessage) {
                         // System messages get a grayish color to differenciate them from normal messages in chat, and do not receive a username/badge prefix
@@ -156,10 +149,15 @@ namespace EnhancedStreamChat.Chat
                             // Insert username w/ color
                             sb.Insert(0, $"<color={nameColorCode}><b>{msg.Sender.DisplayName}</b></color>: ");
                         }
+                        var parsedBadge = new HashSet<string>();
                         if (msg.Sender is TwitchUser twitchUser1) {
                             for (var i = 0; i < twitchUser1.Badges.Count; i++) {
                                 // Insert user badges at the beginning of the string in reverse order
                                 var badge = badges.Pop();
+                                if (parsedBadge.Contains(badge.ImageId)) {
+                                    continue;
+                                }
+                                parsedBadge.Add(badge.ImageId);
                                 if (badge != null && font.TryGetCharacter(badge.ImageId, out var character)) {
                                     sb.Insert(0, $"{char.ConvertFromUtf32((int)character)} ");
                                 }

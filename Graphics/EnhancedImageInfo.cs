@@ -1,5 +1,4 @@
 ﻿using BeatSaberMarkupLanguage.Animations;
-using System.Collections.Concurrent;
 using UnityEngine;
 using Zenject;
 

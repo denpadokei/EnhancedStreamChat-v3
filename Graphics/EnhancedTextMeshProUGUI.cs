@@ -17,37 +17,6 @@ namespace EnhancedStreamChat.Graphics
         public event Action OnLatePreRenderRebuildComplete;
         private MemoryPoolContainer<EnhancedImage> _imagePool;
         private ESCFontManager _fontManager;
-
-        //private static readonly ObjectMemoryComponentPool<EnhancedImage> _imagePool = new ObjectMemoryComponentPool<EnhancedImage>(64,
-        //    constructor: () =>
-        //    {
-        //        var img = new GameObject().AddComponent<EnhancedImage>();
-        //        DontDestroyOnLoad(img.gameObject);
-        //        img.gameObject.SetActive(false);
-        //        img.raycastTarget = false;
-        //        img.color = Color.white;
-        //        img.rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
-        //        img.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
-        //        img.rectTransform.pivot = new Vector2(0, 0);
-        //        img.animStateUpdater = img.gameObject.AddComponent<AnimationStateUpdater>();
-        //        img.animStateUpdater.image = img;
-        //        img.SetAllDirty();
-        //        return img;
-        //    },
-        //    onFree: img =>
-        //    {
-        //        try {
-        //            img.gameObject.SetActive(false);
-        //            img.animStateUpdater.controllerData = null;
-        //            img.rectTransform.SetParent(null);
-        //            img.sprite = null;
-        //        }
-        //        catch (Exception ex) {
-        //            Logger.Error($"Exception while freeing EnhancedImage in EnhancedTextMeshProUGUI. {ex.ToString()}");
-        //        }
-        //    }
-        //);
-
         [Inject]
         public void Constract(EnhancedImage.Pool image, ESCFontManager fontManager)
         {
@@ -87,16 +56,14 @@ namespace EnhancedStreamChat.Graphics
                         // If it's a surrogate pair, convert the character
                         character = (uint)char.ConvertToUtf32(this.text[c.index], this.text[c.index + 1]);
                     }
-                    Logger.Debug($"{character}");
                     if (this.FontInfo == null || !this.FontInfo.TryGetImageInfo(character, out var imageInfo) || imageInfo is null) {
-                        Logger.Debug("Skip characters that have no imageInfo registered");
+                        //Logger.Debug("Skip characters that have no imageInfo registered");
                         continue;
                     }
 
                     MainThreadInvoker.Invoke(() =>
                     {
                         var img = this._imagePool.Spawn();
-                        Logger.Info($"{imageInfo.ImageId}");
                         try {
                             if (imageInfo.AnimControllerData != null) {
                                 img.animStateUpdater.controllerData = imageInfo.AnimControllerData;
