@@ -26,7 +26,7 @@ namespace EnhancedStreamChat.Chat
         /// </summary>
         /// <param name="msg">The chat message to get images from</param>
         /// <param name="font">The font to register these images to</param>
-        public bool PrepareImages(IESCChatMessage msg, EnhancedFontInfo font)
+        public async Task<bool> PrepareImages(IESCChatMessage msg, EnhancedFontInfo font)
         {
             Logger.Debug($"{msg.Message}");
             var tasks = new List<Task<EnhancedImageInfo>>();
@@ -75,16 +75,17 @@ namespace EnhancedStreamChat.Chat
                 }
             }
             // Wait on all the resources to be ready
-            return Task.WaitAll(tasks.ToArray(), 15000);
+            var result = await Task.WhenAll(tasks);
+            return result.All(x => x != null);
         }
 
         public Task<string> BuildMessage(IESCChatMessage msg, EnhancedFontInfo font)
         {
-            return Task.Run(() =>
+            return Task.Run(async () =>
             {
                 try {
                     Logger.Debug($"{msg.Message}");
-                    if (!this.PrepareImages(msg, font)) {
+                    if (!await this.PrepareImages(msg, font)) {
                         Logger.Warn($"Failed to prepare some/all images for msg \"{msg.Message}\"!");
                         //return msg.Message;
                     }
@@ -102,26 +103,31 @@ namespace EnhancedStreamChat.Chat
 
                     // Escape all html tags in the message
                     sb.Replace("<", "<\u2060");
-
                     foreach (var emote in msg.Emotes) {
                         if (!this._chatImageProvider.CachedImageInfo.TryGetValue(emote.Id, out var replace)) {
                             Logger.Warn($"Emote {emote.Name} was missing from the emote dict! The request to {emote.Url} may have timed out?");
                             continue;
                         }
-                        //Logger.Info($"Emote: {emote.Name}, StartIndex: {emote.StartIndex}, EndIndex: {emote.EndIndex}, Len: {sb.Length}");
+                        Logger.Info($"replase id {replace.ImageId}");
+                        Logger.Info($"Emote: {emote.Name}, StartIndex: {emote.StartIndex}, EndIndex: {emote.EndIndex}, Len: {sb.Length}");
                         if (!font.TryGetCharacter(replace.ImageId, out var character)) {
                             Logger.Warn($"Emote {emote.Name} was missing from the character dict! Font hay have run out of usable characters.");
                             continue;
                         }
-
+                        Logger.Info($"target char {character}");
                         try {
                             // Replace emotes by index, in reverse order (msg.Emotes is sorted by emote.StartIndex in descending order)
+                            //sb.Replace(emote.Name, emote switch
+                            //{
+                            //    TwitchEmote t when t.Bits > 0 => $"{char.ConvertFromUtf32((int)character)}\u00A0<color={t.Color}><size=77%><b>{t.Bits}\u00A0</b></size></color>",
+                            //    _ => char.ConvertFromUtf32((int)character)
+                            //},
+                            //emote.StartIndex, emote.EndIndex - emote.StartIndex + 1);
                             sb.Replace(emote.Name, emote switch
                             {
                                 TwitchEmote t when t.Bits > 0 => $"{char.ConvertFromUtf32((int)character)}\u00A0<color={t.Color}><size=77%><b>{t.Bits}\u00A0</b></size></color>",
                                 _ => char.ConvertFromUtf32((int)character)
-                            },
-                            emote.StartIndex, emote.EndIndex - emote.StartIndex + 1);
+                            });
                         }
                         catch (Exception ex) {
                             Logger.Error($"An unknown error occurred while trying to swap emote {emote.Name} into string of length {sb.Length} at location ({emote.StartIndex}, {emote.EndIndex})\r\n{ex}");
@@ -161,13 +167,17 @@ namespace EnhancedStreamChat.Chat
                                 if (badge != null && font.TryGetCharacter(badge.ImageId, out var character)) {
                                     sb.Insert(0, $"{char.ConvertFromUtf32((int)character)} ");
                                 }
+                                else {
+                                    Logger.Warn("バッジが取得できてない。");
+                                }
                             }
                         }
                     }
+                    Logger.Debug($"{sb}");
                     return sb.ToString();
                 }
                 catch (Exception ex) {
-                    Logger.Error($"An exception occurred in ChatMessageBuilder while parsing msg with {msg.Emotes.Count} emotes. Msg: \"{msg.Message}\". {ex.ToString()}");
+                    Logger.Error($"An exception occurred in ChatMessageBuilder while parsing msg with {msg.Emotes.Count} emotes. Msg: \"{msg.Message}\". {ex}");
                 }
                 return msg.Message;
             });

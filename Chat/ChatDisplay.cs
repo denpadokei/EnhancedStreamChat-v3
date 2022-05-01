@@ -29,7 +29,7 @@ using Color = UnityEngine.Color;
 namespace EnhancedStreamChat.Chat
 {
     [HotReload]
-    public partial class ChatDisplay : BSMLAutomaticViewController, IAsyncInitializable, IChatDisplay
+    public partial class ChatDisplay : BSMLAutomaticViewController, IAsyncInitializable, IChatDisplay, IDisposable
     {
         //ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*
         #region // プロパティ
@@ -95,14 +95,16 @@ namespace EnhancedStreamChat.Chat
             //        }
             //    }
             //);
-            this._chatConfig.OnConfigChanged += this.Instance_OnConfigChanged;
-            BSEvents.menuSceneActive += this.BSEvents_menuSceneActive;
-            BSEvents.gameSceneActive += this.BSEvents_gameSceneActive;;
             while (_backupMessageQueue.TryDequeue(out var msg)) {
                 await this.OnTextMessageReceived(msg.Value, msg.Key);
             }
+            this._chatConfig.OnConfigChanged += this.Instance_OnConfigChanged;
+            BSEvents.menuSceneActive += this.BSEvents_menuSceneActive;
+            BSEvents.gameSceneActive += this.BSEvents_gameSceneActive;
             this._catCoreManager.OnJoinChannel += this.CatCoreManager_OnJoinChannel;
             this._catCoreManager.OnTwitchTextMessageReceived += this.CatCoreManager_OnTwitchTextMessageReceived;
+            this._catCoreManager.OnFollow += this.OnCatCoreManager_OnFollow;
+            this._catCoreManager.OnRewardRedeemed += this.OnCatCoreManager_OnRewardRedeemed;
         }
 
         public void AddMessage(EnhancedTextMeshProUGUIWithBackground newMsg)
@@ -143,44 +145,7 @@ namespace EnhancedStreamChat.Chat
                 }
             });
         }
-        private void CatCoreManager_OnJoinChannel(CatCore.Services.Multiplexer.MultiplexedPlatformService arg1, CatCore.Services.Multiplexer.MultiplexedChannel arg2)
-        {
-            MainThreadInvoker.Invoke(() =>
-            {
-                var newMsg = this._textPoolContaner.Spawn();
-                newMsg.transform.SetParent(this._chatContainer.transform, false);
-                this.UpdateMessage(newMsg);
-                newMsg.Text.text = $"<color=#bbbbbbbb>[{arg2.Name}] Success joining {arg2.Id}</color>";
-                newMsg.HighlightEnabled = true;
-                newMsg.HighlightColor = Color.gray.ColorWithAlpha(0.05f);
-                this.AddMessage(newMsg);
-            });
-        }
-
-        //public void OnChannelResourceDataCached(IChatChannel channel, Dictionary<string, IChatResourceData> resources)
-        //{
-        //    MainThreadInvoker.Invoke(() =>
-        //    {
-        //        var count = 0;
-        //        if (this._chatConfig.PreCacheAnimatedEmotes) {
-        //            foreach (var emote in resources) {
-        //                if (emote.Value.IsAnimated) {
-        //                    HMMainThreadDispatcher.instance.Enqueue(ChatImageProvider.instance.PrecacheAnimatedImage(emote.Value.Uri, emote.Key, 110));
-        //                    count++;
-        //                }
-        //            }
-        //            Logger.Info($"Pre-cached {count} animated emotes.");
-        //        }
-        //        else {
-        //            Logger.Warn("Pre-caching of animated emotes disabled by the user. If you're experiencing lag, re-enable emote precaching.");
-        //        }
-        //    });
-        //}
-        private void CatCoreManager_OnTwitchTextMessageReceived(CatCore.Services.Twitch.Interfaces.ITwitchService arg1, CatCore.Models.Twitch.IRC.TwitchMessage arg2)
-        {
-            _ = this.OnTextMessageReceived(new ESCChatMessage(arg2), DateTime.Now);
-        }
-
+        
         public async Task OnTextMessageReceived(IESCChatMessage msg, DateTime dateTime)
         {
             var parsedMessage = await _chatMessageBuilder.BuildMessage(msg, this._fontManager.FontInfo);
@@ -245,7 +210,6 @@ namespace EnhancedStreamChat.Chat
                 this._bg.material.color = Color.white.ColorWithAlpha(1);
                 this._bg.color = this.BackgroundColor;
                 this._bg.SetAllDirty();
-                this.Load();
                 this.AddToVRPointer();
                 this.UpdateChatUI();
             }
@@ -441,7 +405,6 @@ namespace EnhancedStreamChat.Chat
         }
         private void CreateMessage(IESCChatMessage msg, DateTime date, string parsedMessage)
         {
-            Logger.Info($"{msg.Id}, {msg.Message}");
             if (this._lastMessage != null && !msg.IsSystemMessage && this._lastMessage.Text.ChatMessage.Id == msg.Id) {
                 // If the last message received had the same id and isn't a system message, then this was a sub-message of the original and may need to be highlighted along with the original message
                 this._lastMessage.SubText.text = parsedMessage;
@@ -461,6 +424,40 @@ namespace EnhancedStreamChat.Chat
                 this._lastMessage = newMsg;
             }
             this._updateMessagePositions = true;
+        }
+        private void CatCoreManager_OnJoinChannel(CatCore.Services.Multiplexer.MultiplexedPlatformService arg1, CatCore.Services.Multiplexer.MultiplexedChannel arg2)
+        {
+            MainThreadInvoker.Invoke(() =>
+            {
+                var newMsg = this._textPoolContaner.Spawn();
+                newMsg.transform.SetParent(this._chatContainer.transform, false);
+                this.UpdateMessage(newMsg);
+                newMsg.Text.text = $"<color=#bbbbbbbb>[{arg2.Name}] Success joining {arg2.Id}</color>";
+                newMsg.HighlightEnabled = true;
+                newMsg.HighlightColor = Color.gray.ColorWithAlpha(0.05f);
+                this.AddMessage(newMsg);
+            });
+        }
+
+        private void CatCoreManager_OnTwitchTextMessageReceived(CatCore.Services.Twitch.Interfaces.ITwitchService arg1, CatCore.Models.Twitch.IRC.TwitchMessage arg2)
+        {
+            _ = this.OnTextMessageReceived(new ESCChatMessage(arg2), DateTime.Now);
+        }
+        private void OnCatCoreManager_OnFollow(string channelId, in CatCore.Models.Twitch.PubSub.Responses.Follow data)
+        {
+            var mes = new ESCChatMessage(Guid.NewGuid().ToString(), $"Thank you for following {data.DisplayName}({data.Username})!")
+            {
+                IsSystemMessage = true
+            };
+            _ = this.OnTextMessageReceived(mes, DateTime.Now);
+        }
+        private void OnCatCoreManager_OnRewardRedeemed(string channelId, in CatCore.Models.Twitch.PubSub.Responses.ChannelPointsChannelV1.RewardRedeemedData data)
+        {
+            var mes = new ESCChatMessage(Guid.NewGuid().ToString(), $"{data.User.DisplayName} used points {data.Reward.Title}({data.Reward.Cost}).")
+            {
+                IsSystemMessage = true
+            };
+            _ = this.OnTextMessageReceived(mes, DateTime.Now);
         }
         #endregion
         //ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*
@@ -482,6 +479,7 @@ namespace EnhancedStreamChat.Chat
         private ICatCoreManager _catCoreManager;
         private ChatMessageBuilder _chatMessageBuilder;
         private ESCFontManager _fontManager;
+        private bool _disposedValue;
         #endregion
         //ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*
         #region // 構築・破棄
@@ -494,13 +492,30 @@ namespace EnhancedStreamChat.Chat
             this._chatMessageBuilder = chatMessageBuilder;
             this._fontManager = fontManager;
         }
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposedValue) {
+                if (disposing) {
+                    Destroy(this.gameObject);
+                }
+                _disposedValue = true;
+            }
+        }
+        public void Dispose()
+        {
+            // このコードを変更しないでください。クリーンアップ コードを 'Dispose(bool disposing)' メソッドに記述します
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
+        }
         #endregion
         //ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*
         #region // Unity message
         private void Awake()
         {
             this._waitForEndOfFrame = new WaitForEndOfFrame();
+            DontDestroyOnLoad(this.gameObject);
         }
+
         protected override void OnDestroy()
         {
             this._chatConfig.OnConfigChanged -= this.Instance_OnConfigChanged;
@@ -509,6 +524,8 @@ namespace EnhancedStreamChat.Chat
             VRPointerOnEnablePatch.OnEnabled -= this.PointerOnEnabled;
             this._catCoreManager.OnJoinChannel -= this.CatCoreManager_OnJoinChannel;
             this._catCoreManager.OnTwitchTextMessageReceived -= this.CatCoreManager_OnTwitchTextMessageReceived;
+            this._catCoreManager.OnFollow -= this.OnCatCoreManager_OnFollow;
+            this._catCoreManager.OnRewardRedeemed -= this.OnCatCoreManager_OnRewardRedeemed;
             this.StopAllCoroutines();
             while (this._messages.TryDequeue(out var msg)) {
                 msg.OnLatePreRenderRebuildComplete -= this.OnRenderRebuildComplete;

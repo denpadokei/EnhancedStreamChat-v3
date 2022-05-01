@@ -38,7 +38,7 @@ namespace EnhancedStreamChat
                 container.BindInterfacesAndSelfTo<PluginConfig>().FromInstance(s_pluginConfig);
             });
             zenjector.Install<ESCAppInstaller>(Location.App);
-            zenjector.Install<ESCMenuAndGameInstaller>(Location.Menu | Location.Player);
+            zenjector.Install<ESCMenuAndGameInstaller>(Location.Menu);
             Font.textureRebuilt += this.Font_textureRebuilt;
             this.harmony = new Harmony(HARMONY_ID);
         }

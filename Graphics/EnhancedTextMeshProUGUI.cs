@@ -10,10 +10,10 @@ using Zenject;
 
 namespace EnhancedStreamChat.Graphics
 {
-    public class EnhancedTextMeshProUGUI : TextMeshProUGUI, IInitializable
+    public class EnhancedTextMeshProUGUI : TextMeshProUGUI
     {
         public IESCChatMessage ChatMessage { get; set; } = null;
-        public EnhancedFontInfo FontInfo { get; private set; }
+        public EnhancedFontInfo FontInfo => this._fontManager.FontInfo;
         public event Action OnLatePreRenderRebuildComplete;
         private MemoryPoolContainer<EnhancedImage> _imagePool;
         private ESCFontManager _fontManager;
@@ -55,11 +55,6 @@ namespace EnhancedStreamChat.Graphics
             this._fontManager = fontManager;
         }
 
-        public void Initialize()
-        {
-            this.FontInfo = this._fontManager.FontInfo;
-        }
-
         protected override void Awake()
         {
             base.Awake();
@@ -92,15 +87,16 @@ namespace EnhancedStreamChat.Graphics
                         // If it's a surrogate pair, convert the character
                         character = (uint)char.ConvertToUtf32(this.text[c.index], this.text[c.index + 1]);
                     }
-
+                    Logger.Debug($"{character}");
                     if (this.FontInfo == null || !this.FontInfo.TryGetImageInfo(character, out var imageInfo) || imageInfo is null) {
-                        // Skip characters that have no imageInfo registered
+                        Logger.Debug("Skip characters that have no imageInfo registered");
                         continue;
                     }
 
                     MainThreadInvoker.Invoke(() =>
                     {
                         var img = this._imagePool.Spawn();
+                        Logger.Info($"{imageInfo.ImageId}");
                         try {
                             if (imageInfo.AnimControllerData != null) {
                                 img.animStateUpdater.controllerData = imageInfo.AnimControllerData;
@@ -130,7 +126,6 @@ namespace EnhancedStreamChat.Graphics
                 MainThreadInvoker.Invoke(OnLatePreRenderRebuildComplete);
             }
         }
-
         public class Pool : MonoMemoryPool<EnhancedTextMeshProUGUI>
         {
 

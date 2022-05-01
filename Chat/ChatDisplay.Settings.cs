@@ -29,6 +29,7 @@ namespace EnhancedStreamChat.Chat
         [UIAction("#post-parse")]
         private void PostParse()
         {
+            this.Load();
             // bg
             this._backgroundColorSetting.editButton.onClick.AddListener(this.HideSettings);
             this._backgroundColorSetting.modalColorPicker.cancelEvent += this.ShowSettings;
