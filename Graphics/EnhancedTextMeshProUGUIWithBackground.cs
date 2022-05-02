@@ -1,4 +1,5 @@
-﻿using EnhancedStreamChat.Utilities;
+﻿using EnhancedStreamChat.Interfaces;
+using EnhancedStreamChat.Utilities;
 using HMUI;
 using System;
 using UnityEngine;
@@ -7,14 +8,16 @@ using Zenject;
 
 namespace EnhancedStreamChat.Graphics
 {
-    public class EnhancedTextMeshProUGUIWithBackground : MonoBehaviour
+    public class EnhancedTextMeshProUGUIWithBackground : MonoBehaviour, ILatePreRenderRebuildReciver
     {
         public EnhancedTextMeshProUGUI Text { get; internal set; }
         public EnhancedTextMeshProUGUI SubText { get; internal set; }
 
         public DateTime ReceivedDate { get; internal set; }
 
-        public event Action OnLatePreRenderRebuildComplete;
+        private bool _rebuiled = false;
+        private readonly LazyCopyHashSet<ILatePreRenderRebuildReciver> _recivers = new LazyCopyHashSet<ILatePreRenderRebuildReciver>();
+        public ILazyCopyHashSet<ILatePreRenderRebuildReciver> LazyCopyHashSet => this._recivers;
 
         private ImageView _highlight;
         private ImageView _accent;
@@ -81,20 +84,43 @@ namespace EnhancedStreamChat.Graphics
             this._textContainer = new MemoryPoolContainer<EnhancedTextMeshProUGUI>(pool);
         }
 
-        private void OnDestroy()
+        protected void OnDestroy()
         {
             try {
-                this.Text.OnLatePreRenderRebuildComplete -= this.Text_OnLatePreRenderRebuildComplete;
-                this.SubText.OnLatePreRenderRebuildComplete -= this.Text_OnLatePreRenderRebuildComplete;
+                this.Text.RemoveReciver(this);
+                this.SubText.RemoveReciver(this);
+                if (this._textContainer != null) {
+                    this._textContainer.Despawn(this.Text);
+                    this._textContainer.Despawn(this.SubText);
+                }
             }
             catch (Exception) {
             }
         }
 
-        private void Text_OnLatePreRenderRebuildComplete()
+        public void AddReciver(ILatePreRenderRebuildReciver reciver)
+        {
+            this.LazyCopyHashSet.Add(reciver);
+        }
+
+        public void RemoveReciver(ILatePreRenderRebuildReciver reciver)
+        {
+            this.LazyCopyHashSet.Remove(reciver);
+        }
+
+        public void LatePreRenderRebuildHandler(object sender, EventArgs e)
         {
             (this._accent.gameObject.transform as RectTransform).sizeDelta = new Vector2(1, (this.transform as RectTransform).sizeDelta.y);
-            OnLatePreRenderRebuildComplete?.Invoke();
+            this._rebuiled = true;
+        }
+
+        protected void Update()
+        {
+            if (this._rebuiled) {
+                foreach (var reciver in this._recivers.items) {
+                    reciver?.LatePreRenderRebuildHandler(this, EventArgs.Empty);
+                }
+            }
         }
 
         public class Pool : MonoMemoryPool<EnhancedTextMeshProUGUIWithBackground>
@@ -107,10 +133,9 @@ namespace EnhancedStreamChat.Graphics
                 item._highlight.material = BeatSaberUtils.UINoGlowMaterial;
 
                 item.Text = item._textContainer.Spawn();
-                item.Text.OnLatePreRenderRebuildComplete += item.Text_OnLatePreRenderRebuildComplete;
-
+                item.Text.AddReciver(item);
                 item.SubText = item._textContainer.Spawn();
-                item.SubText.OnLatePreRenderRebuildComplete += item.Text_OnLatePreRenderRebuildComplete;
+                item.SubText.AddReciver(item);
 
                 item._accent = new GameObject().AddComponent<ImageView>();
                 item._accent.raycastTarget = false;
@@ -150,11 +175,10 @@ namespace EnhancedStreamChat.Graphics
 
             protected override void OnDespawned(EnhancedTextMeshProUGUIWithBackground msg)
             {
-                if (msg == null) {
+                if (msg == null || msg.gameObject == null) {
                     return;
                 }
                 base.OnDespawned(msg);
-                msg.gameObject.SetActive(false);
                 (msg.transform as RectTransform).localPosition = Vector3.zero;
                 msg.HighlightEnabled = false;
                 msg.AccentEnabled = false;

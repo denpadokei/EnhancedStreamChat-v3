@@ -7,11 +7,11 @@ namespace EnhancedStreamChat.Utilities
 {
     public static class BeatSaberUtils
     {
-        private static Material _noGlow;
-        public static Material UINoGlowMaterial => _noGlow ??= Resources.FindObjectsOfTypeAll<Material>().Where(m => m.name == "UINoGlow").FirstOrDefault();
+        private static Material s_noGlow;
+        public static Material UINoGlowMaterial => s_noGlow ??= Resources.FindObjectsOfTypeAll<Material>().Where(m => m.name == "UINoGlow").FirstOrDefault();
 
-        private static Shader _tmpNoGlowFontShader;
-        public static Shader TMPNoGlowFontShader => _tmpNoGlowFontShader ??= BeatSaberUI.MainTextFont == null ? null : BeatSaberUI.MainTextFont.material.shader;
+        private static Shader s_tmpNoGlowFontShader;
+        public static Shader TMPNoGlowFontShader => s_tmpNoGlowFontShader ??= BeatSaberUI.MainTextFont == null ? null : BeatSaberUI.MainTextFont.material.shader;
 
         // DaNike to the rescue 
         public static bool TryGetTMPFontByFamily(string family, out TMP_FontAsset font)

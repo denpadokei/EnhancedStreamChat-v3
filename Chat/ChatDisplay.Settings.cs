@@ -305,7 +305,8 @@ namespace EnhancedStreamChat.Chat
             set
             {
                 this.SetProperty(ref this._reverseChatOrder, value);
-                this.UpdateMessages();
+                this._updateMessagePositions = true;
+                //this.UpdateMessages();
             }
         }
 

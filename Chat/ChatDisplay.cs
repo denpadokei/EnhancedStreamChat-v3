@@ -12,7 +12,6 @@ using IPA.Utilities;
 using SiraUtil.Affinity;
 using SiraUtil.Zenject;
 using System;
-using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -29,7 +28,7 @@ using Color = UnityEngine.Color;
 namespace EnhancedStreamChat.Chat
 {
     [HotReload]
-    public partial class ChatDisplay : BSMLAutomaticViewController, IAsyncInitializable, IChatDisplay, IDisposable, IAffinity
+    public partial class ChatDisplay : BSMLAutomaticViewController, IAsyncInitializable, IChatDisplay, IDisposable, IAffinity, ILatePreRenderRebuildReciver
     {
         //ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*
         #region // プロパティ
@@ -46,7 +45,7 @@ namespace EnhancedStreamChat.Chat
         public async Task InitializeAsync(CancellationToken token)
         {
             while (!this._fontManager.IsInitialized) {
-                await Task.Delay(100);
+                await Task.Yield();
             }
             this.SetupScreens();
             foreach (var msg in this._messages.ToArray()) {
@@ -104,7 +103,7 @@ namespace EnhancedStreamChat.Chat
         public async Task OnTextMessageReceived(IESCChatMessage msg, DateTime dateTime)
         {
             var parsedMessage = await this._chatMessageBuilder.BuildMessage(msg, this._fontManager.FontInfo);
-            HMMainThreadDispatcher.instance.Enqueue(() => this.CreateMessage(msg, dateTime, parsedMessage));
+            _ = MainThreadInvoker.Invoke(() => this.CreateMessage(msg, dateTime, parsedMessage));
         }
 
         [AffinityPatch(typeof(VRPointer), nameof(VRPointer.OnEnable))]
@@ -113,13 +112,17 @@ namespace EnhancedStreamChat.Chat
         {
             this.PointerOnEnabled(__instance);
         }
+
+        public void LatePreRenderRebuildHandler(object sender, EventArgs e)
+        {
+            this._updateMessagePositions = true;
+        }
         #endregion
         //ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*
         #region // プライベートメソッド
         private void AddMessage(EnhancedTextMeshProUGUIWithBackground newMsg)
         {
-            newMsg.OnLatePreRenderRebuildComplete -= this.OnRenderRebuildComplete;
-            newMsg.OnLatePreRenderRebuildComplete += this.OnRenderRebuildComplete;
+            newMsg.AddReciver(this);
             this.UpdateMessage(newMsg, true);
             this._messages.Enqueue(newMsg);
             this.ClearOldMessages();
@@ -237,9 +240,8 @@ namespace EnhancedStreamChat.Chat
                 this._chatScreen.screenMover.transform.SetAsFirstSibling();
             }
         }
-        private IEnumerator UpdateMessagePositions()
+        private void UpdateMessagePositions()
         {
-            yield return this._waitForEndOfFrame;
             // TODO: Remove later on
             //float msgPos =  (ReverseChatOrder ?  ChatHeight : 0);
             float? msgPos = this.ChatHeight / (this.ReverseChatOrder ? 2f : -2f);
@@ -256,11 +258,6 @@ namespace EnhancedStreamChat.Chat
                     msgPos += msgHeight;
                 }
             }
-        }
-
-        private void OnRenderRebuildComplete()
-        {
-            this._updateMessagePositions = true;
         }
 
         private void UpdateChatUI()
@@ -296,7 +293,7 @@ namespace EnhancedStreamChat.Chat
         private void UpdateMessages()
         {
             foreach (var msg in this._messages.ToArray()) {
-                this.UpdateMessage(msg, true);
+                this.UpdateMessage(msg);
             }
             this._updateMessagePositions = true;
         }
@@ -338,6 +335,7 @@ namespace EnhancedStreamChat.Chat
         {
             while (this._messages.TryPeek(out var msg) && this.ReverseChatOrder ? msg.transform.localPosition.y < 0 - (msg.transform as RectTransform).sizeDelta.y : msg.transform.localPosition.y >= this._chatConfig.ChatHeight) {
                 if (this._messages.TryDequeue(out msg)) {
+                    msg.RemoveReciver(this);
                     this._textPoolContaner.Despawn(msg);
                 }
             }
@@ -522,13 +520,16 @@ namespace EnhancedStreamChat.Chat
             this._catCoreManager.OnRewardRedeemed -= this.OnCatCoreManager_OnRewardRedeemed;
             this.StopAllCoroutines();
             while (this._messages.TryDequeue(out var msg)) {
-                msg.OnLatePreRenderRebuildComplete -= this.OnRenderRebuildComplete;
+                if (msg != null) {
+                    msg.RemoveReciver(this);
+                }
                 if (msg.Text.ChatMessage != null) {
                     s_backupMessageQueue.Enqueue(new KeyValuePair<DateTime, IESCChatMessage>(msg.ReceivedDate, msg.Text.ChatMessage));
                 }
                 if (msg.SubText.ChatMessage != null) {
                     s_backupMessageQueue.Enqueue(new KeyValuePair<DateTime, IESCChatMessage>(msg.ReceivedDate, msg.SubText.ChatMessage));
                 }
+                this._textPoolContaner?.Despawn(msg);
             }
             Destroy(this._rootGameObject);
             if (this._chatScreen != null) {
@@ -546,7 +547,7 @@ namespace EnhancedStreamChat.Chat
             if (!this._updateMessagePositions) {
                 return;
             }
-            HMMainThreadDispatcher.instance.Enqueue(this.UpdateMessagePositions());
+            this.UpdateMessagePositions();
             this._updateMessagePositions = false;
         }
         #endregion
