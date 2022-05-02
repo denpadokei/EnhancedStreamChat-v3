@@ -27,6 +27,65 @@ namespace EnhancedStreamChat.Chat
         private void OnPropertyChanged(PropertyChangedEventArgs e)
         {
             this.NotifyPropertyChanged(e.PropertyName);
+            if (e.PropertyName == nameof(this.AccentColor)) {
+                this._chatConfig.AccentColor = this.AccentColor;
+            }
+            else if (e.PropertyName == nameof(this.TextColor)) {
+                this._chatConfig.TextColor = this.TextColor;
+            }
+            else if (e.PropertyName == nameof(this.BackgroundColor)) {
+                this._chatConfig.BackgroundColor = this.BackgroundColor;
+            }
+            else if (e.PropertyName == nameof(AllowMovement)) {
+                this._chatConfig.AllowMovement = this.AllowMovement;
+            }
+            else if (e.PropertyName == nameof(this.ChatHeight)) {
+                this._chatConfig.ChatHeight = this.ChatHeight;
+            }
+            else if (e.PropertyName == nameof(this.ChatWidth)) {
+                this._chatConfig.ChatWidth = this.ChatWidth;
+            }
+            else if (e.PropertyName == nameof(this.ChatPosition)) {
+                if (this._isInGame) {
+                    this._chatConfig.Song_ChatPosition = this.ChatPosition;
+                }
+                else {
+                    this._chatConfig.Menu_ChatPosition = this.ChatPosition;
+                }
+            }
+            else if (e.PropertyName == nameof(this.ChatRotation)) {
+                if (this._isInGame) {
+                    this._chatConfig.Song_ChatRotation = this.ChatRotation;
+                }
+                else {
+                    this._chatConfig.Menu_ChatRotation = this.ChatRotation;
+                }
+            }
+            else if (e.PropertyName == nameof(this.FontSize)) {
+                this._chatConfig.FontSize = this.FontSize;
+            }
+            else if (e.PropertyName == nameof(this.HighlightColor)) {
+                this._chatConfig.HighlightColor = this.HighlightColor;
+            }
+            else if (e.PropertyName == nameof(this.PingColor)) {
+                this._chatConfig.PingColor = this.PingColor;
+            }
+            else if (e.PropertyName == nameof(this.ReverseChatOrder)) {
+                this._chatConfig.ReverseChatOrder = this.ReverseChatOrder;
+            }
+            else if (e.PropertyName == nameof(this.SyncOrientation)) {
+                this._chatConfig.SyncOrientation = this.SyncOrientation;
+                if (this.SyncOrientation) {
+                    if (this._isInGame) {
+                        this._chatConfig.Menu_ChatPosition = this._chatConfig.Song_ChatPosition;
+                        this._chatConfig.Menu_ChatRotation = this._chatConfig.Song_ChatRotation;
+                    }
+                    else {
+                        this._chatConfig.Song_ChatPosition = this._chatConfig.Menu_ChatPosition;
+                        this._chatConfig.Song_ChatRotation = this._chatConfig.Menu_ChatRotation;
+                    }
+                }
+            }
         }
 
         [UIAction("#post-parse")]
@@ -281,7 +340,6 @@ namespace EnhancedStreamChat.Chat
         protected void OnHideSettings()
         {
             Logger.Info("Saving settings!");
-            this.Save();
         }
 
         private void HideSettings()
@@ -293,40 +351,6 @@ namespace EnhancedStreamChat.Chat
         {
             this._parserParams.EmitEvent("show-settings");
         }
-
-        private void Save()
-        {
-            this._chatConfig.AccentColor = this.AccentColor;
-            this._chatConfig.TextColor = this.TextColor;
-            this._chatConfig.BackgroundColor = this.BackgroundColor;
-            this._chatConfig.AllowMovement = this.AllowMovement;
-            this._chatConfig.ChatHeight = this.ChatHeight;
-            this._chatConfig.ChatWidth = this.ChatWidth;
-            if (this._isInGame) {
-                this._chatConfig.Song_ChatPosition = this.ChatPosition;
-                this._chatConfig.Song_ChatRotation = this.ChatRotation;
-            }
-            else {
-                this._chatConfig.Menu_ChatPosition = this.ChatPosition;
-                this._chatConfig.Menu_ChatRotation = this.ChatRotation;
-            }
-            this._chatConfig.FontSize = this.FontSize;
-            this._chatConfig.HighlightColor = this.HighlightColor;
-            this._chatConfig.PingColor = this.PingColor;
-            this._chatConfig.ReverseChatOrder = this.ReverseChatOrder;
-            this._chatConfig.SyncOrientation = this.SyncOrientation;
-            if (this.SyncOrientation) {
-                if (this._isInGame) {
-                    this._chatConfig.Menu_ChatPosition = this._chatConfig.Song_ChatPosition;
-                    this._chatConfig.Menu_ChatRotation = this._chatConfig.Song_ChatRotation;
-                }
-                else {
-                    this._chatConfig.Song_ChatPosition = this._chatConfig.Menu_ChatPosition;
-                    this._chatConfig.Song_ChatRotation = this._chatConfig.Menu_ChatRotation;
-                }
-            }
-        }
-
         private void Load()
         {
             this.AccentColor = this._chatConfig.AccentColor;
