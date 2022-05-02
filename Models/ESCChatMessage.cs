@@ -25,11 +25,12 @@ namespace EnhancedStreamChat.Models
             this.IsSystemMessage = twitchMessage.IsSystemMessage;
             this.Metadata = twitchMessage.Metadata;
             this.Emotes = twitchMessage.Emotes;
-            this.SystemMessageSetup();
+            if (!this.SystemMessageSetup()) {
+                this.Message = twitchMessage.Message;
+            }
             this.Id = twitchMessage.Id;
             this.IsActionMessage = twitchMessage.IsActionMessage;
             this.IsMentioned = twitchMessage.IsMentioned;
-            this.Message = twitchMessage.Message;
             this.Sender = twitchMessage.Sender;
             this.Channel = new ESCChatChannel(twitchMessage.Channel);
         }
@@ -39,8 +40,9 @@ namespace EnhancedStreamChat.Models
             this.Message = message;
         }
 
-        private void SystemMessageSetup()
+        private bool SystemMessageSetup()
         {
+            var updateMessage = false;
             if (this.IsSystemMessage && this.Metadata.TryGetValue("msg-id", out var msgIdValue)) {
                 //_logger.LogInformation($"msg-id: {msgIdValue}");
                 //_logger.LogInformation($"Message: {match.Value}");
@@ -70,14 +72,16 @@ namespace EnhancedStreamChat.Models
                             //_logger.LogInformation($"Message: {match.Value}");
                             if (this.Metadata.TryGetValue("msg-param-sub-plan", out var subPlanName)) {
                                 this.Message = subPlanName == "Prime" ? $"👑  {systemMsgText}" : $"⭐  {systemMsgText}";
+                                updateMessage = true;
                             }
                             else if (this.Metadata.TryGetValue("msg-param-profileImageURL", out var profileImage) && this.Metadata.TryGetValue("msg-param-login", out var loginUser)) {
                                 var emoteId = $"ProfileImage_{loginUser}";
                                 this.Emotes = new ReadOnlyCollection<IChatEmote>(new IChatEmote[]
                                 {
-                                    new TwitchEmote(emoteId, $"[{emoteId}]", 0, emoteId.Length + 1, profileImage),
+                                    new TwitchEmote(emoteId, $"[{emoteId}]", 0, emoteId.Length + 1, profileImage, false),
                                 });
                                 this.Message = $"{this.Emotes[0].Name}  {systemMsgText}";
+                                updateMessage = true;
                             }
                         }
                         else {
@@ -89,6 +93,7 @@ namespace EnhancedStreamChat.Models
                         break;
                 }
             }
+            return updateMessage;
         }
     }
 }
