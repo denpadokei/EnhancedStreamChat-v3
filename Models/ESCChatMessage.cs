@@ -1,5 +1,6 @@
 ﻿using CatCore.Models.Shared;
 using CatCore.Models.Twitch.IRC;
+using CatCore.Models.Twitch.Media;
 using EnhancedStreamChat.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -10,39 +11,85 @@ namespace EnhancedStreamChat.Models
     public class ESCChatMessage : IESCChatMessage
     {
         public string Id { get; internal set; }
-
         public bool IsSystemMessage { get; internal set; }
-
         public bool IsActionMessage { get; internal set; }
-
         public bool IsMentioned { get; internal set; }
-
+        public bool IsHighlighted { get; internal set; }
         public string Message { get; internal set; }
-
         public IChatUser Sender { get; internal set; }
-
         public IESCChatChannel Channel { get; internal set; }
-
         public ReadOnlyCollection<IChatEmote> Emotes { get; internal set; } = new ReadOnlyCollection<IChatEmote>(Array.Empty<IChatEmote>());
-
         public ReadOnlyDictionary<string, string> Metadata { get; internal set; } = new ReadOnlyDictionary<string, string>(new Dictionary<string, string>());
-
         public ESCChatMessage(TwitchMessage twitchMessage)
         {
-            this.Id = twitchMessage.Id;
             this.IsSystemMessage = twitchMessage.IsSystemMessage;
+            this.Metadata = twitchMessage.Metadata;
+            this.Emotes = twitchMessage.Emotes;
+            this.SystemMessageSetup();
+            this.Id = twitchMessage.Id;
             this.IsActionMessage = twitchMessage.IsActionMessage;
             this.IsMentioned = twitchMessage.IsMentioned;
             this.Message = twitchMessage.Message;
             this.Sender = twitchMessage.Sender;
             this.Channel = new ESCChatChannel(twitchMessage.Channel);
-            this.Metadata = twitchMessage.Metadata;
-            this.Emotes = twitchMessage.Emotes;
         }
         public ESCChatMessage(string id, string message)
         {
             this.Id = id;
             this.Message = message;
         }
+
+        private void SystemMessageSetup()
+        {
+            if (this.IsSystemMessage && this.Metadata.TryGetValue("msg-id", out var msgIdValue)) {
+                //_logger.LogInformation($"msg-id: {msgIdValue}");
+                //_logger.LogInformation($"Message: {match.Value}");
+                switch (msgIdValue) {
+                    case "skip-subs-mode-message":
+                        this.Message = "Redeemed Send a Message In Sub-Only Mode";
+                        this.IsHighlighted = false;
+                        this.IsSystemMessage = true;
+                        this.Emotes = new ReadOnlyCollection<IChatEmote>(Array.Empty<IChatEmote>());
+                        break;
+                    case "highlighted-message":
+                        this.Message = "Redeemed Highlight My Message";
+                        this.IsHighlighted = true;
+                        this.IsSystemMessage = true;
+                        this.Emotes = new ReadOnlyCollection<IChatEmote>(Array.Empty<IChatEmote>());
+                        break;
+                    //case "sub":
+                    //case "resub":
+                    //case "raid":
+                    default:
+                        //_logger.LogInformation($"Message: {match.Value}");
+                        if (this.Metadata.TryGetValue("system-msg", out var systemMsgText)) {
+                            systemMsgText = systemMsgText.Replace(@"\s", " ");
+                            this.IsHighlighted = true;
+                            this.IsSystemMessage = true;
+
+                            //_logger.LogInformation($"Message: {match.Value}");
+                            if (this.Metadata.TryGetValue("msg-param-sub-plan", out var subPlanName)) {
+                                this.Message = subPlanName == "Prime" ? $"👑  {systemMsgText}" : $"⭐  {systemMsgText}";
+                            }
+                            else if (this.Metadata.TryGetValue("msg-param-profileImageURL", out var profileImage) && this.Metadata.TryGetValue("msg-param-login", out var loginUser)) {
+                                var emoteId = $"ProfileImage_{loginUser}";
+                                this.Emotes = new ReadOnlyCollection<IChatEmote>(new IChatEmote[]
+                                {
+                                    new TwitchEmote(emoteId, $"[{emoteId}]", 0, emoteId.Length + 1, profileImage),
+                                });
+                                this.Message = $"{this.Emotes[0].Name}  {systemMsgText}";
+                            }
+                        }
+                        else {
+                            // If there's no system message, the message must be the actual message.
+                            // In this case we wipe out the original message and skip it.
+                            this.IsHighlighted = true;
+                            this.IsSystemMessage = true;
+                        }
+                        break;
+                }
+            }
+        }
     }
 }
+

@@ -126,6 +126,9 @@ namespace EnhancedStreamChat.Chat
         }
         private void PointerOnEnabled(VRPointer obj)
         {
+            if (obj == null || this._chatScreen == null) {
+                return;
+            }
             try {
                 var mover = this._chatScreen.gameObject.GetComponent<FloatingScreenMoverPointer>();
                 if (!mover) {
@@ -320,7 +323,7 @@ namespace EnhancedStreamChat.Chat
             if (msg.Text.ChatMessage != null) {
                 msg.HighlightColor = this.HighlightColor;
                 msg.AccentColor = this.AccentColor;
-                msg.HighlightEnabled = msg.Text.ChatMessage.IsMentioned;
+                msg.HighlightEnabled = msg.Text.ChatMessage.IsHighlighted;
                 msg.AccentEnabled = msg.HighlightEnabled || msg.SubText.ChatMessage != null;
             }
 
@@ -427,7 +430,8 @@ namespace EnhancedStreamChat.Chat
         {
             var mes = new ESCChatMessage(Guid.NewGuid().ToString(), $"Thank you for following {data.DisplayName}({data.Username})!")
             {
-                IsSystemMessage = true
+                IsSystemMessage = true,
+                IsHighlighted = true,
             };
             _ = this.OnTextMessageReceived(mes, DateTime.Now);
         }
@@ -435,7 +439,8 @@ namespace EnhancedStreamChat.Chat
         {
             var mes = new ESCChatMessage(Guid.NewGuid().ToString(), $"{data.User.DisplayName} used points {data.Reward.Title}({data.Reward.Cost}).")
             {
-                IsSystemMessage = true
+                IsSystemMessage = true,
+                IsHighlighted = true
             };
             _ = this.OnTextMessageReceived(mes, DateTime.Now);
         }
