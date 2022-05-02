@@ -10,7 +10,7 @@ namespace EnhancedStreamChat.Graphics
         public uint NextReplaceChar { get; private set; } = 0xe000;
         public ConcurrentDictionary<string, uint> CharacterLookupTable { get; } = new ConcurrentDictionary<string, uint>();
         public ConcurrentDictionary<uint, EnhancedImageInfo> ImageInfoLookupTable { get; } = new ConcurrentDictionary<uint, EnhancedImageInfo>();
-        private readonly object _lock = new object();
+        private static readonly object s_lock = new object();
 
         public EnhancedFontInfo(TMP_FontAsset font)
         {
@@ -40,7 +40,7 @@ namespace EnhancedStreamChat.Graphics
 
         public bool TryRegisterImageInfo(EnhancedImageInfo imageInfo, out uint replaceCharacter)
         {
-            lock (this._lock) {
+            lock (s_lock) {
                 if (!this.CharacterLookupTable.ContainsKey(imageInfo.ImageId)) {
                     uint next;
                     do {
@@ -60,7 +60,7 @@ namespace EnhancedStreamChat.Graphics
 
         public bool TryUnregisterImageInfo(string id, out uint unregisteredCharacter)
         {
-            lock (this._lock) {
+            lock (s_lock) {
                 if (!this.CharacterLookupTable.TryGetValue(id, out var c)) {
                     unregisteredCharacter = 0;
                     return false;

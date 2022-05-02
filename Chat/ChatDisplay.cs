@@ -4,12 +4,12 @@ using BeatSaberMarkupLanguage.ViewControllers;
 using BS_Utils.Utilities;
 using EnhancedStreamChat.Configuration;
 using EnhancedStreamChat.Graphics;
-using EnhancedStreamChat.HarmonyPatches;
 using EnhancedStreamChat.Interfaces;
 using EnhancedStreamChat.Models;
 using EnhancedStreamChat.Utilities;
 using HMUI;
 using IPA.Utilities;
+using SiraUtil.Affinity;
 using SiraUtil.Zenject;
 using System;
 using System.Collections;
@@ -29,7 +29,7 @@ using Color = UnityEngine.Color;
 namespace EnhancedStreamChat.Chat
 {
     [HotReload]
-    public partial class ChatDisplay : BSMLAutomaticViewController, IAsyncInitializable, IChatDisplay, IDisposable
+    public partial class ChatDisplay : BSMLAutomaticViewController, IAsyncInitializable, IChatDisplay, IDisposable, IAffinity
     {
         //ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*
         #region // プロパティ
@@ -48,7 +48,6 @@ namespace EnhancedStreamChat.Chat
             while (!this._fontManager.IsInitialized) {
                 await Task.Delay(100);
             }
-            VRPointerOnEnablePatch.OnEnabled += this.PointerOnEnabled;
             this.SetupScreens();
             foreach (var msg in this._messages.ToArray()) {
                 msg.Text.SetAllDirty();
@@ -57,7 +56,7 @@ namespace EnhancedStreamChat.Chat
                 }
             }
             (this.transform as RectTransform).pivot = new Vector2(0.5f, 0f);
-            while (_backupMessageQueue.TryDequeue(out var msg)) {
+            while (s_backupMessageQueue.TryDequeue(out var msg)) {
                 await this.OnTextMessageReceived(msg.Value, msg.Key);
             }
             this._chatConfig.OnConfigChanged += this.Instance_OnConfigChanged;
@@ -65,18 +64,12 @@ namespace EnhancedStreamChat.Chat
             BSEvents.gameSceneActive += this.BSEvents_gameSceneActive;
             this._catCoreManager.OnJoinChannel += this.CatCoreManager_OnJoinChannel;
             this._catCoreManager.OnTwitchTextMessageReceived += this.CatCoreManager_OnTwitchTextMessageReceived;
+            this._catCoreManager.OnMessageDeleted += this.OnCatCoreManager_OnMessageDeleted;
+            this._catCoreManager.OnChatCleared += this.OnCatCoreManager_OnChatCleared;
             this._catCoreManager.OnFollow += this.OnCatCoreManager_OnFollow;
             this._catCoreManager.OnRewardRedeemed += this.OnCatCoreManager_OnRewardRedeemed;
         }
 
-        public void AddMessage(EnhancedTextMeshProUGUIWithBackground newMsg)
-        {
-            newMsg.OnLatePreRenderRebuildComplete -= this.OnRenderRebuildComplete;
-            newMsg.OnLatePreRenderRebuildComplete += this.OnRenderRebuildComplete;
-            this.UpdateMessage(newMsg, true);
-            this._messages.Enqueue(newMsg);
-            this.ClearOldMessages();
-        }
         public void OnMessageCleared(string messageId)
         {
             if (messageId != null) {
@@ -107,15 +100,30 @@ namespace EnhancedStreamChat.Chat
                 }
             });
         }
-        
+
         public async Task OnTextMessageReceived(IESCChatMessage msg, DateTime dateTime)
         {
-            var parsedMessage = await _chatMessageBuilder.BuildMessage(msg, this._fontManager.FontInfo);
+            var parsedMessage = await this._chatMessageBuilder.BuildMessage(msg, this._fontManager.FontInfo);
             HMMainThreadDispatcher.instance.Enqueue(() => this.CreateMessage(msg, dateTime, parsedMessage));
+        }
+
+        [AffinityPatch(typeof(VRPointer), nameof(VRPointer.OnEnable))]
+        [AffinityPostfix]
+        public void VRPointerOnEnable(VRPointer __instance)
+        {
+            this.PointerOnEnabled(__instance);
         }
         #endregion
         //ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*
         #region // プライベートメソッド
+        private void AddMessage(EnhancedTextMeshProUGUIWithBackground newMsg)
+        {
+            newMsg.OnLatePreRenderRebuildComplete -= this.OnRenderRebuildComplete;
+            newMsg.OnLatePreRenderRebuildComplete += this.OnRenderRebuildComplete;
+            this.UpdateMessage(newMsg, true);
+            this._messages.Enqueue(newMsg);
+            this.ClearOldMessages();
+        }
         private void PointerOnEnabled(VRPointer obj)
         {
             try {
@@ -404,6 +412,17 @@ namespace EnhancedStreamChat.Chat
         {
             _ = this.OnTextMessageReceived(new ESCChatMessage(arg2), DateTime.Now);
         }
+
+        private void OnCatCoreManager_OnMessageDeleted(CatCore.Services.Multiplexer.MultiplexedPlatformService arg1, CatCore.Services.Multiplexer.MultiplexedChannel arg2, string arg3)
+        {
+            this.OnMessageCleared(arg3);
+        }
+
+        private void OnCatCoreManager_OnChatCleared(CatCore.Services.Multiplexer.MultiplexedPlatformService arg1, CatCore.Services.Multiplexer.MultiplexedChannel arg2, string arg3)
+        {
+            this.OnChatCleared(arg3);
+        }
+
         private void OnCatCoreManager_OnFollow(string channelId, in CatCore.Models.Twitch.PubSub.Responses.Follow data)
         {
             var mes = new ESCChatMessage(Guid.NewGuid().ToString(), $"Thank you for following {data.DisplayName}({data.Username})!")
@@ -427,14 +446,14 @@ namespace EnhancedStreamChat.Chat
         private PluginConfig _chatConfig;
         private bool _isInGame;
         // TODO: eventually figure out a way to make this more modular incase we want to create multiple instances of ChatDisplay
-        private static readonly ConcurrentQueue<KeyValuePair<DateTime, IESCChatMessage>> _backupMessageQueue = new ConcurrentQueue<KeyValuePair<DateTime, IESCChatMessage>>();
+        private static readonly ConcurrentQueue<KeyValuePair<DateTime, IESCChatMessage>> s_backupMessageQueue = new ConcurrentQueue<KeyValuePair<DateTime, IESCChatMessage>>();
         private FloatingScreen _chatScreen;
         private GameObject _chatContainer;
         private GameObject _rootGameObject;
         private Material _chatMoverMaterial;
         private ImageView _bg;
         private bool _updateMessagePositions = false;
-        private WaitForEndOfFrame _waitForEndOfFrame;
+        private readonly WaitForEndOfFrame _waitForEndOfFrame = new WaitForEndOfFrame();
         private EnhancedTextMeshProUGUIWithBackground _lastMessage;
         private MemoryPoolContainer<EnhancedTextMeshProUGUIWithBackground> _textPoolContaner;
         private ICatCoreManager _catCoreManager;
@@ -455,25 +474,24 @@ namespace EnhancedStreamChat.Chat
         }
         protected virtual void Dispose(bool disposing)
         {
-            if (!_disposedValue) {
+            if (!this._disposedValue) {
                 if (disposing) {
                     Destroy(this.gameObject);
                 }
-                _disposedValue = true;
+                this._disposedValue = true;
             }
         }
         public void Dispose()
         {
             // このコードを変更しないでください。クリーンアップ コードを 'Dispose(bool disposing)' メソッドに記述します
-            Dispose(disposing: true);
+            this.Dispose(disposing: true);
             GC.SuppressFinalize(this);
         }
         #endregion
         //ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*
         #region // Unity message
-        private void Awake()
+        protected void Awake()
         {
-            this._waitForEndOfFrame = new WaitForEndOfFrame();
             DontDestroyOnLoad(this.gameObject);
         }
 
@@ -482,19 +500,20 @@ namespace EnhancedStreamChat.Chat
             this._chatConfig.OnConfigChanged -= this.Instance_OnConfigChanged;
             BSEvents.menuSceneActive -= this.BSEvents_menuSceneActive;
             BSEvents.gameSceneActive -= this.BSEvents_gameSceneActive;
-            VRPointerOnEnablePatch.OnEnabled -= this.PointerOnEnabled;
             this._catCoreManager.OnJoinChannel -= this.CatCoreManager_OnJoinChannel;
             this._catCoreManager.OnTwitchTextMessageReceived -= this.CatCoreManager_OnTwitchTextMessageReceived;
+            this._catCoreManager.OnMessageDeleted -= this.OnCatCoreManager_OnMessageDeleted;
+            this._catCoreManager.OnChatCleared -= this.OnCatCoreManager_OnChatCleared;
             this._catCoreManager.OnFollow -= this.OnCatCoreManager_OnFollow;
             this._catCoreManager.OnRewardRedeemed -= this.OnCatCoreManager_OnRewardRedeemed;
             this.StopAllCoroutines();
             while (this._messages.TryDequeue(out var msg)) {
                 msg.OnLatePreRenderRebuildComplete -= this.OnRenderRebuildComplete;
                 if (msg.Text.ChatMessage != null) {
-                    _backupMessageQueue.Enqueue(new KeyValuePair<DateTime, IESCChatMessage>(msg.ReceivedDate, msg.Text.ChatMessage));
+                    s_backupMessageQueue.Enqueue(new KeyValuePair<DateTime, IESCChatMessage>(msg.ReceivedDate, msg.Text.ChatMessage));
                 }
                 if (msg.SubText.ChatMessage != null) {
-                    _backupMessageQueue.Enqueue(new KeyValuePair<DateTime, IESCChatMessage>(msg.ReceivedDate, msg.SubText.ChatMessage));
+                    s_backupMessageQueue.Enqueue(new KeyValuePair<DateTime, IESCChatMessage>(msg.ReceivedDate, msg.SubText.ChatMessage));
                 }
             }
             Destroy(this._rootGameObject);
@@ -509,7 +528,7 @@ namespace EnhancedStreamChat.Chat
             base.OnDestroy();
         }
 
-        private void Update()
+        protected void Update()
         {
             if (!this._updateMessagePositions) {
                 return;

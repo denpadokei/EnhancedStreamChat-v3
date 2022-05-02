@@ -95,7 +95,13 @@ namespace EnhancedStreamChat.Graphics
         }
         public class Pool : MonoMemoryPool<EnhancedTextMeshProUGUI>
         {
-
+            protected override void OnDespawned(EnhancedTextMeshProUGUI item)
+            {
+                if (item == null) {
+                    return;
+                }
+                base.OnDespawned(item);
+            }
         }
     }
 }

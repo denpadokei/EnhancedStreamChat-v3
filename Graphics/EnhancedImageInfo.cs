@@ -14,6 +14,13 @@ namespace EnhancedStreamChat.Graphics
 
         public class Pool : MemoryPool<EnhancedImageInfo>
         {
+            protected override void OnDespawned(EnhancedImageInfo item)
+            {
+                if (item == null) {
+                    return;
+                }
+                base.OnDespawned(item);
+            }
         }
     }
 }

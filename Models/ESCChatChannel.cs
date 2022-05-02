@@ -1,8 +1,5 @@
 ﻿using CatCore.Models.Twitch;
 using EnhancedStreamChat.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace EnhancedStreamChat.Models
 {
@@ -12,7 +9,7 @@ namespace EnhancedStreamChat.Models
 
         public string Name => this._channel.Name;
 
-        private TwitchChannel _channel;
+        private readonly TwitchChannel _channel;
 
         public void SendMessage(string message)
         {

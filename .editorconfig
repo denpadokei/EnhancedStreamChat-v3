@@ -245,3 +245,6 @@ dotnet_naming_style.began_with_s_.required_prefix = s_
 dotnet_naming_style.began_with_s_.required_suffix = 
 dotnet_naming_style.began_with_s_.word_separator = 
 dotnet_naming_style.began_with_s_.capitalization = camel_case
+
+# CS0649: フィールド 'ChatDisplay._textColorSetting' は割り当てられません。常に既定値 null を使用します
+dotnet_diagnostic.CS0649.severity = none

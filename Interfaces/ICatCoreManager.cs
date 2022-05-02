@@ -24,7 +24,6 @@ namespace EnhancedStreamChat.Interfaces
         void LaunchWebPortal(bool shouldLaunchPortal = true);
     }
 
-
     public delegate void OnRewardRedeemedHandler(string channelId, in RewardRedeemedData data);
     public delegate void OnFollowHandler(string channelId, in Follow data);
 }

@@ -150,6 +150,9 @@ namespace EnhancedStreamChat.Graphics
 
             protected override void OnDespawned(EnhancedTextMeshProUGUIWithBackground msg)
             {
+                if (msg == null) {
+                    return;
+                }
                 base.OnDespawned(msg);
                 msg.gameObject.SetActive(false);
                 (msg.transform as RectTransform).localPosition = Vector3.zero;

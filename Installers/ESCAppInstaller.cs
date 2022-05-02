@@ -16,7 +16,7 @@ namespace EnhancedStreamChat.Installers
             this.Container.BindInterfacesAndSelfTo<CatCoreManager>().AsCached().NonLazy();
             this.Container.BindMemoryPool<EnhancedImageInfo, EnhancedImageInfo.Pool>().WithInitialSize(20);
             this.Container.BindMemoryPool<EnhancedImage, EnhancedImage.Pool>().WithInitialSize(20).FromComponentInNewPrefab(this._image);
-            this.Container.BindMemoryPool<EnhancedTextMeshProUGUI, EnhancedTextMeshProUGUI.Pool>().WithInitialSize(20).FromComponentInNewPrefab(_enhancedTextMeshProUGUI);
+            this.Container.BindMemoryPool<EnhancedTextMeshProUGUI, EnhancedTextMeshProUGUI.Pool>().WithInitialSize(20).FromComponentInNewPrefab(this._enhancedTextMeshProUGUI);
             this.Container.BindMemoryPool<EnhancedTextMeshProUGUIWithBackground, EnhancedTextMeshProUGUIWithBackground.Pool>().WithInitialSize(64).FromComponentInNewPrefab(this._enhancedTextMeshProUGUIWithBackground);
             this.Container.BindInterfacesAndSelfTo<ChatMessageBuilder>().AsCached().NonLazy();
             this.Container.BindInterfacesAndSelfTo<ESCFontManager>().AsSingle().NonLazy();

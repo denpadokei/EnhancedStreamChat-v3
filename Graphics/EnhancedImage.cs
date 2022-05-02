@@ -28,6 +28,9 @@ namespace EnhancedStreamChat.Graphics
 
             protected override void OnDespawned(EnhancedImage img)
             {
+                if (img == null) {
+                    return;
+                }
                 base.OnDespawned(img);
                 try {
                     img.gameObject.SetActive(false);

@@ -24,10 +24,13 @@ namespace EnhancedStreamChat.Chat
             return true;
         }
 
-        private void OnPropertyChanged(PropertyChangedEventArgs e) => this.NotifyPropertyChanged(e.PropertyName);
+        private void OnPropertyChanged(PropertyChangedEventArgs e)
+        {
+            this.NotifyPropertyChanged(e.PropertyName);
+        }
 
         [UIAction("#post-parse")]
-        private void PostParse()
+        protected void PostParse()
         {
             this.Load();
             // bg
@@ -52,21 +55,21 @@ namespace EnhancedStreamChat.Chat
             this._textColorSetting.CurrentColor = this._chatConfig.TextColor;
 
             // Move interactables in front of the screen
-            this.settingsModalGameObject.transform.localPosition = new Vector3(this.settingsModalGameObject.transform.localPosition.x, this.settingsModalGameObject.transform.localPosition.y, -2f);
-            this.settingsIconGameObject.transform.localPosition = new Vector3(this.settingsIconGameObject.transform.localPosition.x, this.settingsIconGameObject.transform.localPosition.y, -2f);
+            this._settingsModalGameObject.transform.localPosition = new Vector3(this._settingsModalGameObject.transform.localPosition.x, this._settingsModalGameObject.transform.localPosition.y, -2f);
+            this._settingsIconGameObject.transform.localPosition = new Vector3(this._settingsIconGameObject.transform.localPosition.x, this._settingsIconGameObject.transform.localPosition.y, -2f);
 
-            this.settingsIconGameObject.layer = 5;
-            this.settingsModalGameObject.layer = 5;
+            this._settingsIconGameObject.layer = 5;
+            this._settingsModalGameObject.layer = 5;
         }
 
         [UIParams]
-        internal BSMLParserParams parserParams;
+        internal BSMLParserParams _parserParams;
 
         [UIObject("settings-icon")]
-        internal GameObject settingsIconGameObject;
+        internal GameObject _settingsIconGameObject;
 
         [UIObject("settings-modal")]
-        internal GameObject settingsModalGameObject;
+        internal GameObject _settingsModalGameObject;
 
         [UIComponent("background-color-setting")]
         private readonly ColorSetting _backgroundColorSetting;
@@ -210,7 +213,7 @@ namespace EnhancedStreamChat.Chat
             get => this._chatRotation;
             set
             {
-                this.SetProperty(ref _chatRotation, value);
+                this.SetProperty(ref this._chatRotation, value);
                 this._chatScreen.ScreenRotation = Quaternion.Euler(value);
             }
         }
@@ -232,10 +235,7 @@ namespace EnhancedStreamChat.Chat
         public bool SyncOrientation
         {
             get => this._syncOrientation;
-            set
-            {
-                this.SetProperty(ref this._syncOrientation, value);
-            }
+            set => this.SetProperty(ref this._syncOrientation, value);
         }
 
         private bool _reverseChatOrder;
@@ -254,27 +254,45 @@ namespace EnhancedStreamChat.Chat
         public string ModVersion => Plugin.Version;
 
         [UIAction("launch-web-app")]
-        private void LaunchWebApp() => this._catCoreManager.LaunchWebPortal();
+        protected void LaunchWebApp()
+        {
+            this._catCoreManager.LaunchWebPortal();
+        }
 
         [UIAction("launch-kofi")]
-        private void LaunchKofi() => Application.OpenURL("https://ko-fi.com/brian91292");
+        protected void LaunchKofi()
+        {
+            Application.OpenURL("https://ko-fi.com/brian91292");
+        }
 
         [UIAction("launch-github")]
-        private void LaunchGitHub() => Application.OpenURL("https://github.com/Auros/EnhancedStreamChat-v3");
+        protected void LaunchGitHub()
+        {
+            Application.OpenURL("https://github.com/denpadokei/EnhancedStreamChat-v3");
+        }
 
         [UIAction("on-settings-clicked")]
-        private void OnSettingsClick() => Logger.Info("Settings clicked!");
+        protected void OnSettingsClick()
+        {
+            Logger.Info("Settings clicked!");
+        }
 
         [UIAction("#hide-settings")]
-        private void OnHideSettings()
+        protected void OnHideSettings()
         {
             Logger.Info("Saving settings!");
             this.Save();
         }
 
-        private void HideSettings() => this.parserParams.EmitEvent("hide-settings");
+        private void HideSettings()
+        {
+            this._parserParams.EmitEvent("hide-settings");
+        }
 
-        private void ShowSettings() => this.parserParams.EmitEvent("show-settings");
+        private void ShowSettings()
+        {
+            this._parserParams.EmitEvent("show-settings");
+        }
 
         private void Save()
         {

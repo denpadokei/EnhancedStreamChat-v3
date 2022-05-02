@@ -1,12 +1,10 @@
 ﻿using CatCore;
-using CatCore.Logging;
 using CatCore.Models.Twitch.IRC;
 using CatCore.Models.Twitch.PubSub.Responses;
 using CatCore.Models.Twitch.PubSub.Responses.ChannelPointsChannelV1;
 using CatCore.Services.Multiplexer;
 using CatCore.Services.Twitch.Interfaces;
 using EnhancedStreamChat.Interfaces;
-using IPA.Logging;
 using System;
 using Zenject;
 

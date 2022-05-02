@@ -1,4 +1,5 @@
-﻿using EnhancedStreamChat.Graphics;
+﻿using System;
+using System.Threading.Tasks;
 using UnityEngine;
 
 namespace EnhancedStreamChat.Interfaces
@@ -20,8 +21,7 @@ namespace EnhancedStreamChat.Interfaces
         int SettingsWidth { get; set; }
         bool SyncOrientation { get; set; }
         Color TextColor { get; set; }
-
-        void AddMessage(EnhancedTextMeshProUGUIWithBackground newMsg);
+        Task OnTextMessageReceived(IESCChatMessage msg, DateTime dateTime);
         void OnChatCleared(string userId);
         void OnMessageCleared(string messageId);
     }
