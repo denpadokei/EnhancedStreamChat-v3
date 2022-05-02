@@ -1,7 +1,6 @@
 ﻿using EnhancedStreamChat.Converters;
 using IPA.Config.Stores;
 using IPA.Config.Stores.Attributes;
-using IPA.Config.Stores.Converters;
 using System;
 using System.Runtime.CompilerServices;
 using UnityEngine;
@@ -13,15 +12,15 @@ namespace EnhancedStreamChat.Configuration
     {
         public virtual bool PreCacheAnimatedEmotes { get; set; } = true;
         public virtual string SystemFontName { get; set; } = "Segoe UI";
-        [UseConverter(typeof(HexColorConverter))]
+        [UseConverter(typeof(ColorConverterWithAlpha))]
         public virtual Color BackgroundColor { get; set; } = ((Color)(Vector4.one * 0.3f)).ColorWithAlpha(1f);
-        [UseConverter(typeof(HexColorConverter))]
+        [UseConverter(typeof(ColorConverterWithAlpha))]
         public virtual Color TextColor { get; set; } = Color.white;
-        [UseConverter(typeof(HexColorConverter))]
+        [UseConverter(typeof(ColorConverterWithAlpha))]
         public virtual Color AccentColor { get; set; } = new Color(0.57f, 0.28f, 1f, 1f);
-        [UseConverter(typeof(HexColorConverter))]
+        [UseConverter(typeof(ColorConverterWithAlpha))]
         public virtual Color HighlightColor { get; set; } = new Color(0.57f, 0.28f, 1f, 0.06f);
-        [UseConverter(typeof(HexColorConverter))]
+        [UseConverter(typeof(ColorConverterWithAlpha))]
         public virtual Color PingColor { get; set; } = new Color(1f, 0f, 0f, 0.13f);
         public virtual int ChatWidth { get; set; } = 120;
         public virtual int ChatHeight { get; set; } = 140;

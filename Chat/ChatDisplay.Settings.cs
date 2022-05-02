@@ -36,7 +36,7 @@ namespace EnhancedStreamChat.Chat
             else if (e.PropertyName == nameof(this.BackgroundColor)) {
                 this._chatConfig.BackgroundColor = this.BackgroundColor;
             }
-            else if (e.PropertyName == nameof(AllowMovement)) {
+            else if (e.PropertyName == nameof(this.AllowMovement)) {
                 this._chatConfig.AllowMovement = this.AllowMovement;
             }
             else if (e.PropertyName == nameof(this.ChatHeight)) {
