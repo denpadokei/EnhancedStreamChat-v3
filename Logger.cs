@@ -1,5 +1,4 @@
-﻿using IPA.Logging;
-using System;
+﻿using System;
 using System.IO;
 using System.Runtime.CompilerServices;
 using IPALogger = IPA.Logging.Logger;
@@ -9,7 +8,6 @@ namespace EnhancedStreamChat
     internal static class Logger
     {
         internal static IPALogger Log { get; set; }
-        internal static IPALogger cclog => Log.GetChildLogger("CatCore");
         public static void Debug(string message, [CallerFilePath] string path = null, [CallerMemberName] string member = null, [CallerLineNumber] int? num = null)
         {
             Log.Debug($"{Path.GetFileName(path)}[{member}({num})] : {message}");
