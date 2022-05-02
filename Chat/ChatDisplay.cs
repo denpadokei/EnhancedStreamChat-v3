@@ -481,7 +481,14 @@ namespace EnhancedStreamChat.Chat
         {
             if (!this._disposedValue) {
                 if (disposing) {
-                    Destroy(this.gameObject);
+                    try {
+                        if (this.gameObject != null) {
+                            Destroy(this.gameObject);
+                        }
+                    }
+                    catch (Exception e) {
+                        Logger.Error(e);
+                    }
                 }
                 this._disposedValue = true;
             }
@@ -502,6 +509,8 @@ namespace EnhancedStreamChat.Chat
 
         protected override void OnDestroy()
         {
+            Logger.Debug("OnDestroy()");
+            base.OnDestroy();
             this._chatConfig.OnConfigChanged -= this.Instance_OnConfigChanged;
             BSEvents.menuSceneActive -= this.BSEvents_menuSceneActive;
             BSEvents.gameSceneActive -= this.BSEvents_gameSceneActive;
@@ -530,7 +539,6 @@ namespace EnhancedStreamChat.Chat
                 Destroy(this._chatMoverMaterial);
                 this._chatMoverMaterial = null;
             }
-            base.OnDestroy();
         }
 
         protected void Update()
