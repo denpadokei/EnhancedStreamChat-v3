@@ -75,7 +75,9 @@ namespace EnhancedStreamChat
         [HarmonyPrefix]
         public static void Prefix(ref string message)
         {
+#if DEBUG
             Logger.Info(message);
+#endif
         }
     }
 }
