@@ -1,7 +1,4 @@
 ﻿using EnhancedStreamChat.Graphics;
-using EnhancedStreamChat.Utilities;
-using System;
-using System.Threading.Tasks;
 using UnityEngine;
 
 namespace EnhancedStreamChat.Interfaces

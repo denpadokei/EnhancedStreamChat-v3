@@ -12,7 +12,7 @@ using UnityEngine.UI;
 
 namespace EnhancedStreamChat.Chat
 {
-    public partial class ChatDisplay : BSMLAutomaticViewController, IChatDisplaySetting
+    public partial class ChatDisplay : BSMLAutomaticViewController
     {
         private bool SetProperty<T>(ref T oldValue, T newValue, [CallerMemberName] string name = null)
         {
