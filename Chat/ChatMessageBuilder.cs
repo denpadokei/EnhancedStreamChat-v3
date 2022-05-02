@@ -98,6 +98,9 @@ namespace EnhancedStreamChat.Chat
                     }
                     var sb = new StringBuilder(msg.Message); // Replace all instances of < with a zero-width non-breaking character
                     foreach (var emote in msg.Emotes) {
+                        if (emote is TwitchEmote twitchEmote && 0 < twitchEmote.Bits) {
+                            continue;
+                        }
                         if (!this._chatImageProvider.CachedImageInfo.TryGetValue(emote.Id, out var replace)) {
                             Logger.Warn($"Emote {emote.Name} was missing from the emote dict! The request to {emote.Url} may have timed out?");
                             continue;
@@ -111,19 +114,36 @@ namespace EnhancedStreamChat.Chat
                         //Logger.Info($"target char {character}");
                         try {
                             // Replace emotes by index, in reverse order (msg.Emotes is sorted by emote.StartIndex in descending order)
-                            sb.Replace(emote.Name, emote switch
-                            {
-                                TwitchEmote t when t.Bits > 0 => $"{char.ConvertFromUtf32((int)character)}\u00A0<color={t.Color}><size=77%><b>{t.Bits}\u00A0</b></size></color>",
-                                _ => char.ConvertFromUtf32((int)character)
-                            });
+                            sb.Replace(emote.Name, char.ConvertFromUtf32((int)character));
                         }
                         catch (Exception ex) {
                             Logger.Error($"An unknown error occurred while trying to swap emote {emote.Name} into string of length {sb.Length} at location ({emote.StartIndex}, {emote.EndIndex})\r\n{ex}");
                         }
                     }
-                    // Escape all html tags in the message
                     sb.Replace("<", "<\u2060");
-
+                    foreach (var emote in msg.Emotes) {
+                        if (emote is not TwitchEmote twitchEmote || twitchEmote.Bits == 0) {
+                            continue;
+                        }
+                        if (!this._chatImageProvider.CachedImageInfo.TryGetValue(emote.Id, out var replace)) {
+                            Logger.Warn($"Emote {emote.Name} was missing from the emote dict! The request to {emote.Url} may have timed out?");
+                            continue;
+                        }
+                        //Logger.Info($"replase id {replace.ImageId}");
+                        //Logger.Info($"Emote: {emote.Name}, StartIndex: {emote.StartIndex}, EndIndex: {emote.EndIndex}, Len: {sb.Length}");
+                        if (!font.TryGetCharacter(replace.ImageId, out var character)) {
+                            Logger.Warn($"Emote {emote.Name} was missing from the character dict! Font hay have run out of usable characters.");
+                            continue;
+                        }
+                        //Logger.Info($"target char {character}");
+                        try {
+                            // Replace emotes by index, in reverse order (msg.Emotes is sorted by emote.StartIndex in descending order)
+                            sb.Replace(emote.Name, $"{char.ConvertFromUtf32((int)character)}\u00A0<color={twitchEmote.Color}><size=77%><b>{twitchEmote.Bits}\u00A0</b></size></color>");
+                        }
+                        catch (Exception ex) {
+                            Logger.Error($"An unknown error occurred while trying to swap emote {emote.Name} into string of length {sb.Length} at location ({emote.StartIndex}, {emote.EndIndex})\r\n{ex}");
+                        }
+                    }
                     if (msg.IsSystemMessage) {
                         // System messages get a grayish color to differenciate them from normal messages in chat, and do not receive a username/badge prefix
                         sb.Insert(0, $"<color=#bbbbbbbb>");
