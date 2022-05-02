@@ -44,8 +44,6 @@ namespace EnhancedStreamChat.Models
         {
             var updateMessage = false;
             if (this.IsSystemMessage && this.Metadata.TryGetValue("msg-id", out var msgIdValue)) {
-                //_logger.LogInformation($"msg-id: {msgIdValue}");
-                //_logger.LogInformation($"Message: {match.Value}");
                 switch (msgIdValue) {
                     case "skip-subs-mode-message":
                         this.Message = "Redeemed Send a Message In Sub-Only Mode";
@@ -63,13 +61,10 @@ namespace EnhancedStreamChat.Models
                     //case "resub":
                     //case "raid":
                     default:
-                        //_logger.LogInformation($"Message: {match.Value}");
                         if (this.Metadata.TryGetValue("system-msg", out var systemMsgText)) {
                             systemMsgText = systemMsgText.Replace(@"\s", " ");
                             this.IsHighlighted = true;
                             this.IsSystemMessage = true;
-
-                            //_logger.LogInformation($"Message: {match.Value}");
                             if (this.Metadata.TryGetValue("msg-param-sub-plan", out var subPlanName)) {
                                 this.Message = subPlanName == "Prime" ? $"👑  {systemMsgText}" : $"⭐  {systemMsgText}";
                                 updateMessage = true;
