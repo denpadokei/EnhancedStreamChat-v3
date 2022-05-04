@@ -31,6 +31,7 @@ namespace EnhancedStreamChat.Models
             }
             else {
                 this.Message = twitchMessage.Message;
+                this.SubMessage = "";
             }
             this.Id = twitchMessage.Id;
             this.IsActionMessage = twitchMessage.IsActionMessage;
@@ -61,8 +62,13 @@ namespace EnhancedStreamChat.Models
                         this.IsSystemMessage = true;
                         this.Emotes = new ReadOnlyCollection<IChatEmote>(Array.Empty<IChatEmote>());
                         break;
-                    //case "sub":
-                    //case "resub":
+                    case "sub":
+                    case "resub":
+                        this.Message = "";
+                        this.IsHighlighted = true;
+                        this.IsSystemMessage = true;
+                        updateMessage = true;
+                        break;
                     //case "raid":
                     default:
                         if (this.Metadata.TryGetValue("system-msg", out var systemMsgText)) {
@@ -91,6 +97,9 @@ namespace EnhancedStreamChat.Models
                         }
                         break;
                 }
+            }
+            else {
+                this.IsSystemMessage = false;
             }
             return updateMessage;
         }

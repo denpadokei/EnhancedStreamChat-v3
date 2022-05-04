@@ -410,7 +410,7 @@ namespace EnhancedStreamChat.Chat
         {
             var message = new ESCChatMessage(arg2);
             await this.OnTextMessageReceived(new ESCChatMessage(arg2), DateTime.Now);
-            if (string.IsNullOrEmpty(message.SubMessage)) {
+            if (!string.IsNullOrEmpty(message.SubMessage)) {
                 message = new ESCChatMessage(arg2);
                 message.Message = message.SubMessage;
                 message.IsSystemMessage = false;

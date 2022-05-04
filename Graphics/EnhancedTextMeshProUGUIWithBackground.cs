@@ -2,6 +2,7 @@
 using EnhancedStreamChat.Utilities;
 using HMUI;
 using System;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 using Zenject;
@@ -23,6 +24,7 @@ namespace EnhancedStreamChat.Graphics
         private ImageView _accent;
         private VerticalLayoutGroup _verticalLayoutGroup;
         private MemoryPoolContainer<EnhancedTextMeshProUGUI> _textContainer;
+        private WaitWhile _waitNoGlowUINull = new WaitWhile(() => BeatSaberUtils.UINoGlowMaterial == null);
 
         public Vector2 Size
         {
@@ -78,6 +80,13 @@ namespace EnhancedStreamChat.Graphics
             }
         }
 
+        IEnumerator Start()
+        {
+            yield return this._waitNoGlowUINull;
+            this._highlight.material = BeatSaberUtils.UINoGlowMaterial;
+            this._accent.material = BeatSaberUtils.UINoGlowMaterial;
+        }
+
         [Inject]
         public void Constact(EnhancedTextMeshProUGUI.Pool pool)
         {
@@ -131,7 +140,6 @@ namespace EnhancedStreamChat.Graphics
                 base.OnCreated(item);
                 item._highlight = item.gameObject.GetComponent<ImageView>();
                 item._highlight.raycastTarget = false;
-                item._highlight.material = BeatSaberUtils.UINoGlowMaterial;
 
                 item.Text = item._textContainer.Spawn();
                 item.Text.AddReciver(item);
@@ -140,7 +148,6 @@ namespace EnhancedStreamChat.Graphics
 
                 item._accent = new GameObject().AddComponent<ImageView>();
                 item._accent.raycastTarget = false;
-                item._accent.material = BeatSaberUtils.UINoGlowMaterial;
                 item._accent.color = Color.yellow;
 
                 item._verticalLayoutGroup = item.gameObject.GetComponent<VerticalLayoutGroup>();
@@ -164,7 +171,16 @@ namespace EnhancedStreamChat.Graphics
                 (item._accent.gameObject.transform as RectTransform).pivot = new Vector2(0, 0.5f);
                 item.Text.rectTransform.SetParent(item.gameObject.transform, false);
             }
-
+            protected override void OnSpawned(EnhancedTextMeshProUGUIWithBackground item)
+            {
+                base.OnSpawned(item);
+                if (item._highlight.material != BeatSaberUtils.UINoGlowMaterial) {
+                    item._accent.material = BeatSaberUtils.UINoGlowMaterial;
+                }
+                if (item._accent.material != BeatSaberUtils.UINoGlowMaterial) {
+                    item._accent.material = BeatSaberUtils.UINoGlowMaterial;
+                }
+            }
             protected override void Reinitialize(EnhancedTextMeshProUGUIWithBackground msg)
             {
                 base.Reinitialize(msg);

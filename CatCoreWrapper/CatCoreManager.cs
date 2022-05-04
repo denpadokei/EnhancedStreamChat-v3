@@ -7,6 +7,10 @@ using CatCore.Services.Twitch.Interfaces;
 using EnhancedStreamChat.Interfaces;
 using System;
 using Zenject;
+#if DEBUG
+using CatCore.Logging;
+using IPA.Logging;
+#endif
 
 namespace EnhancedStreamChat.CatCoreWrapper
 {
