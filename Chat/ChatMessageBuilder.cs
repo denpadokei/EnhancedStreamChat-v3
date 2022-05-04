@@ -15,7 +15,7 @@ namespace EnhancedStreamChat.Chat
     public class ChatMessageBuilder
     {
         private readonly ChatImageProvider _chatImageProvider;
-        private readonly ConcurrentDictionary<string, Color> _senderColor = new ConcurrentDictionary<string, Color>();
+        private static readonly ConcurrentDictionary<string, Color> s_senderColor = new ConcurrentDictionary<string, Color>();
         private readonly System.Random _random = new System.Random(Environment.TickCount);
 
         public ChatMessageBuilder(ChatImageProvider chatImageProvider)
@@ -153,9 +153,9 @@ namespace EnhancedStreamChat.Chat
                 else {
                     var nameColorCode = msg.Sender.Color;
                     if (ColorUtility.TryParseHtmlString(msg.Sender.Color.Substring(0, 7), out var nameColor)) {
-                        if (nameColor == Color.white && !this._senderColor.TryGetValue(msg.Sender.Id, out nameColor)) {
+                        if (nameColor == Color.white && !s_senderColor.TryGetValue(msg.Sender.UserName, out nameColor)) {
                             nameColor = new Color(((float)this._random.Next(0, 100000) / 100000), ((float)this._random.Next(0, 100000) / 100000), ((float)this._random.Next(0, 100000) / 100000));
-                            this._senderColor.TryAdd(msg.Id, nameColor);
+                            s_senderColor.TryAdd(msg.Sender.UserName, nameColor);
                         }
                         Color.RGBToHSV(nameColor, out var h, out var s, out var v);
                         if (v < 0.85f) {

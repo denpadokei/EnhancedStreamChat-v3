@@ -32,6 +32,7 @@ namespace EnhancedStreamChat.Graphics
                 try {
                     img.AnimStateUpdater.controllerData = null;
                     img.sprite = null;
+                    img.SetAllDirty();
                 }
                 catch (Exception ex) {
                     Logger.Error($"Exception while freeing EnhancedImage in EnhancedTextMeshProUGUI. {ex}");

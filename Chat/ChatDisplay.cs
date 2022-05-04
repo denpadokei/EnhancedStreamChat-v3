@@ -66,7 +66,6 @@ namespace EnhancedStreamChat.Chat
             this._catCoreManager.OnChatCleared += this.OnCatCoreManager_OnChatCleared;
             this._catCoreManager.OnFollow += this.OnCatCoreManager_OnFollow;
             this._catCoreManager.OnRewardRedeemed += this.OnCatCoreManager_OnRewardRedeemed;
-            this._catCoreManager.RunService();
         }
 
         public void OnMessageCleared(string messageId)
@@ -456,8 +455,8 @@ namespace EnhancedStreamChat.Chat
         // TODO: eventually figure out a way to make this more modular incase we want to create multiple instances of ChatDisplay
         private static readonly ConcurrentQueue<KeyValuePair<DateTime, IESCChatMessage>> s_backupMessageQueue = new ConcurrentQueue<KeyValuePair<DateTime, IESCChatMessage>>();
         private FloatingScreen _chatScreen;
-        private GameObject _chatContainer = new GameObject("chatContainer");
-        private GameObject _rootGameObject = new GameObject();
+        private readonly GameObject _chatContainer = new GameObject("chatContainer");
+        private readonly GameObject _rootGameObject = new GameObject();
         private Material _chatMoverMaterial;
         private ImageView _bg;
         private bool _updateMessagePositions = false;
@@ -536,7 +535,7 @@ namespace EnhancedStreamChat.Chat
                 }
                 this._textPoolContaner?.Despawn(msg);
             }
-            
+
             if (this._chatScreen != null) {
                 Destroy(this._chatScreen);
                 this._chatScreen = null;

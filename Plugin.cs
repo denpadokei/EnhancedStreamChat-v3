@@ -11,7 +11,7 @@ using IPALogger = IPA.Logging.Logger;
 
 namespace EnhancedStreamChat
 {
-    [HarmonyPatch("CatCore.Services.Twitch.TwitchIrcService, CatCore", "MessageReceivedHandler")]
+    [HarmonyPatch]
     [Plugin(RuntimeOptions.DynamicInit)]
     public class Plugin
     {
@@ -21,6 +21,20 @@ namespace EnhancedStreamChat
         internal static string Version => s_meta.HVersion.ToString() ?? Assembly.GetExecutingAssembly().GetName().Version.ToString();
         private static PluginMetadata s_meta;
         private static Harmony s_harmony;
+        private static readonly string[] s_twitchAuthorizationScope =
+        {
+            "channel:moderate",
+            "chat:edit",
+            "chat:read",
+            "bits:read",
+            "user:read:follows",
+            "channel:manage:broadcast",
+            "channel:manage:polls",
+            "channel:manage:predictions",
+            "channel:manage:redemptions",
+            "channel:read:redemptions",
+            "channel:read:subscriptions"
+        };
         [Init]
         public void Init(IPALogger logger, PluginMetadata meta, Config config, Zenjector zenjector)
         {
@@ -71,12 +85,13 @@ namespace EnhancedStreamChat
         {
 
         }
-
+#if DEBUG
+        [HarmonyPatch("CatCore.Services.Twitch.TwitchIrcService, CatCore", "MessageReceivedHandler")]
         [HarmonyPrefix]
-        public static void Prefix(ref string message)
+        public static void MessageReceivedHandlerPrefix(ref string message)
         {
 
-#if DEBUG
+
             try {
                 if (message.Contains(@"JOIN #")) {
                     return;
@@ -86,7 +101,29 @@ namespace EnhancedStreamChat
             catch (System.Exception r) {
                 Logger.Error(r);
             }
+
+        }
+
+        [HarmonyPatch("CatCore.Services.Twitch.TwitchPubSubServiceExperimentalAgent, CatCore", "MessageReceivedHandler")]
+        [HarmonyPrefix]
+        public static void HandleMessageTypeInternalPrefix(ref string receivedMessage)
+        {
+
+            try {
+                Logger.Info(receivedMessage);
+            }
+            catch (System.Exception r) {
+                Logger.Error(r);
+            }
+
+        }
 #endif
+
+        [HarmonyPatch("CatCore.Services.Twitch.TwitchAuthService, CatCore", "AuthorizationUrl")]
+        [HarmonyPrefix]
+        public static void StaticConstractPrefix(ref string[] ____twitchAuthorizationScope)
+        {
+            ____twitchAuthorizationScope = s_twitchAuthorizationScope;
         }
     }
 }

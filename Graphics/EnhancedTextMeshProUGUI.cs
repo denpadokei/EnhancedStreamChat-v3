@@ -85,7 +85,6 @@ namespace EnhancedStreamChat.Graphics
                             }
                             catch (Exception ex) {
                                 Logger.Error($"Exception while trying to overlay sprite. {ex}");
-                                img.sprite = null;
                                 this._imagePool?.Despawn(img);
                             }
                         }

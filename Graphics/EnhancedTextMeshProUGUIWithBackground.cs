@@ -24,7 +24,7 @@ namespace EnhancedStreamChat.Graphics
         private ImageView _accent;
         private VerticalLayoutGroup _verticalLayoutGroup;
         private MemoryPoolContainer<EnhancedTextMeshProUGUI> _textContainer;
-        private WaitWhile _waitNoGlowUINull = new WaitWhile(() => BeatSaberUtils.UINoGlowMaterial == null);
+        private WaitWhile _waitNoGlowUINull;
 
         public Vector2 Size
         {
@@ -80,7 +80,12 @@ namespace EnhancedStreamChat.Graphics
             }
         }
 
-        IEnumerator Start()
+        private void Awake()
+        {
+            this._waitNoGlowUINull = new WaitWhile(() => BeatSaberUtils.UINoGlowMaterial == null || this._highlight == null || this._accent == null);
+        }
+
+        private IEnumerator Start()
         {
             yield return this._waitNoGlowUINull;
             this._highlight.material = BeatSaberUtils.UINoGlowMaterial;
@@ -175,7 +180,7 @@ namespace EnhancedStreamChat.Graphics
             {
                 base.OnSpawned(item);
                 if (item._highlight.material != BeatSaberUtils.UINoGlowMaterial) {
-                    item._accent.material = BeatSaberUtils.UINoGlowMaterial;
+                    item._highlight.material = BeatSaberUtils.UINoGlowMaterial;
                 }
                 if (item._accent.material != BeatSaberUtils.UINoGlowMaterial) {
                     item._accent.material = BeatSaberUtils.UINoGlowMaterial;
