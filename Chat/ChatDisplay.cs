@@ -406,9 +406,16 @@ namespace EnhancedStreamChat.Chat
             });
         }
 
-        private void CatCoreManager_OnTwitchTextMessageReceived(CatCore.Services.Twitch.Interfaces.ITwitchService arg1, CatCore.Models.Twitch.IRC.TwitchMessage arg2)
+        private async void CatCoreManager_OnTwitchTextMessageReceived(CatCore.Services.Twitch.Interfaces.ITwitchService arg1, CatCore.Models.Twitch.IRC.TwitchMessage arg2)
         {
-            _ = this.OnTextMessageReceived(new ESCChatMessage(arg2), DateTime.Now);
+            var message = new ESCChatMessage(arg2);
+            await this.OnTextMessageReceived(new ESCChatMessage(arg2), DateTime.Now);
+            if (string.IsNullOrEmpty(message.SubMessage)) {
+                message = new ESCChatMessage(arg2);
+                message.Message = message.SubMessage;
+                message.IsSystemMessage = false;
+                await this.OnTextMessageReceived(new ESCChatMessage(arg2), DateTime.Now);
+            }
         }
 
         private void OnCatCoreManager_OnMessageDeleted(CatCore.Services.Multiplexer.MultiplexedPlatformService arg1, CatCore.Services.Multiplexer.MultiplexedChannel arg2, string arg3)

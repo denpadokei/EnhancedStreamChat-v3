@@ -15,7 +15,8 @@ namespace EnhancedStreamChat.Models
         public bool IsActionMessage { get; internal set; }
         public bool IsMentioned { get; internal set; }
         public bool IsHighlighted { get; internal set; }
-        public string Message { get; internal set; }
+        public string Message { get; internal set; } = "";
+        public string SubMessage { get; internal set; } = "";
         public IChatUser Sender { get; internal set; }
         public IESCChatChannel Channel { get; internal set; }
         public ReadOnlyCollection<IChatEmote> Emotes { get; internal set; } = new ReadOnlyCollection<IChatEmote>(Array.Empty<IChatEmote>());
@@ -25,7 +26,10 @@ namespace EnhancedStreamChat.Models
             this.IsSystemMessage = twitchMessage.IsSystemMessage;
             this.Metadata = twitchMessage.Metadata;
             this.Emotes = twitchMessage.Emotes;
-            if (!this.SystemMessageSetup()) {
+            if (this.SystemMessageSetup()) {
+                this.SubMessage = twitchMessage.Message;
+            }
+            else {
                 this.Message = twitchMessage.Message;
             }
             this.Id = twitchMessage.Id;
@@ -43,7 +47,7 @@ namespace EnhancedStreamChat.Models
         private bool SystemMessageSetup()
         {
             var updateMessage = false;
-            if (this.IsSystemMessage && this.Metadata.TryGetValue("msg-id", out var msgIdValue)) {
+            if (this.Metadata.TryGetValue("msg-id", out var msgIdValue)) {
                 switch (msgIdValue) {
                     case "skip-subs-mode-message":
                         this.Message = "Redeemed Send a Message In Sub-Only Mode";

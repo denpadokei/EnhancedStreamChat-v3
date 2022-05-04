@@ -11,6 +11,7 @@ namespace EnhancedStreamChat.Interfaces
         bool IsMentioned { get; }
         bool IsHighlighted { get; }
         string Message { get; }
+        string SubMessage { get; }
         IChatUser Sender { get; }
         IESCChatChannel Channel { get; }
         ReadOnlyCollection<IChatEmote> Emotes { get; }
