@@ -38,6 +38,10 @@ namespace EnhancedStreamChat.Models
             this.IsMentioned = twitchMessage.IsMentioned;
             this.Sender = twitchMessage.Sender;
             this.Channel = new ESCChatChannel(twitchMessage.Channel);
+#if DEBUG
+            Logger.Debug($"{this.Message}");
+            Logger.Debug($"{this.SubMessage}");
+#endif
         }
         public ESCChatMessage(string id, string message)
         {
@@ -62,13 +66,8 @@ namespace EnhancedStreamChat.Models
                         this.IsSystemMessage = true;
                         this.Emotes = new ReadOnlyCollection<IChatEmote>(Array.Empty<IChatEmote>());
                         break;
-                    case "sub":
-                    case "resub":
-                        this.Message = "";
-                        this.IsHighlighted = true;
-                        this.IsSystemMessage = true;
-                        updateMessage = true;
-                        break;
+                    //case "sub":
+                    //case "resub":
                     //case "raid":
                     default:
                         if (this.Metadata.TryGetValue("system-msg", out var systemMsgText)) {

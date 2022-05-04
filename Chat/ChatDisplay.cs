@@ -66,6 +66,7 @@ namespace EnhancedStreamChat.Chat
             this._catCoreManager.OnChatCleared += this.OnCatCoreManager_OnChatCleared;
             this._catCoreManager.OnFollow += this.OnCatCoreManager_OnFollow;
             this._catCoreManager.OnRewardRedeemed += this.OnCatCoreManager_OnRewardRedeemed;
+            this._catCoreManager.RunService();
         }
 
         public void OnMessageCleared(string messageId)

@@ -3,6 +3,7 @@ using CatCore.Models.Twitch.Media;
 using EnhancedStreamChat.Graphics;
 using EnhancedStreamChat.Interfaces;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -14,6 +15,8 @@ namespace EnhancedStreamChat.Chat
     public class ChatMessageBuilder
     {
         private readonly ChatImageProvider _chatImageProvider;
+        private readonly ConcurrentDictionary<string, Color> _senderColor = new ConcurrentDictionary<string, Color>();
+        private readonly System.Random _random = new System.Random(Environment.TickCount);
 
         public ChatMessageBuilder(ChatImageProvider chatImageProvider)
         {
@@ -150,6 +153,10 @@ namespace EnhancedStreamChat.Chat
                 else {
                     var nameColorCode = msg.Sender.Color;
                     if (ColorUtility.TryParseHtmlString(msg.Sender.Color.Substring(0, 7), out var nameColor)) {
+                        if (nameColor == Color.white && !this._senderColor.TryGetValue(msg.Sender.Id, out nameColor)) {
+                            nameColor = new Color(((float)this._random.Next(0, 100000) / 100000), ((float)this._random.Next(0, 100000) / 100000), ((float)this._random.Next(0, 100000) / 100000));
+                            this._senderColor.TryAdd(msg.Id, nameColor);
+                        }
                         Color.RGBToHSV(nameColor, out var h, out var s, out var v);
                         if (v < 0.85f) {
                             v = 0.85f;

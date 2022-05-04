@@ -75,8 +75,17 @@ namespace EnhancedStreamChat
         [HarmonyPrefix]
         public static void Prefix(ref string message)
         {
+
 #if DEBUG
-            Logger.Info(message);
+            try {
+                if (message.Contains(@"JOIN #")) {
+                    return;
+                }
+                Logger.Info(message);
+            }
+            catch (System.Exception r) {
+                Logger.Error(r);
+            }
 #endif
         }
     }

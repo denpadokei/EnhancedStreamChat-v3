@@ -21,6 +21,7 @@ namespace EnhancedStreamChat.Interfaces
         event Action<MultiplexedPlatformService, MultiplexedMessage> OnTextMessageReceived;
         event Action<ITwitchService, TwitchMessage> OnTwitchTextMessageReceived;
 
+        void RunService();
         void LaunchWebPortal(bool shouldLaunchPortal = true);
     }
 
