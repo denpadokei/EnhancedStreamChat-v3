@@ -119,6 +119,7 @@ namespace EnhancedStreamChat.Graphics
                 foreach (var reciver in this._recivers.items) {
                     reciver?.LatePreRenderRebuildHandler(this, EventArgs.Empty);
                 }
+                this._rebuiled = false;
             }
         }
 

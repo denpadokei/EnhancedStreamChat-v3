@@ -35,7 +35,6 @@ namespace EnhancedStreamChat.Chat
         #endregion
         //ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*
         #region // イベント
-
         #endregion
         //ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*
         #region // オーバーライドメソッド
@@ -156,7 +155,6 @@ namespace EnhancedStreamChat.Chat
                     Destroy(rectMask2D);
                 }
 
-                this._chatContainer = new GameObject("chatContainer");
                 this._chatContainer.transform.SetParent(this._chatScreen.transform, false);
                 this._chatContainer.AddComponent<RectMask2D>().rectTransform.sizeDelta = screenSize;
 
@@ -165,8 +163,6 @@ namespace EnhancedStreamChat.Chat
                 canvas.sortingOrder = 3;
 
                 this._chatScreen.SetRootViewController(this, AnimationType.None);
-                this._rootGameObject = new GameObject();
-                DontDestroyOnLoad(this._rootGameObject);
 
                 this._chatMoverMaterial = Instantiate(BeatSaberUtils.UINoGlowMaterial);
                 this._chatMoverMaterial.color = Color.clear;
@@ -176,6 +172,7 @@ namespace EnhancedStreamChat.Chat
                 renderer.material.mainTexture = this._chatMoverMaterial.mainTexture;
 
                 this._chatScreen.transform.SetParent(this._rootGameObject.transform);
+                DontDestroyOnLoad(this._rootGameObject);
                 this._chatScreen.ScreenRotation = Quaternion.Euler(this.ChatRotation);
 
                 this._bg = this._chatScreen.GetComponentsInChildren<ImageView>().FirstOrDefault(x => x.name == "bg");
@@ -451,8 +448,8 @@ namespace EnhancedStreamChat.Chat
         // TODO: eventually figure out a way to make this more modular incase we want to create multiple instances of ChatDisplay
         private static readonly ConcurrentQueue<KeyValuePair<DateTime, IESCChatMessage>> s_backupMessageQueue = new ConcurrentQueue<KeyValuePair<DateTime, IESCChatMessage>>();
         private FloatingScreen _chatScreen;
-        private GameObject _chatContainer;
-        private GameObject _rootGameObject;
+        private GameObject _chatContainer = new GameObject("chatContainer");
+        private GameObject _rootGameObject = new GameObject();
         private Material _chatMoverMaterial;
         private ImageView _bg;
         private bool _updateMessagePositions = false;
@@ -480,8 +477,8 @@ namespace EnhancedStreamChat.Chat
             if (!this._disposedValue) {
                 if (disposing) {
                     try {
-                        if (this.gameObject != null) {
-                            Destroy(this.gameObject);
+                        if (this._rootGameObject != null) {
+                            Destroy(this._rootGameObject);
                         }
                     }
                     catch (Exception e) {
@@ -531,7 +528,7 @@ namespace EnhancedStreamChat.Chat
                 }
                 this._textPoolContaner?.Despawn(msg);
             }
-            Destroy(this._rootGameObject);
+            
             if (this._chatScreen != null) {
                 Destroy(this._chatScreen);
                 this._chatScreen = null;
@@ -539,6 +536,9 @@ namespace EnhancedStreamChat.Chat
             if (this._chatMoverMaterial != null) {
                 Destroy(this._chatMoverMaterial);
                 this._chatMoverMaterial = null;
+            }
+            if (this._bg != null) {
+                Destroy(this._bg.material);
             }
         }
 
