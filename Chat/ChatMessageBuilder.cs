@@ -80,7 +80,7 @@ namespace EnhancedStreamChat.Chat
             return result.All(x => x != null);
         }
 
-        public async Task<string> BuildMessage(IESCChatMessage msg, EnhancedFontInfo font)
+        public async Task<string> BuildMessage(IESCChatMessage msg, EnhancedFontInfo font, BuildMessageTarget buildMessage)
         {
             try {
                 if (!await this.PrepareImages(msg, font)) {
@@ -97,7 +97,7 @@ namespace EnhancedStreamChat.Chat
                         badges.Push(badgeInfo);
                     }
                 }
-                var sb = new StringBuilder(msg.Message); // Replace all instances of < with a zero-width non-breaking character
+                var sb = buildMessage == BuildMessageTarget.Main ? new StringBuilder(msg.Message) : new StringBuilder(msg.SubMessage); // Replace all instances of < with a zero-width non-breaking character
                 foreach (var emote in msg.Emotes) {
                     if (emote is TwitchEmote twitchEmote && 0 < twitchEmote.Bits) {
                         continue;
@@ -145,17 +145,17 @@ namespace EnhancedStreamChat.Chat
                         Logger.Error($"An unknown error occurred while trying to swap emote {emote.Name} into string of length {sb.Length} at location ({emote.StartIndex}, {emote.EndIndex})\r\n{ex}");
                     }
                 }
-                if (msg.IsSystemMessage) {
+                if (buildMessage == BuildMessageTarget.Main && msg.IsSystemMessage) {
                     // System messages get a grayish color to differenciate them from normal messages in chat, and do not receive a username/badge prefix
                     sb.Insert(0, $"<color=#bbbbbbbb>");
                     sb.Append("</color>");
                 }
                 else {
-                    var nameColorCode = msg.Sender.Color;
-                    if (ColorUtility.TryParseHtmlString(msg.Sender.Color.Substring(0, 7), out var nameColor)) {
-                        if (nameColor == Color.white && !s_senderColor.TryGetValue(msg.Sender.UserName, out nameColor)) {
+                    var nameColorCode = msg.Sender?.Color;
+                    if (ColorUtility.TryParseHtmlString(nameColorCode?.Substring(0, 7), out var nameColor)) {
+                        if (nameColor == Color.white && !s_senderColor.TryGetValue(msg.Sender?.UserName, out nameColor)) {
                             nameColor = new Color(((float)this._random.Next(0, 100000) / 100000), ((float)this._random.Next(0, 100000) / 100000), ((float)this._random.Next(0, 100000) / 100000));
-                            s_senderColor.TryAdd(msg.Sender.UserName, nameColor);
+                            s_senderColor.TryAdd(msg.Sender?.UserName, nameColor);
                         }
                         Color.RGBToHSV(nameColor, out var h, out var s, out var v);
                         if (v < 0.85f) {
@@ -167,12 +167,12 @@ namespace EnhancedStreamChat.Chat
                     }
                     if (msg.IsActionMessage) {
                         // Message becomes the color of their name if it's an action message
-                        sb.Insert(0, $"<color={nameColorCode}><b>{msg.Sender.DisplayName}</b> ");
+                        sb.Insert(0, $"<color={nameColorCode}><b>{msg.Sender?.DisplayName}</b> ");
                         sb.Append("</color>");
                     }
                     else {
                         // Insert username w/ color
-                        sb.Insert(0, $"<color={nameColorCode}><b>{msg.Sender.DisplayName}</b></color>: ");
+                        sb.Insert(0, $"<color={nameColorCode}><b>{msg.Sender?.DisplayName}</b></color>: ");
                     }
                     var parsedBadge = new HashSet<string>();
                     if (msg.Sender is TwitchUser twitchUser1) {

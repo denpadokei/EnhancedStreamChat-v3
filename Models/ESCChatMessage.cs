@@ -24,8 +24,12 @@ namespace EnhancedStreamChat.Models
         public ESCChatMessage(TwitchMessage twitchMessage)
         {
             this.IsSystemMessage = twitchMessage.IsSystemMessage;
-            this.Metadata = twitchMessage.Metadata;
-            this.Emotes = twitchMessage.Emotes;
+            if (twitchMessage.Metadata != null) {
+                this.Metadata = twitchMessage.Metadata;
+            }
+            if (twitchMessage.Emotes != null) {
+                this.Emotes = twitchMessage.Emotes;
+            }
             if (this.SystemMessageSetup()) {
                 this.SubMessage = twitchMessage.Message;
             }

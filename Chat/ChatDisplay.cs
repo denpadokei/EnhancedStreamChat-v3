@@ -101,8 +101,9 @@ namespace EnhancedStreamChat.Chat
 
         public async Task OnTextMessageReceived(IESCChatMessage msg, DateTime dateTime)
         {
-            var parsedMessage = await this._chatMessageBuilder.BuildMessage(msg, this._fontManager.FontInfo);
-            _ = MainThreadInvoker.Invoke(() => this.CreateMessage(msg, dateTime, parsedMessage));
+            var main = await this._chatMessageBuilder.BuildMessage(msg, this._fontManager.FontInfo, BuildMessageTarget.Main);
+            var sub = await this._chatMessageBuilder.BuildMessage(msg, this._fontManager.FontInfo, BuildMessageTarget.Sub);
+            _ = MainThreadInvoker.Invoke(() => this.CreateMessage(msg, dateTime, main, sub));
         }
 
         [AffinityPatch(typeof(VRPointer), nameof(VRPointer.OnEnable))]
@@ -370,26 +371,17 @@ namespace EnhancedStreamChat.Chat
                 msg.SubText.text = this.BuildClearedMessage(msg.SubText);
             }
         }
-        private void CreateMessage(IESCChatMessage msg, DateTime date, string parsedMessage)
+        private void CreateMessage(IESCChatMessage msg, DateTime date, string mainMessage, string subMassage)
         {
-            if (this._lastMessage != null && !msg.IsSystemMessage && this._lastMessage.Text.ChatMessage.Id == msg.Id) {
-                // If the last message received had the same id and isn't a system message, then this was a sub-message of the original and may need to be highlighted along with the original message
-                this._lastMessage.SubText.text = parsedMessage;
-                this._lastMessage.SubText.ChatMessage = msg;
-                this._lastMessage.SubTextEnabled = true;
-                this.UpdateMessage(this._lastMessage, true);
-            }
-            else {
-                var newMsg = this._textPoolContaner.Spawn();
-                newMsg.transform.SetParent(this._chatContainer.transform, false);
-                this.UpdateMessage(newMsg);
-                newMsg.gameObject.SetActive(true);
-                newMsg.Text.ChatMessage = msg;
-                newMsg.Text.text = parsedMessage;
-                newMsg.ReceivedDate = date;
-                this.AddMessage(newMsg);
-                this._lastMessage = newMsg;
-            }
+            var newMsg = this._textPoolContaner.Spawn();
+            newMsg.transform.SetParent(this._chatContainer.transform, false);
+            newMsg.Text.ChatMessage = msg;
+            newMsg.Text.text = mainMessage;
+            // If the last message received had the same id and isn't a system message, then this was a sub-message of the original and may need to be highlighted along with the original message
+            newMsg.SubText.text = subMassage;
+            newMsg.SubTextEnabled = !string.IsNullOrEmpty(msg.SubMessage);
+            newMsg.ReceivedDate = date;
+            this.AddMessage(newMsg);
             this._updateMessagePositions = true;
         }
         private void CatCoreManager_OnJoinChannel(CatCore.Services.Multiplexer.MultiplexedPlatformService arg1, CatCore.Services.Multiplexer.MultiplexedChannel arg2)
@@ -406,16 +398,9 @@ namespace EnhancedStreamChat.Chat
             });
         }
 
-        private async void CatCoreManager_OnTwitchTextMessageReceived(CatCore.Services.Twitch.Interfaces.ITwitchService arg1, CatCore.Models.Twitch.IRC.TwitchMessage arg2)
+        private void CatCoreManager_OnTwitchTextMessageReceived(CatCore.Services.Twitch.Interfaces.ITwitchService arg1, CatCore.Models.Twitch.IRC.TwitchMessage arg2)
         {
-            var message = new ESCChatMessage(arg2);
-            await this.OnTextMessageReceived(new ESCChatMessage(arg2), DateTime.Now);
-            if (!string.IsNullOrEmpty(message.SubMessage)) {
-                message = new ESCChatMessage(arg2);
-                message.Message = message.SubMessage;
-                message.IsSystemMessage = false;
-                await this.OnTextMessageReceived(new ESCChatMessage(arg2), DateTime.Now);
-            }
+            _ = this.OnTextMessageReceived(new ESCChatMessage(arg2), DateTime.Now);
         }
 
         private void OnCatCoreManager_OnMessageDeleted(CatCore.Services.Multiplexer.MultiplexedPlatformService arg1, CatCore.Services.Multiplexer.MultiplexedChannel arg2, string arg3)
@@ -461,7 +446,6 @@ namespace EnhancedStreamChat.Chat
         private ImageView _bg;
         private bool _updateMessagePositions = false;
         private readonly WaitForEndOfFrame _waitForEndOfFrame = new WaitForEndOfFrame();
-        private EnhancedTextMeshProUGUIWithBackground _lastMessage;
         private MemoryPoolContainer<EnhancedTextMeshProUGUIWithBackground> _textPoolContaner;
         private ICatCoreManager _catCoreManager;
         private ChatMessageBuilder _chatMessageBuilder;

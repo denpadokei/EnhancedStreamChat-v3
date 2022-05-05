@@ -126,4 +126,10 @@ namespace EnhancedStreamChat
             ____twitchAuthorizationScope = s_twitchAuthorizationScope;
         }
     }
+
+    public enum BuildMessageTarget
+    {
+        Main,
+        Sub
+    }
 }
