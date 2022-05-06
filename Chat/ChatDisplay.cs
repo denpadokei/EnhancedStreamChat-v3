@@ -331,7 +331,7 @@ namespace EnhancedStreamChat.Chat
         }
         private void ClearOldMessages()
         {
-            while (this._messages.TryPeek(out var msg) && this.ReverseChatOrder ? msg.transform.localPosition.y < 0 - (msg.transform as RectTransform).sizeDelta.y : msg.transform.localPosition.y >= this._chatConfig.ChatHeight) {
+            while (this._messages.TryPeek(out var msg) && this.ReverseChatOrder ? msg.transform.localPosition.y < -this._chatConfig.ChatHeight : msg.transform.localPosition.y >= this._chatConfig.ChatHeight) {
                 if (this._messages.TryDequeue(out msg)) {
                     msg.RemoveReciver(this);
                     this._textPoolContaner.Despawn(msg);
