@@ -23,7 +23,7 @@ namespace EnhancedStreamChat.Graphics
         private ImageView _highlight;
         private ImageView _accent;
         private VerticalLayoutGroup _verticalLayoutGroup;
-        private MemoryPoolContainer<EnhancedTextMeshProUGUI> _textContainer;
+        private EnhancedTextMeshProUGUI.Factory _factory;
         private WaitWhile _waitNoGlowUINull;
 
         public Vector2 Size
@@ -93,9 +93,9 @@ namespace EnhancedStreamChat.Graphics
         }
 
         [Inject]
-        public void Constact(EnhancedTextMeshProUGUI.Pool pool)
+        public void Constract(EnhancedTextMeshProUGUI.Factory factory)
         {
-            this._textContainer = new MemoryPoolContainer<EnhancedTextMeshProUGUI>(pool);
+            this._factory = factory;
         }
 
         protected void OnDestroy()
@@ -103,10 +103,8 @@ namespace EnhancedStreamChat.Graphics
             try {
                 this.Text.RemoveReciver(this);
                 this.SubText.RemoveReciver(this);
-                if (this._textContainer != null) {
-                    this._textContainer.Despawn(this.Text);
-                    this._textContainer.Despawn(this.SubText);
-                }
+                Destroy(this.Text);
+                Destroy(this.SubText);
             }
             catch (Exception) {
             }
@@ -146,9 +144,9 @@ namespace EnhancedStreamChat.Graphics
                 item._highlight = item.gameObject.GetComponent<ImageView>();
                 item._highlight.raycastTarget = false;
 
-                item.Text = item._textContainer.Spawn();
+                item.Text = item._factory.Create();
                 item.Text.AddReciver(item);
-                item.SubText = item._textContainer.Spawn();
+                item.SubText = item._factory.Create();
                 item.SubText.AddReciver(item);
 
                 item._accent = new GameObject().AddComponent<ImageView>();
@@ -209,8 +207,6 @@ namespace EnhancedStreamChat.Graphics
                 msg.Text.ChatMessage = null;
                 msg.SubText.text = "";
                 msg.SubText.ChatMessage = null;
-                msg.Text.ClearImages();
-                msg.SubText.ClearImages();
             }
         }
     }

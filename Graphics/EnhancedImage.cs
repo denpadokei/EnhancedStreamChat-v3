@@ -33,11 +33,11 @@ namespace EnhancedStreamChat.Graphics
                     img.AnimStateUpdater.controllerData = null;
                     img.sprite = null;
                     img.SetAllDirty();
+                    base.OnDespawned(img);
                 }
                 catch (Exception ex) {
                     Logger.Error($"Exception while freeing EnhancedImage in EnhancedTextMeshProUGUI. {ex}");
                 }
-                base.OnDespawned(img);
             }
         }
     }

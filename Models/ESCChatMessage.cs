@@ -62,13 +62,13 @@ namespace EnhancedStreamChat.Models
                         this.Message = "Redeemed Send a Message In Sub-Only Mode";
                         this.IsHighlighted = false;
                         this.IsSystemMessage = true;
-                        this.Emotes = new ReadOnlyCollection<IChatEmote>(Array.Empty<IChatEmote>());
+                        updateMessage = true;
                         break;
                     case "highlighted-message":
                         this.Message = "Redeemed Highlight My Message";
                         this.IsHighlighted = true;
                         this.IsSystemMessage = true;
-                        this.Emotes = new ReadOnlyCollection<IChatEmote>(Array.Empty<IChatEmote>());
+                        updateMessage = true;
                         break;
                     //case "sub":
                     //case "resub":

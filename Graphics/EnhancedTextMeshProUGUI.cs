@@ -21,7 +21,6 @@ namespace EnhancedStreamChat.Graphics
         private readonly LazyCopyHashSet<ILatePreRenderRebuildReciver> _recivers = new LazyCopyHashSet<ILatePreRenderRebuildReciver>();
         public ILazyCopyHashSet<ILatePreRenderRebuildReciver> LazyCopyHashSet => this._recivers;
 
-        [Inject]
         public void Constract(EnhancedImage.Pool image, ESCFontManager fontManager)
         {
             this._imagePool = new MemoryPoolContainer<EnhancedImage>(image);
@@ -36,8 +35,13 @@ namespace EnhancedStreamChat.Graphics
 
         public void ClearImages()
         {
-            while (this._imagePool?.activeItems != null && this._imagePool.activeItems.Any()) {
-                this._imagePool.Despawn(this._imagePool.activeItems[0]);
+            try {
+                while (this._imagePool?.activeItems != null && this._imagePool?.activeItems.Any() == true) {
+                    this._imagePool?.Despawn(this._imagePool.activeItems[0]);
+                }
+            }
+            catch (Exception e) {
+                Logger.Error(e);
             }
         }
 
@@ -48,7 +52,8 @@ namespace EnhancedStreamChat.Graphics
                     MainThreadInvoker.Invoke(() =>
                     {
                         this.ClearImages();
-                        foreach (var c in this.textInfo.characterInfo) {
+                        for (var i = 0; i < this.textInfo.characterCount; i++) {
+                            var c = this.textInfo.characterInfo[i];
                             if (!c.isVisible || string.IsNullOrEmpty(this.text) || c.index >= this.text.Length) {
                                 // Skip invisible/empty/out of range chars
                                 continue;
@@ -65,7 +70,7 @@ namespace EnhancedStreamChat.Graphics
                             }
                             var img = this._imagePool?.Spawn();
                             if (img == null) {
-                                return;
+                                continue;
                             }
                             try {
                                 img.rectTransform.SetParent(this.rectTransform, false);
@@ -122,15 +127,8 @@ namespace EnhancedStreamChat.Graphics
             }
         }
 
-        public class Pool : MonoMemoryPool<EnhancedTextMeshProUGUI>
+        public class Factory : PlaceholderFactory<EnhancedTextMeshProUGUI>
         {
-            protected override void OnDespawned(EnhancedTextMeshProUGUI item)
-            {
-                if (item == null || item.gameObject == null) {
-                    return;
-                }
-                base.OnDespawned(item);
-            }
         }
     }
 }
