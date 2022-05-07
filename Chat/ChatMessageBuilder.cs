@@ -7,6 +7,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using UnityEngine;
 
@@ -34,7 +35,7 @@ namespace EnhancedStreamChat.Chat
             var tasks = new List<Task<EnhancedImageInfo>>();
             var pendingEmoteDownloads = new HashSet<string>();
 
-            foreach (var emote in msg.Emotes.OfType<TwitchEmote>()) {
+            foreach (var emote in msg.Emotes) {
                 if (string.IsNullOrEmpty(emote.Id) || pendingEmoteDownloads.Contains(emote.Id)) {
                     continue;
                 }
@@ -43,10 +44,8 @@ namespace EnhancedStreamChat.Chat
                     var tcs = new TaskCompletionSource<EnhancedImageInfo>();
                     SharedCoroutineStarter.instance.StartCoroutine(this._chatImageProvider.TryCacheSingleImage(emote.Id, emote.Url, emote.Animated, (info) =>
                     {
-                        if (info != null) {
-                            if (!font.TryRegisterImageInfo(info, out var character)) {
-                                Logger.Warn($"Failed to register emote \"{emote.Id}\" in font {font.Font.name}.");
-                            }
+                        if (info == null || !font.TryRegisterImageInfo(info, out var character)) {
+                            Logger.Warn($"Failed to register emote \"{emote.Id}\" in font {font.Font.name}.");
                         }
                         tcs.SetResult(info);
                     }, forcedHeight: 110));
@@ -115,7 +114,14 @@ namespace EnhancedStreamChat.Chat
                     //Logger.Info($"target char {character}");
                     try {
                         // Replace emotes by index, in reverse order (msg.Emotes is sorted by emote.StartIndex in descending order)
-                        sb.Replace(emote.Name, char.ConvertFromUtf32((int)character));
+                        if (Regex.IsMatch(emote.Id, "^Emoji_")) {
+                            var charIndexText = Regex.Replace(emote.Id, "^Emoji_", "");
+                            var charIndex = Convert.ToInt32($"0x{charIndexText}", 16);
+                            sb.Replace(char.ConvertFromUtf32(charIndex), char.ConvertFromUtf32((int)character));
+                        }
+                        else {
+                            sb.Replace(emote.Name, char.ConvertFromUtf32((int)character));
+                        }
                     }
                     catch (Exception ex) {
                         Logger.Error($"An unknown error occurred while trying to swap emote {emote.Name} into string of length {sb.Length} at location ({emote.StartIndex}, {emote.EndIndex})\r\n{ex}");

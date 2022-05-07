@@ -74,7 +74,7 @@ namespace EnhancedStreamChat.Chat
                     if (!isRetry) {
                         Logger.Error($"A network error occurred during request to {uri}. Retrying in 3 seconds... {wr.error}");
                         yield return new WaitForSeconds(3);
-                        MainThreadInvoker.Invoke(() => this.DownloadContent(uri, Finally, true));
+                        SharedCoroutineStarter.instance.StartCoroutine(this.DownloadContent(uri, Finally, true));
                         yield break;
                     }
                     activeDownload.Finally?.Invoke(new byte[0]);

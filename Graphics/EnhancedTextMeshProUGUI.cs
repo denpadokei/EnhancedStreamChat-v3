@@ -65,7 +65,7 @@ namespace EnhancedStreamChat.Graphics
                                 character = (uint)char.ConvertToUtf32(this.text[c.index], this.text[c.index + 1]);
                             }
                             if (this.FontInfo == null || !this.FontInfo.TryGetImageInfo(character, out var imageInfo) || imageInfo is null) {
-                                //Logger.Debug("Skip characters that have no imageInfo registered");
+                                //Logger.Debug($"{c.character}:{character}, Skip characters that have no imageInfo registered");
                                 continue;
                             }
                             var img = this._imagePool?.Spawn();
