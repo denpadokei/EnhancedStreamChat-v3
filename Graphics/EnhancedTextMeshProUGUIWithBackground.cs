@@ -70,6 +70,9 @@ namespace EnhancedStreamChat.Graphics
             get => this.SubText.enabled;
             set
             {
+                if (this.SubText == null) {
+                    return;
+                }
                 this.SubText.enabled = value;
                 if (value) {
                     this.SubText.rectTransform.SetParent(this.gameObject.transform, false);
