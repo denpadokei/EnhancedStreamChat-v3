@@ -59,7 +59,7 @@
       <Private>False</Private>
     </Reference>
     <Reference Include="SiraUtil">
-      <HintPath>D:\Oculus\Software\hyperbolic-magnetism-beat-saber\Plugins\SiraUtil.dll</HintPath>
+      <HintPath>$(BeatSaberDir)\Plugins\SiraUtil.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Unity.TextMeshPro">
