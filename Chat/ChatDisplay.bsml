@@ -37,6 +37,7 @@
               <clickable-text text='click here' default-color='#00bcff' on-click='launch-web-app' highlight-color='cyan' font-size='5'></clickable-text>
               <text text='.'  font-size='5'></text>
             </horizontal>
+            <button text='ReConnect' on-click='re-connect' font-size='8' anchor-pos-y='-1' interactable='~re-connect-enable'></button>
           </vertical>
         </tab>
         <tab tags ='settings-tab' tab-name='About'>

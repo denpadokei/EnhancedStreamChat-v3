@@ -7,6 +7,9 @@ using CatCore.Services.Twitch.Interfaces;
 using EnhancedStreamChat.Interfaces;
 using System;
 using Zenject;
+using CatCore.Services.Twitch;
+using System.Reflection;
+using System.Threading.Tasks;
 #if DEBUG
 using CatCore.Logging;
 using IPA.Logging;
@@ -52,6 +55,7 @@ namespace EnhancedStreamChat.CatCoreWrapper
             }
             this._chatServiceMultiplexer = this._instance.RunAllServices();
             this._twitchPratformService = this._chatServiceMultiplexer.GetTwitchPlatformService();
+            this._twitchIrcService = typeof(TwitchService).GetField("_twitchIrcService", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(this._twitchPratformService);
             this._twitchPubSubServiceManager = this._twitchPratformService.GetPubSubService();
             this._twitchPubSubServiceManager.OnFollow += this.OnTwitchPubSubServiceManager_OnFollow;
             this._twitchPubSubServiceManager.OnRewardRedeemed += this.OnTwitchPubSubServiceManager_OnRewardRedeemed;
@@ -72,6 +76,18 @@ namespace EnhancedStreamChat.CatCoreWrapper
                 return;
             }
             this._instance.LaunchWebPortal();
+        }
+
+        public Task Start()
+        {
+            var task = this._start?.Invoke(this._twitchIrcService, null);
+            return task as Task ?? Task.CompletedTask;
+        }
+
+        public Task Stop()
+        {
+            var task = this._stop?.Invoke(this._twitchIrcService, null);
+            return task as Task ?? Task.CompletedTask;
         }
         #endregion
         //ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*
@@ -136,6 +152,9 @@ namespace EnhancedStreamChat.CatCoreWrapper
         private ITwitchService _twitchPratformService;
         private ITwitchPubSubServiceManager _twitchPubSubServiceManager;
         private bool _disposedValue;
+        private object _twitchIrcService;
+        private readonly MethodInfo _start = Type.GetType("CatCore.Services.Twitch.TwitchIrcService, CatCore").GetMethod("CatCore.Services.Twitch.Interfaces.ITwitchIrcService.Start", BindingFlags.NonPublic | BindingFlags.Instance);
+        private readonly MethodInfo _stop = Type.GetType("CatCore.Services.Twitch.TwitchIrcService, CatCore").GetMethod("CatCore.Services.Twitch.Interfaces.ITwitchIrcService.Stop", BindingFlags.NonPublic | BindingFlags.Instance);
         #endregion
         //ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*
         #region // 構築・破棄

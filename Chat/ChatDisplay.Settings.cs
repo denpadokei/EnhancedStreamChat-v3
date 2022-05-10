@@ -310,6 +310,17 @@ namespace EnhancedStreamChat.Chat
             }
         }
 
+        /// <summary>説明 を取得、設定</summary>
+        private bool _reconnectEnable = true;
+        [UIValue("re-connect-enable")]
+        /// <summary>説明 を取得、設定</summary>
+        public bool ReconnectEnable
+        {
+            get => this._reconnectEnable;
+
+            set => this.SetProperty(ref this._reconnectEnable, value);
+        }
+
         [UIValue("mod-version")]
         public string ModVersion => Plugin.Version;
 
@@ -341,6 +352,22 @@ namespace EnhancedStreamChat.Chat
         protected void OnHideSettings()
         {
             Logger.Info("Saving settings!");
+        }
+
+        [UIAction("re-connect")]
+        protected void ReConnect()
+        {
+            try {
+                this.ReconnectEnable = false;
+                this._catCoreManager.Stop().ContinueWith(async task =>
+                {
+                    await this._catCoreManager.Start();
+                    this.ReconnectEnable = true;
+                });
+            }
+            catch (System.Exception e) {
+                Logger.Error(e);
+            }
         }
 
         private void HideSettings()

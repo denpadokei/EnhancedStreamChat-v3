@@ -4,6 +4,7 @@ using CatCore.Models.Twitch.PubSub.Responses.ChannelPointsChannelV1;
 using CatCore.Services.Multiplexer;
 using CatCore.Services.Twitch.Interfaces;
 using System;
+using System.Threading.Tasks;
 
 namespace EnhancedStreamChat.Interfaces
 {
@@ -23,6 +24,8 @@ namespace EnhancedStreamChat.Interfaces
 
         void RunService();
         void LaunchWebPortal(bool shouldLaunchPortal = true);
+        Task Start();
+        Task Stop();
     }
 
     public delegate void OnRewardRedeemedHandler(string channelId, in RewardRedeemedData data);
