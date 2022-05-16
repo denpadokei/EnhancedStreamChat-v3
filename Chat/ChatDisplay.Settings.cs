@@ -2,6 +2,7 @@
 using BeatSaberMarkupLanguage.Components.Settings;
 using BeatSaberMarkupLanguage.Parser;
 using BeatSaberMarkupLanguage.ViewControllers;
+using EnhancedStreamChat.Utilities;
 using HMUI;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -20,7 +21,7 @@ namespace EnhancedStreamChat.Chat
                 return false;
             }
             oldValue = newValue;
-            this.OnPropertyChanged(new PropertyChangedEventArgs(name));
+            MainThreadInvoker.Invoke(() => this.OnPropertyChanged(new PropertyChangedEventArgs(name)));
             return true;
         }
 
@@ -357,6 +358,9 @@ namespace EnhancedStreamChat.Chat
         [UIAction("re-connect")]
         protected void ReConnect()
         {
+            if (!this.ReconnectEnable) {
+                return;
+            }
             try {
                 this.ReconnectEnable = false;
                 this._catCoreManager.Stop().ContinueWith(async task =>

@@ -4,6 +4,7 @@ using BeatSaberMarkupLanguage.ViewControllers;
 using BS_Utils.Utilities;
 using EnhancedStreamChat.Configuration;
 using EnhancedStreamChat.Graphics;
+using EnhancedStreamChat.HarmonyPatches;
 using EnhancedStreamChat.Interfaces;
 using EnhancedStreamChat.Models;
 using EnhancedStreamChat.Utilities;
@@ -28,7 +29,7 @@ using Color = UnityEngine.Color;
 namespace EnhancedStreamChat.Chat
 {
     [HotReload]
-    public partial class ChatDisplay : BSMLAutomaticViewController, IAsyncInitializable, IChatDisplay, IDisposable, IAffinity, ILatePreRenderRebuildReciver
+    public partial class ChatDisplay : BSMLAutomaticViewController, IAsyncInitializable, IChatDisplay, IDisposable, IAffinity, ILatePreRenderRebuildReciver, IIrcServiceDisconnectReceiver
     {
         //ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*
         #region // プロパティ
@@ -57,6 +58,7 @@ namespace EnhancedStreamChat.Chat
             while (s_backupMessageQueue.TryDequeue(out var msg)) {
                 await this.OnTextMessageReceived(msg.Value, msg.Key);
             }
+            TwitchIrcServicePatch.RegistReceiver(this);
             this._chatConfig.OnConfigChanged += this.Instance_OnConfigChanged;
             BSEvents.menuSceneActive += this.BSEvents_menuSceneActive;
             BSEvents.gameSceneActive += this.BSEvents_gameSceneActive;
@@ -111,6 +113,14 @@ namespace EnhancedStreamChat.Chat
         public void VRPointerOnEnable(VRPointer __instance)
         {
             this.PointerOnEnabled(__instance);
+        }
+
+        public void OnDisconnect(object ircService)
+        {
+            if (!this._chatConfig.ForceAutoReconnect || !this.ReconnectEnable) {
+                return;
+            }
+            this.ReConnect();
         }
 
         public void LatePreRenderRebuildHandler(object sender, EventArgs e)
@@ -506,6 +516,7 @@ namespace EnhancedStreamChat.Chat
             this._catCoreManager.OnChatCleared -= this.OnCatCoreManager_OnChatCleared;
             this._catCoreManager.OnFollow -= this.OnCatCoreManager_OnFollow;
             this._catCoreManager.OnRewardRedeemed -= this.OnCatCoreManager_OnRewardRedeemed;
+            TwitchIrcServicePatch.UnRegistReceiver(this);
             this.StopAllCoroutines();
             while (this._messages.TryDequeue(out var msg)) {
                 if (msg != null) {
