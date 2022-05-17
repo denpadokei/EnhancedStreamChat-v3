@@ -13,7 +13,6 @@ namespace EnhancedStreamChat.Interfaces
         string Message { get; }
         string SubMessage { get; }
         IChatUser Sender { get; }
-        IESCChatChannel Channel { get; }
         ReadOnlyCollection<IChatEmote> Emotes { get; }
         ReadOnlyDictionary<string, string> Metadata { get; }
     }

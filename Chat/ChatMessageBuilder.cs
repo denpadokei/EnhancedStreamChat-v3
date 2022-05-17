@@ -153,7 +153,7 @@ namespace EnhancedStreamChat.Chat
                 }
                 if (buildMessage == BuildMessageTarget.Main && msg.IsSystemMessage) {
                     // System messages get a grayish color to differenciate them from normal messages in chat, and do not receive a username/badge prefix
-                    sb.Insert(0, $"<color=#bbbbbbbb>");
+                    sb.Insert(0, $"<color=#bbbbbbff>");
                     sb.Append("</color>");
                 }
                 else {

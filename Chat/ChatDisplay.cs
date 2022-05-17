@@ -48,7 +48,7 @@ namespace EnhancedStreamChat.Chat
                 await Task.Yield();
             }
             this.SetupScreens();
-            foreach (var msg in this._messages.ToArray()) {
+            foreach (var msg in this._messages) {
                 msg.Text.SetAllDirty();
                 if (msg.SubTextEnabled) {
                     msg.SubText.SetAllDirty();
@@ -72,31 +72,25 @@ namespace EnhancedStreamChat.Chat
 
         public void OnMessageCleared(string messageId)
         {
-            if (messageId != null) {
-                MainThreadInvoker.Invoke(() =>
-                {
-                    foreach (var msg in this._messages.ToArray()) {
-                        if (msg.Text.ChatMessage == null) {
-                            continue;
-                        }
-                        if (msg.Text.ChatMessage.Id == messageId) {
-                            this.ClearMessage(msg);
-                        }
-                    }
-                });
+            if (string.IsNullOrEmpty(messageId)) {
+                return;
             }
+            MainThreadInvoker.Invoke(() =>
+            {
+                foreach (var msg in this._messages.Where(x => x.Text.ChatMessage?.Id == messageId)) {
+                    this.ClearMessage(msg);
+                }
+            });
         }
         public void OnChatCleared(string userId)
         {
+            if (string.IsNullOrEmpty(userId)) {
+                return;
+            }
             MainThreadInvoker.Invoke(() =>
             {
-                foreach (var msg in this._messages.ToArray()) {
-                    if (msg.Text.ChatMessage == null) {
-                        continue;
-                    }
-                    if (userId == null || msg.Text.ChatMessage.Sender.Id == userId) {
-                        this.ClearMessage(msg);
-                    }
+                foreach (var msg in this._messages.Where(x => x.Text.ChatMessage?.Sender?.Id == userId)) {
+                    this.ClearMessage(msg);
                 }
             });
         }
@@ -300,7 +294,7 @@ namespace EnhancedStreamChat.Chat
 
         private void UpdateMessages()
         {
-            foreach (var msg in this._messages.ToArray()) {
+            foreach (var msg in this._messages) {
                 this.UpdateMessage(msg);
             }
             this._updateMessagePositions = true;
@@ -366,45 +360,53 @@ namespace EnhancedStreamChat.Chat
             if (badgeEndIndex != -1) {
                 sb.Insert(0, msg.text.Substring(0, badgeEndIndex));
             }
-            sb.Append(": <color=#bbbbbbbb><message deleted></color>");
+            sb.Append(": <color=#bbbbbbff><message deleted></color>");
             return sb.ToString();
         }
 
         private void ClearMessage(EnhancedTextMeshProUGUIWithBackground msg)
         {
             // Only clear non-system messages
-            if (!msg.Text.ChatMessage.IsSystemMessage) {
-                msg.Text.text = this.BuildClearedMessage(msg.Text);
-                msg.SubTextEnabled = false;
-            }
-            if (msg.SubText.ChatMessage != null && !msg.SubText.ChatMessage.IsSystemMessage) {
+            if (msg.SubTextEnabled) {
                 msg.SubText.text = this.BuildClearedMessage(msg.SubText);
             }
+            msg.Text.text = this.BuildClearedMessage(msg.Text);
+            msg.SubTextEnabled = false;
         }
         private void CreateMessage(IESCChatMessage msg, DateTime date, string mainMessage, string subMassage)
         {
-            var newMsg = this._textPoolContaner.Spawn();
-            newMsg.transform.SetParent(this._chatContainer.transform, false);
-            newMsg.Text.ChatMessage = msg;
-            newMsg.Text.text = mainMessage;
-            // If the last message received had the same id and isn't a system message, then this was a sub-message of the original and may need to be highlighted along with the original message
-            newMsg.SubText.text = subMassage;
-            newMsg.SubTextEnabled = !string.IsNullOrEmpty(msg.SubMessage);
-            newMsg.ReceivedDate = date;
-            this.AddMessage(newMsg);
-            this._updateMessagePositions = true;
+            MainThreadInvoker.Invoke(() =>
+            {
+                var newMsg = this._textPoolContaner.Spawn();
+                newMsg.transform.SetParent(this._chatContainer.transform, false);
+                newMsg.Text.ChatMessage = msg;
+                newMsg.Text.text = mainMessage;
+                // If the last message received had the same id and isn't a system message, then this was a sub-message of the original and may need to be highlighted along with the original message
+                newMsg.SubText.text = subMassage;
+                newMsg.SubText.ChatMessage = msg;
+                newMsg.SubTextEnabled = !string.IsNullOrEmpty(msg.SubMessage);
+                newMsg.ReceivedDate = date;
+                this.AddMessage(newMsg);
+                this._updateMessagePositions = true;
+            });
         }
         private void CatCoreManager_OnJoinChannel(CatCore.Services.Multiplexer.MultiplexedPlatformService arg1, CatCore.Services.Multiplexer.MultiplexedChannel arg2)
         {
             MainThreadInvoker.Invoke(() =>
             {
                 var newMsg = this._textPoolContaner.Spawn();
+                var dummyMessage = new ESCChatMessage(Guid.NewGuid().ToString(), $"<color=#bbbbbbff>[{arg2.Name}] Success joining {arg2.Id}</color>");
+                newMsg.Text.ChatMessage = dummyMessage;
+                newMsg.SubText.ChatMessage = dummyMessage;
                 newMsg.transform.SetParent(this._chatContainer.transform, false);
                 this.UpdateMessage(newMsg);
-                newMsg.Text.text = $"<color=#bbbbbbbb>[{arg2.Name}] Success joining {arg2.Id}</color>";
+                newMsg.Text.text = dummyMessage.Message;
                 newMsg.HighlightEnabled = true;
                 newMsg.HighlightColor = Color.gray.ColorWithAlpha(0.05f);
+                newMsg.ReceivedDate = DateTime.Now;
+                newMsg.SubTextEnabled = false;
                 this.AddMessage(newMsg);
+                this._updateMessagePositions = true;
             });
         }
 

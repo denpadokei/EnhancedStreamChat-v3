@@ -202,14 +202,15 @@ namespace EnhancedStreamChat.Graphics
                     return;
                 }
                 base.OnDespawned(msg);
-                (msg.transform as RectTransform).localPosition = Vector3.zero;
                 msg.HighlightEnabled = false;
                 msg.AccentEnabled = false;
                 msg.SubTextEnabled = false;
                 msg.Text.text = "";
                 msg.Text.ChatMessage = null;
+                msg.Text.SetAllDirty();
                 msg.SubText.text = "";
                 msg.SubText.ChatMessage = null;
+                msg.SubText.SetAllDirty();
             }
         }
     }
