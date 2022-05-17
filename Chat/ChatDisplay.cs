@@ -323,7 +323,7 @@ namespace EnhancedStreamChat.Chat
                 msg.HighlightColor = this.HighlightColor;
                 msg.AccentColor = this.AccentColor;
                 msg.HighlightEnabled = msg.Text.ChatMessage.IsHighlighted;
-                msg.AccentEnabled = msg.HighlightEnabled || msg.SubText.ChatMessage != null;
+                msg.AccentEnabled = msg.HighlightEnabled;
             }
 
             if (setAllDirty) {
