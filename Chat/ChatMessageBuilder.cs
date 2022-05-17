@@ -116,8 +116,12 @@ namespace EnhancedStreamChat.Chat
                         // Replace emotes by index, in reverse order (msg.Emotes is sorted by emote.StartIndex in descending order)
                         if (Regex.IsMatch(emote.Id, "^Emoji_")) {
                             var charIndexText = Regex.Replace(emote.Id, "^Emoji_", "");
-                            var charIndex = Convert.ToInt32($"0x{charIndexText}", 16);
-                            sb.Replace(char.ConvertFromUtf32(charIndex), char.ConvertFromUtf32((int)character));
+                            var emojiChars = charIndexText.Split('-').Select(x => char.ConvertFromUtf32(Convert.ToInt32($"0x{x}", 16)));
+                            var emojiBuilder = new StringBuilder();
+                            foreach (var emojiChar in emojiChars) {
+                                emojiBuilder.Append(emojiChar);
+                            }
+                            sb.Replace(emojiBuilder.ToString(), char.ConvertFromUtf32((int)character));
                         }
                         else {
                             sb.Replace(emote.Name, char.ConvertFromUtf32((int)character));
