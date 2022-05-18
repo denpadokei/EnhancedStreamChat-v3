@@ -15,9 +15,9 @@
             <bool-setting text='Allow Movement' pref-height='6' value='allow-movement' apply-on-change='true' bind-value='true'></bool-setting>
             <bool-setting text='Same position in-game/menu' pref-height='6' value='sync-orientation' apply-on-change='true' bind-value='true'/>
             <bool-setting text='Reverse Chat Order' pref-height='6' value='reverse-chat-order' apply-on-change='true' bind-value='true'></bool-setting>
-            <slider-setting text='Chat Width' min='5' max='1000' increment='5' pref-height='6' value='chat-width' apply-on-change='true' integer-only='true'></slider-setting>
-            <slider-setting text='Chat Height' min='5' max='1000' increment='5' pref-height='6' value='chat-height' apply-on-change='true' integer-only='true'></slider-setting>
-            <slider-setting text='Font Size' min='1' max='20' increment='0.1' pref-height='6' value='font-size' apply-on-change='true'></slider-setting>
+            <slider-setting text='Chat Width' min='5' max='1000' increment='5' pref-height='6' value='chat-width' apply-on-change='true' integer-only='true' bind-value='true'></slider-setting>
+            <slider-setting text='Chat Height' min='5' max='1000' increment='5' pref-height='6' value='chat-height' apply-on-change='true' integer-only='true' bind-value='true'></slider-setting>
+            <slider-setting text='Font Size' min='1' max='20' increment='0.1' pref-height='6' value='font-size' apply-on-change='true' bind-value='true'></slider-setting>
           </vertical>
         </tab>
         <tab tags ='settings-tab' tab-name='Colors'>
@@ -31,12 +31,13 @@
         </tab>
         <tab tags ='settings-tab' tab-name='Login/Channels'>
           <vertical pad='10' pad-top='70' vertical-fit='PreferredSize' child-expand-height='false' child-align='MiddleCenter' pref-width='~settings-width'>
-            <text text='Login and channel configuration are currently done via your default browser in the new ChatCore webapp.' font-size='5' word-wrapping='true' align='Center'></text>
+            <text text='Login and channel configuration are currently done via your default browser in the new CatCore webapp.' font-size='5' word-wrapping='true' align='Center'></text>
             <horizontal child-expand-width='false' child-align='MiddleCenter' pad-top='10'>
-              <text text='To launch the ChatCore web app,&#xA0;' font-size='5'></text>
+              <text text='To launch the CatCore web app,&#xA0;' font-size='5'></text>
               <clickable-text text='click here' default-color='#00bcff' on-click='launch-web-app' highlight-color='cyan' font-size='5'></clickable-text>
               <text text='.'  font-size='5'></text>
             </horizontal>
+            <button text='ReConnect' on-click='re-connect' font-size='8' anchor-pos-y='-1' interactable='~re-connect-enable'></button>
           </vertical>
         </tab>
         <tab tags ='settings-tab' tab-name='About'>

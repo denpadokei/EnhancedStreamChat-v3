@@ -1,4 +1,5 @@
 ﻿using BeatSaberMarkupLanguage;
+using EnhancedStreamChat.Configuration;
 using EnhancedStreamChat.Graphics;
 using EnhancedStreamChat.Utilities;
 using System;
@@ -8,15 +9,23 @@ using System.IO;
 using TMPro;
 using UnityEngine;
 using UnityEngine.TextCore.LowLevel;
+using Zenject;
 
 namespace EnhancedStreamChat.Chat
 {
-    public class ESCFontManager : PersistentSingleton<ESCFontManager>
+    public class ESCFontManager : IInitializable
     {
         private static readonly string FontPath = Path.Combine(Environment.CurrentDirectory, "UserData", "ESC");
         private static readonly string FontAssetPath = Path.Combine(Environment.CurrentDirectory, "UserData", "FontAssets");
         private static readonly string MainFontPath = Path.Combine(FontAssetPath, "Main");
         private static readonly string FallBackFontPath = Path.Combine(FontAssetPath, "FallBack");
+        private PluginConfig _pluginConfig;
+
+        [Inject]
+        public void Constact(PluginConfig pluginConfig)
+        {
+            this._pluginConfig = pluginConfig;
+        }
 
         public bool IsInitialized { get; private set; } = false;
 
@@ -52,18 +61,20 @@ namespace EnhancedStreamChat.Chat
             private set => this._fallbackFonts = value;
         }
         public EnhancedFontInfo FontInfo { get; private set; } = null;
-
-        private void Awake() => HMMainThreadDispatcher.instance.Enqueue(this.CreateChatFont());
+        public void Initialize()
+        {
+            SharedCoroutineStarter.instance.StartCoroutine(this.CreateChatFont());
+        }
         public IEnumerator CreateChatFont()
         {
             this.IsInitialized = false;
             yield return new WaitWhile(() => BeatSaberUtils.TMPNoGlowFontShader == null);
             if (this.MainFont != null) {
-                Destroy(this.MainFont);
+                GameObject.Destroy(this.MainFont);
             }
             foreach (var font in this.FallBackFonts) {
                 if (font != null) {
-                    Destroy(font);
+                    GameObject.Destroy(font);
                 }
             }
 
@@ -77,7 +88,7 @@ namespace EnhancedStreamChat.Chat
                 Directory.CreateDirectory(FallBackFontPath);
             }
 
-            var fontName = ChatConfig.instance.SystemFontName;
+            var fontName = this._pluginConfig.SystemFontName;
             TMP_FontAsset? asset = null;
             AssetBundle? bundle = null;
             foreach (var filename in Directory.EnumerateFiles(MainFontPath, "*.assets", SearchOption.TopDirectoryOnly)) {
@@ -151,8 +162,10 @@ namespace EnhancedStreamChat.Chat
                 if (Path.GetFileNameWithoutExtension(osFontPath).ToLower() != "meiryo") {
                     continue;
                 }
-                var meiryo = new Font(osFontPath);
-                meiryo.name = Path.GetFileNameWithoutExtension(osFontPath);
+                var meiryo = new Font(osFontPath)
+                {
+                    name = Path.GetFileNameWithoutExtension(osFontPath)
+                };
                 asset = TMP_FontAsset.CreateFontAsset(meiryo);
                 this._fallbackFonts.Add(asset);
             }

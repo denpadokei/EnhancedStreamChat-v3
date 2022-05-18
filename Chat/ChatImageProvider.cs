@@ -1,5 +1,4 @@
 ﻿using BeatSaberMarkupLanguage.Animations;
-using ChatCore.Models;
 using EnhancedStreamChat.Graphics;
 using EnhancedStreamChat.Utilities;
 using System;
@@ -7,6 +6,7 @@ using System.Collections;
 using System.Collections.Concurrent;
 using UnityEngine;
 using UnityEngine.Networking;
+using Zenject;
 
 namespace EnhancedStreamChat.Chat
 {
@@ -17,11 +17,18 @@ namespace EnhancedStreamChat.Chat
         public Action<byte[]> Finally;
     }
 
-    public class ChatImageProvider : PersistentSingleton<ChatImageProvider>
+    public class ChatImageProvider
     {
+        [Inject]
+        public ChatImageProvider(EnhancedImageInfo.Pool pool)
+        {
+            this._imageInfoContaner = new MemoryPoolContainer<EnhancedImageInfo>(pool);
+        }
+
         public ConcurrentDictionary<string, EnhancedImageInfo> CachedImageInfo { get; } = new ConcurrentDictionary<string, EnhancedImageInfo>();
         private readonly ConcurrentDictionary<string, ActiveDownload> _activeDownloads = new ConcurrentDictionary<string, ActiveDownload>();
-        private readonly ConcurrentDictionary<string, Texture2D> _cachedSpriteSheets = new ConcurrentDictionary<string, Texture2D>();
+        private readonly MemoryPoolContainer<EnhancedImageInfo> _imageInfoContaner;
+        //private readonly ConcurrentDictionary<string, Texture2D> _cachedSpriteSheets = new ConcurrentDictionary<string, Texture2D>();
         /// <summary>
         /// Retrieves the requested content from the provided Uri. 
         /// <para>
@@ -46,7 +53,6 @@ namespace EnhancedStreamChat.Chat
                 yield return new WaitUntil(() => activeDownload.IsCompleted);
                 yield break;
             }
-
             using (var wr = UnityWebRequest.Get(uri)) {
                 activeDownload = new ActiveDownload()
                 {
@@ -68,7 +74,7 @@ namespace EnhancedStreamChat.Chat
                     if (!isRetry) {
                         Logger.Error($"A network error occurred during request to {uri}. Retrying in 3 seconds... {wr.error}");
                         yield return new WaitForSeconds(3);
-                        this.StartCoroutine(this.DownloadContent(uri, Finally, true));
+                        SharedCoroutineStarter.instance.StartCoroutine(this.DownloadContent(uri, Finally, true));
                         yield break;
                     }
                     activeDownload.Finally?.Invoke(new byte[0]);
@@ -141,71 +147,31 @@ namespace EnhancedStreamChat.Chat
                     sprite = null;
                 }
             }
-            EnhancedImageInfo ret = null;
+            var ret = this._imageInfoContaner.Spawn();
             if (sprite != null) {
                 if (forcedHeight != -1) {
                     this.SetImageHeight(ref spriteWidth, ref spriteHeight, forcedHeight);
                 }
-                ret = new EnhancedImageInfo()
-                {
-                    ImageId = id,
-                    Sprite = sprite,
-                    Width = spriteWidth,
-                    Height = spriteHeight,
-                    AnimControllerData = animControllerData
-                };
+                ret.ImageId = id;
+                ret.Sprite = sprite;
+                ret.Width = spriteWidth;
+                ret.Height = spriteHeight;
+                ret.AnimControllerData = animControllerData;
                 this.CachedImageInfo.TryAdd(id, ret);
+            }
+            else {
+                this._imageInfoContaner.Despawn(ret);
             }
             Finally?.Invoke(ret);
         }
-
-        public IEnumerator TryCacheSpriteSheetImage(string id, string uri, ImageRect rect, Action<EnhancedImageInfo> Finally = null, int forcedHeight = -1)
+        internal void ClearCache()
         {
-            if (this.CachedImageInfo.TryGetValue(id, out var info)) {
-                Finally?.Invoke(info);
-                yield break;
-            }
-            if (!this._cachedSpriteSheets.TryGetValue(uri, out var tex) || tex == null) {
-                yield return this.DownloadContent(uri, (bytes) => tex = GraphicUtils.LoadTextureRaw(bytes));
-                this._cachedSpriteSheets[uri] = tex;
-            }
-            this.CacheSpriteSheetImage(id, rect, tex, Finally, forcedHeight);
-        }
-
-        private void CacheSpriteSheetImage(string id, ImageRect rect, Texture2D tex, Action<EnhancedImageInfo> Finally = null, int forcedHeight = -1)
-        {
-            if (tex == null) {
-                Finally?.Invoke(null);
-                return;
-            }
-            int spriteWidth = rect.Width, spriteHeight = rect.Height;
-            var sprite = Sprite.Create(tex, new Rect(rect.X, tex.height - rect.Y - spriteHeight, spriteWidth, spriteHeight), new Vector2(0, 0));
-            sprite.texture.wrapMode = TextureWrapMode.Clamp;
-            EnhancedImageInfo ret = null;
-            if (sprite != null) {
-                if (forcedHeight != -1) {
-                    this.SetImageHeight(ref spriteWidth, ref spriteHeight, forcedHeight);
+            if (this.CachedImageInfo.Count > 0) {
+                foreach (var info in this.CachedImageInfo.Values) {
+                    GameObject.Destroy(info.Sprite);
+                    this._imageInfoContaner.Despawn(info);
                 }
-                ret = new EnhancedImageInfo()
-                {
-                    ImageId = id,
-                    Sprite = sprite,
-                    Width = spriteWidth,
-                    Height = spriteHeight,
-                    AnimControllerData = null
-                };
-                this.CachedImageInfo.TryAdd(id, ret);
-            }
-            Finally?.Invoke(ret);
-        }
-
-        internal static void ClearCache()
-        {
-            if (instance.CachedImageInfo.Count > 0) {
-                foreach (var info in instance.CachedImageInfo.Values) {
-                    Destroy(info.Sprite);
-                }
-                instance.CachedImageInfo.Clear();
+                this.CachedImageInfo.Clear();
             }
         }
     }

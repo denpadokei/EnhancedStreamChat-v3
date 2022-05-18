@@ -1,23 +1,31 @@
-﻿using EnhancedStreamChat.Utilities;
+﻿using EnhancedStreamChat.Interfaces;
+using EnhancedStreamChat.Utilities;
 using HMUI;
 using System;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
+using Zenject;
 
 namespace EnhancedStreamChat.Graphics
 {
-    public class EnhancedTextMeshProUGUIWithBackground : MonoBehaviour
+    public class EnhancedTextMeshProUGUIWithBackground : MonoBehaviour, ILatePreRenderRebuildReciver
     {
         public EnhancedTextMeshProUGUI Text { get; internal set; }
         public EnhancedTextMeshProUGUI SubText { get; internal set; }
 
         public DateTime ReceivedDate { get; internal set; }
 
-        public event Action OnLatePreRenderRebuildComplete;
+        private bool _rebuiled = false;
+        private readonly LazyCopyHashSet<ILatePreRenderRebuildReciver> _recivers = new LazyCopyHashSet<ILatePreRenderRebuildReciver>();
+        public ILazyCopyHashSet<ILatePreRenderRebuildReciver> LazyCopyHashSet => this._recivers;
 
         private ImageView _highlight;
         private ImageView _accent;
         private VerticalLayoutGroup _verticalLayoutGroup;
+        private EnhancedTextMeshProUGUI.Factory _factory;
+        private WaitWhile _waitNoGlowUINull;
+
         public Vector2 Size
         {
             get => (this.transform as RectTransform).sizeDelta;
@@ -62,6 +70,9 @@ namespace EnhancedStreamChat.Graphics
             get => this.SubText.enabled;
             set
             {
+                if (this.SubText == null) {
+                    return;
+                }
                 this.SubText.enabled = value;
                 if (value) {
                     this.SubText.rectTransform.SetParent(this.gameObject.transform, false);
@@ -74,57 +85,133 @@ namespace EnhancedStreamChat.Graphics
 
         private void Awake()
         {
-            this._highlight = this.gameObject.AddComponent<ImageView>();
-            this._highlight.raycastTarget = false;
-            this._highlight.material = BeatSaberUtils.UINoGlowMaterial;
-            this.Text = new GameObject().AddComponent<EnhancedTextMeshProUGUI>();
-            DontDestroyOnLoad(this.Text.gameObject);
-            this.Text.OnLatePreRenderRebuildComplete += this.Text_OnLatePreRenderRebuildComplete;
-
-            this.SubText = new GameObject().AddComponent<EnhancedTextMeshProUGUI>();
-            DontDestroyOnLoad(this.SubText.gameObject);
-            this.SubText.OnLatePreRenderRebuildComplete += this.Text_OnLatePreRenderRebuildComplete;
-
-            this._accent = new GameObject().AddComponent<ImageView>();
-            this._accent.raycastTarget = false;
-            DontDestroyOnLoad(this._accent.gameObject);
-            this._accent.material = BeatSaberUtils.UINoGlowMaterial;
-            this._accent.color = Color.yellow;
-
-            this._verticalLayoutGroup = this.gameObject.AddComponent<VerticalLayoutGroup>();
-            this._verticalLayoutGroup.childAlignment = TextAnchor.MiddleLeft;
-            this._verticalLayoutGroup.spacing = 1;
-
-            var highlightFitter = this._accent.gameObject.AddComponent<LayoutElement>();
-            highlightFitter.ignoreLayout = true;
-            var textFitter = this.Text.gameObject.AddComponent<ContentSizeFitter>();
-            textFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-            var backgroundFitter = this.gameObject.AddComponent<ContentSizeFitter>();
-            backgroundFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-
-            this.SubTextEnabled = false;
-            this.HighlightEnabled = false;
-            this.AccentEnabled = false;
-            this._accent.gameObject.transform.SetParent(this.gameObject.transform, false);
-            (this._accent.gameObject.transform as RectTransform).anchorMin = new Vector2(0, 0.5f);
-            (this._accent.gameObject.transform as RectTransform).anchorMax = new Vector2(0, 0.5f);
-            (this._accent.gameObject.transform as RectTransform).sizeDelta = new Vector2(1, 10);
-            (this._accent.gameObject.transform as RectTransform).pivot = new Vector2(0, 0.5f);
-            //var highlightLayoutGroup =_highlight.gameObject.AddComponent<VerticalLayoutGroup>();
-
-            this.Text.rectTransform.SetParent(this.gameObject.transform, false);
+            this._waitNoGlowUINull = new WaitWhile(() => BeatSaberUtils.UINoGlowMaterial == null || this._highlight == null || this._accent == null);
         }
 
-        private void OnDestroy()
+        private IEnumerator Start()
         {
-            this.Text.OnLatePreRenderRebuildComplete -= this.Text_OnLatePreRenderRebuildComplete;
-            this.SubText.OnLatePreRenderRebuildComplete -= this.Text_OnLatePreRenderRebuildComplete;
+            yield return this._waitNoGlowUINull;
+            this._highlight.material = BeatSaberUtils.UINoGlowMaterial;
+            this._accent.material = BeatSaberUtils.UINoGlowMaterial;
         }
 
-        private void Text_OnLatePreRenderRebuildComplete()
+        [Inject]
+        public void Constract(EnhancedTextMeshProUGUI.Factory factory)
+        {
+            this._factory = factory;
+        }
+
+        protected void OnDestroy()
+        {
+            try {
+                this.Text.RemoveReciver(this);
+                this.SubText.RemoveReciver(this);
+                Destroy(this.Text);
+                Destroy(this.SubText);
+            }
+            catch (Exception) {
+            }
+        }
+
+        public void AddReciver(ILatePreRenderRebuildReciver reciver)
+        {
+            this.LazyCopyHashSet.Add(reciver);
+        }
+
+        public void RemoveReciver(ILatePreRenderRebuildReciver reciver)
+        {
+            this.LazyCopyHashSet.Remove(reciver);
+        }
+
+        public void LatePreRenderRebuildHandler(object sender, EventArgs e)
         {
             (this._accent.gameObject.transform as RectTransform).sizeDelta = new Vector2(1, (this.transform as RectTransform).sizeDelta.y);
-            OnLatePreRenderRebuildComplete?.Invoke();
+            this._rebuiled = true;
+        }
+
+        protected void Update()
+        {
+            if (this._rebuiled) {
+                foreach (var reciver in this._recivers.items) {
+                    reciver?.LatePreRenderRebuildHandler(this, EventArgs.Empty);
+                }
+                this._rebuiled = false;
+            }
+        }
+
+        public class Pool : MonoMemoryPool<EnhancedTextMeshProUGUIWithBackground>
+        {
+            protected override void OnCreated(EnhancedTextMeshProUGUIWithBackground item)
+            {
+                base.OnCreated(item);
+                item._highlight = item.gameObject.GetComponent<ImageView>();
+                item._highlight.raycastTarget = false;
+
+                item.Text = item._factory.Create();
+                item.Text.AddReciver(item);
+                item.SubText = item._factory.Create();
+                item.SubText.AddReciver(item);
+
+                item._accent = new GameObject().AddComponent<ImageView>();
+                item._accent.raycastTarget = false;
+                item._accent.color = Color.yellow;
+
+                item._verticalLayoutGroup = item.gameObject.GetComponent<VerticalLayoutGroup>();
+                item._verticalLayoutGroup.childAlignment = TextAnchor.MiddleLeft;
+                item._verticalLayoutGroup.spacing = 1;
+
+                var highlightFitter = item._accent.gameObject.AddComponent<LayoutElement>();
+                highlightFitter.ignoreLayout = true;
+                var textFitter = item.Text.gameObject.AddComponent<ContentSizeFitter>();
+                textFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+                var backgroundFitter = item.gameObject.GetComponent<ContentSizeFitter>();
+                backgroundFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+                item.SubTextEnabled = false;
+                item.HighlightEnabled = false;
+                item.AccentEnabled = false;
+                item._accent.gameObject.transform.SetParent(item.gameObject.transform, false);
+                (item._accent.gameObject.transform as RectTransform).anchorMin = new Vector2(0, 0.5f);
+                (item._accent.gameObject.transform as RectTransform).anchorMax = new Vector2(0, 0.5f);
+                (item._accent.gameObject.transform as RectTransform).sizeDelta = new Vector2(1, 10);
+                (item._accent.gameObject.transform as RectTransform).pivot = new Vector2(0, 0.5f);
+                item.Text.rectTransform.SetParent(item.gameObject.transform, false);
+            }
+            protected override void OnSpawned(EnhancedTextMeshProUGUIWithBackground item)
+            {
+                base.OnSpawned(item);
+                if (item._highlight.material != BeatSaberUtils.UINoGlowMaterial) {
+                    item._highlight.material = BeatSaberUtils.UINoGlowMaterial;
+                }
+                if (item._accent.material != BeatSaberUtils.UINoGlowMaterial) {
+                    item._accent.material = BeatSaberUtils.UINoGlowMaterial;
+                }
+            }
+            protected override void Reinitialize(EnhancedTextMeshProUGUIWithBackground msg)
+            {
+                base.Reinitialize(msg);
+                msg.Text.autoSizeTextContainer = false;
+                msg.SubText.enableWordWrapping = true;
+                msg.SubText.autoSizeTextContainer = false;
+                (msg.transform as RectTransform).pivot = new Vector2(0.5f, 0);
+            }
+
+            protected override void OnDespawned(EnhancedTextMeshProUGUIWithBackground msg)
+            {
+                if (msg == null || msg.gameObject == null) {
+                    return;
+                }
+                base.OnDespawned(msg);
+                msg.HighlightEnabled = false;
+                msg.AccentEnabled = false;
+                msg.SubTextEnabled = false;
+                msg.Text.text = "";
+                msg.Text.ChatMessage = null;
+                msg.Text.SetAllDirty();
+                msg.SubText.text = "";
+                msg.SubText.ChatMessage = null;
+                msg.SubText.SetAllDirty();
+            }
         }
     }
 }

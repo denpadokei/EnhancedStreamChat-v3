@@ -2,6 +2,7 @@
 using BeatSaberMarkupLanguage.Components.Settings;
 using BeatSaberMarkupLanguage.Parser;
 using BeatSaberMarkupLanguage.ViewControllers;
+using EnhancedStreamChat.Utilities;
 using HMUI;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -20,15 +21,78 @@ namespace EnhancedStreamChat.Chat
                 return false;
             }
             oldValue = newValue;
-            this.OnPropertyChanged(new PropertyChangedEventArgs(name));
+            MainThreadInvoker.Invoke(() => this.OnPropertyChanged(new PropertyChangedEventArgs(name)));
             return true;
         }
 
-        private void OnPropertyChanged(PropertyChangedEventArgs e) => this.NotifyPropertyChanged(e.PropertyName);
+        private void OnPropertyChanged(PropertyChangedEventArgs e)
+        {
+            this.NotifyPropertyChanged(e.PropertyName);
+            if (e.PropertyName == nameof(this.AccentColor)) {
+                this._chatConfig.AccentColor = this.AccentColor;
+            }
+            else if (e.PropertyName == nameof(this.TextColor)) {
+                this._chatConfig.TextColor = this.TextColor;
+            }
+            else if (e.PropertyName == nameof(this.BackgroundColor)) {
+                this._chatConfig.BackgroundColor = this.BackgroundColor;
+            }
+            else if (e.PropertyName == nameof(this.AllowMovement)) {
+                this._chatConfig.AllowMovement = this.AllowMovement;
+            }
+            else if (e.PropertyName == nameof(this.ChatHeight)) {
+                this._chatConfig.ChatHeight = this.ChatHeight;
+            }
+            else if (e.PropertyName == nameof(this.ChatWidth)) {
+                this._chatConfig.ChatWidth = this.ChatWidth;
+            }
+            else if (e.PropertyName == nameof(this.ChatPosition)) {
+                if (this._isInGame) {
+                    this._chatConfig.Song_ChatPosition = this.ChatPosition;
+                }
+                else {
+                    this._chatConfig.Menu_ChatPosition = this.ChatPosition;
+                }
+            }
+            else if (e.PropertyName == nameof(this.ChatRotation)) {
+                if (this._isInGame) {
+                    this._chatConfig.Song_ChatRotation = this.ChatRotation;
+                }
+                else {
+                    this._chatConfig.Menu_ChatRotation = this.ChatRotation;
+                }
+            }
+            else if (e.PropertyName == nameof(this.FontSize)) {
+                this._chatConfig.FontSize = this.FontSize;
+            }
+            else if (e.PropertyName == nameof(this.HighlightColor)) {
+                this._chatConfig.HighlightColor = this.HighlightColor;
+            }
+            else if (e.PropertyName == nameof(this.PingColor)) {
+                this._chatConfig.PingColor = this.PingColor;
+            }
+            else if (e.PropertyName == nameof(this.ReverseChatOrder)) {
+                this._chatConfig.ReverseChatOrder = this.ReverseChatOrder;
+            }
+            else if (e.PropertyName == nameof(this.SyncOrientation)) {
+                this._chatConfig.SyncOrientation = this.SyncOrientation;
+                if (this.SyncOrientation) {
+                    if (this._isInGame) {
+                        this._chatConfig.Menu_ChatPosition = this._chatConfig.Song_ChatPosition;
+                        this._chatConfig.Menu_ChatRotation = this._chatConfig.Song_ChatRotation;
+                    }
+                    else {
+                        this._chatConfig.Song_ChatPosition = this._chatConfig.Menu_ChatPosition;
+                        this._chatConfig.Song_ChatRotation = this._chatConfig.Menu_ChatRotation;
+                    }
+                }
+            }
+        }
 
         [UIAction("#post-parse")]
-        private void PostParse()
+        protected void PostParse()
         {
+            this.Load();
             // bg
             this._backgroundColorSetting.editButton.onClick.AddListener(this.HideSettings);
             this._backgroundColorSetting.modalColorPicker.cancelEvent += this.ShowSettings;
@@ -51,21 +115,21 @@ namespace EnhancedStreamChat.Chat
             this._textColorSetting.CurrentColor = this._chatConfig.TextColor;
 
             // Move interactables in front of the screen
-            this.settingsModalGameObject.transform.localPosition = new Vector3(this.settingsModalGameObject.transform.localPosition.x, this.settingsModalGameObject.transform.localPosition.y, -2f);
-            this.settingsIconGameObject.transform.localPosition = new Vector3(this.settingsIconGameObject.transform.localPosition.x, this.settingsIconGameObject.transform.localPosition.y, -2f);
+            this._settingsModalGameObject.transform.localPosition = new Vector3(this._settingsModalGameObject.transform.localPosition.x, this._settingsModalGameObject.transform.localPosition.y, -2f);
+            this._settingsIconGameObject.transform.localPosition = new Vector3(this._settingsIconGameObject.transform.localPosition.x, this._settingsIconGameObject.transform.localPosition.y, -2f);
 
-            this.settingsIconGameObject.layer = 5;
-            this.settingsModalGameObject.layer = 5;
+            this._settingsIconGameObject.layer = 5;
+            this._settingsModalGameObject.layer = 5;
         }
 
         [UIParams]
-        internal BSMLParserParams parserParams;
+        internal BSMLParserParams _parserParams;
 
         [UIObject("settings-icon")]
-        internal GameObject settingsIconGameObject;
+        internal GameObject _settingsIconGameObject;
 
         [UIObject("settings-modal")]
-        internal GameObject settingsModalGameObject;
+        internal GameObject _settingsModalGameObject;
 
         [UIComponent("background-color-setting")]
         private readonly ColorSetting _backgroundColorSetting;
@@ -82,68 +146,74 @@ namespace EnhancedStreamChat.Chat
         [UIComponent("text-color-setting")]
         private readonly ColorSetting _textColorSetting;
 
+        private Color _accentColor;
         [UIValue("accent-color")]
         public Color AccentColor
         {
-            get => this._chatConfig.AccentColor;
+            get => this._accentColor;
+
             set
             {
-                this.SetProperty(ref this._chatConfig.AccentColor, value);
+                this.SetProperty(ref this._accentColor, value);
                 this.UpdateMessages();
             }
         }
-
+        private Color _highlightColor;
         [UIValue("highlight-color")]
         public Color HighlightColor
         {
-            get => this._chatConfig.HighlightColor;
+            get => this._highlightColor;
             set
             {
-                this.SetProperty(ref this._chatConfig.HighlightColor, value);
+                this.SetProperty(ref this._highlightColor, value);
                 this.UpdateMessages();
             }
         }
 
+        private Color _pingColor;
         [UIValue("ping-color")]
         public Color PingColor
         {
-            get => this._chatConfig.PingColor;
+            get => this._pingColor;
             set
             {
-                this.SetProperty(ref this._chatConfig.PingColor, value);
+                this.SetProperty(ref this._pingColor, value);
                 this.UpdateMessages();
             }
         }
 
+        private Color _backGroundColor;
         [UIValue("background-color")]
         public Color BackgroundColor
         {
-            get => this._chatConfig.BackgroundColor;
+            get => this._backGroundColor;
             set
             {
-                this.SetProperty(ref this._chatConfig.BackgroundColor, value);
+                this.SetProperty(ref this._backGroundColor, value);
                 this._chatScreen.GetComponentsInChildren<ImageView>().FirstOrDefault(x => x.name == "bg").color = value;
             }
         }
 
+        private Color _textColor;
         [UIValue("text-color")]
         public Color TextColor
         {
-            get => this._chatConfig.TextColor;
+            get => this._textColor;
             set
             {
-                this.SetProperty(ref this._chatConfig.TextColor, value);
+                this.SetProperty(ref this._textColor, value);
                 this.UpdateMessages();
             }
         }
 
+        private float _fontsize;
         [UIValue("font-size")]
         public float FontSize
         {
-            get => this._chatConfig.FontSize;
+            get => this._fontsize;
             set
             {
-                this.SetProperty(ref this._chatConfig.FontSize, value);
+                this.SetProperty(ref this._fontsize, value);
                 this.UpdateMessages();
             }
         }
@@ -156,126 +226,184 @@ namespace EnhancedStreamChat.Chat
             set => this.SetProperty(ref this._settingsWidth, value);
         }
 
+        private int _chatWidth;
         [UIValue("chat-width")]
         public int ChatWidth
         {
-            get => this._chatConfig.ChatWidth;
+            get => this._chatWidth;
             set
             {
-                this.SetProperty(ref this._chatConfig.ChatWidth, value);
+                this.SetProperty(ref this._chatWidth, value);
                 this._chatScreen.ScreenSize = new Vector2(this.ChatWidth, this.ChatHeight);
                 this._chatContainer.GetComponent<RectMask2D>().rectTransform.sizeDelta = new Vector2(this.ChatWidth, this.ChatHeight);
                 this.UpdateMessages();
             }
         }
 
+        private int _chatHeight;
         [UIValue("chat-height")]
         public int ChatHeight
         {
-            get => this._chatConfig.ChatHeight;
+            get => this._chatHeight;
             set
             {
-                this.SetProperty(ref this._chatConfig.ChatHeight, value);
+                this.SetProperty(ref this._chatHeight, value);
                 this._chatScreen.ScreenSize = new Vector2(this.ChatWidth, this.ChatHeight);
                 this._chatContainer.GetComponent<RectMask2D>().rectTransform.sizeDelta = new Vector2(this.ChatWidth, this.ChatHeight);
                 this.UpdateMessages();
             }
         }
 
+        private Vector3 _chatPosition;
         [UIValue("chat-position")]
         public Vector3 ChatPosition
         {
-            get => this._isInGame ? this._chatConfig.Song_ChatPosition : this._chatConfig.Menu_ChatPosition;
+            get => this._chatPosition;
             set
             {
+                this.SetProperty(ref this._chatPosition, value);
                 this._chatScreen.ScreenPosition = value;
-                if (this._isInGame || this.SyncOrientation) {
-                    this.SetProperty(ref this._chatConfig.Song_ChatPosition, value);
-                }
-
-                if (!this._isInGame || this.SyncOrientation) {
-                    this.SetProperty(ref this._chatConfig.Menu_ChatPosition, value);
-                }
             }
         }
 
+        private Vector3 _chatRotation;
         [UIValue("chat-rotation")]
         public Vector3 ChatRotation
         {
-            get => this._isInGame ? this._chatConfig.Song_ChatRotation : this._chatConfig.Menu_ChatRotation;
+            get => this._chatRotation;
             set
             {
+                this.SetProperty(ref this._chatRotation, value);
                 this._chatScreen.ScreenRotation = Quaternion.Euler(value);
-                if (this._isInGame || this.SyncOrientation) {
-                    this.SetProperty(ref this._chatConfig.Song_ChatRotation, value);
-                }
-
-                if (!this._isInGame || this.SyncOrientation) {
-                    this.SetProperty(ref this._chatConfig.Menu_ChatRotation, value);
-                }
             }
         }
 
+        private bool _allowMovement;
         [UIValue("allow-movement")]
         public bool AllowMovement
         {
-            get => this._chatConfig.AllowMovement;
+            get => this._allowMovement;
             set
             {
-                this.SetProperty(ref this._chatConfig.AllowMovement, value);
+                this.SetProperty(ref this._allowMovement, value);
                 this._chatScreen.ShowHandle = value;
             }
         }
 
+        private bool _syncOrientation;
         [UIValue("sync-orientation")]
         public bool SyncOrientation
         {
-            get => this._chatConfig.SyncOrientation;
-            set
-            {
-                this.SetProperty(ref this._chatConfig.SyncOrientation, value);
-                if (value) {
-                    this.ChatPosition = this.ChatPosition;
-                    this.ChatRotation = this.ChatRotation;
-                }
-            }
+            get => this._syncOrientation;
+            set => this.SetProperty(ref this._syncOrientation, value);
         }
 
+        private bool _reverseChatOrder;
         [UIValue("reverse-chat-order")]
         public bool ReverseChatOrder
         {
-            get => this._chatConfig.ReverseChatOrder;
+            get => this._reverseChatOrder;
             set
             {
-                this.SetProperty(ref this._chatConfig.ReverseChatOrder, value);
-                this.UpdateMessages();
+                this.SetProperty(ref this._reverseChatOrder, value);
+                this._updateMessagePositions = true;
+                //this.UpdateMessages();
             }
+        }
+
+        /// <summary>説明 を取得、設定</summary>
+        private bool _reconnectEnable = true;
+        [UIValue("re-connect-enable")]
+        /// <summary>説明 を取得、設定</summary>
+        public bool ReconnectEnable
+        {
+            get => this._reconnectEnable;
+
+            set => this.SetProperty(ref this._reconnectEnable, value);
         }
 
         [UIValue("mod-version")]
         public string ModVersion => Plugin.Version;
 
         [UIAction("launch-web-app")]
-        private void LaunchWebApp() => ChatManager.instance._chatCoreInstance.LaunchWebApp();
-
-        [UIAction("launch-kofi")]
-        private void LaunchKofi() => Application.OpenURL("https://ko-fi.com/brian91292");
-
-        [UIAction("launch-github")]
-        private void LaunchGitHub() => Application.OpenURL("https://github.com/Auros/EnhancedStreamChat-v3");
-
-        [UIAction("on-settings-clicked")]
-        private void OnSettingsClick() => Logger.Info("Settings clicked!");
-
-        [UIAction("#hide-settings")]
-        private void OnHideSettings()
+        protected void LaunchWebApp()
         {
-            Logger.Info("Saving settings!");
-            this._chatConfig.Save();
+            this._catCoreManager.LaunchWebPortal();
         }
 
-        private void HideSettings() => this.parserParams.EmitEvent("hide-settings");
+        [UIAction("launch-kofi")]
+        protected void LaunchKofi()
+        {
+            Application.OpenURL("https://ko-fi.com/brian91292");
+        }
 
-        private void ShowSettings() => this.parserParams.EmitEvent("show-settings");
+        [UIAction("launch-github")]
+        protected void LaunchGitHub()
+        {
+            Application.OpenURL("https://github.com/denpadokei/EnhancedStreamChat-v3");
+        }
+
+        [UIAction("on-settings-clicked")]
+        protected void OnSettingsClick()
+        {
+            Logger.Info("Settings clicked!");
+        }
+
+        [UIAction("#hide-settings")]
+        protected void OnHideSettings()
+        {
+            Logger.Info("Saving settings!");
+        }
+
+        [UIAction("re-connect")]
+        protected void ReConnect()
+        {
+            if (!this.ReconnectEnable) {
+                return;
+            }
+            try {
+                this.ReconnectEnable = false;
+                this._catCoreManager.Stop().ContinueWith(async task =>
+                {
+                    await this._catCoreManager.Start();
+                    this.ReconnectEnable = true;
+                });
+            }
+            catch (System.Exception e) {
+                Logger.Error(e);
+            }
+        }
+
+        private void HideSettings()
+        {
+            this._parserParams.EmitEvent("hide-settings");
+        }
+
+        private void ShowSettings()
+        {
+            this._parserParams.EmitEvent("show-settings");
+        }
+        private void Load()
+        {
+            this.AccentColor = this._chatConfig.AccentColor;
+            this.TextColor = this._chatConfig.TextColor;
+            this.BackgroundColor = this._chatConfig.BackgroundColor;
+            this.AllowMovement = this._chatConfig.AllowMovement;
+            this.ChatHeight = this._chatConfig.ChatHeight;
+            this.ChatWidth = this._chatConfig.ChatWidth;
+            if (this._isInGame) {
+                this.ChatPosition = this._chatConfig.Song_ChatPosition;
+                this.ChatRotation = this._chatConfig.Song_ChatRotation;
+            }
+            else {
+                this.ChatPosition = this._chatConfig.Menu_ChatPosition;
+                this.ChatRotation = this._chatConfig.Menu_ChatRotation;
+            }
+            this.FontSize = this._chatConfig.FontSize;
+            this.HighlightColor = this._chatConfig.HighlightColor;
+            this.PingColor = this._chatConfig.PingColor;
+            this.ReverseChatOrder = this._chatConfig.ReverseChatOrder;
+            this.SyncOrientation = this._chatConfig.SyncOrientation;
+        }
     }
 }
