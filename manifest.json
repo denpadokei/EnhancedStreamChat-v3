@@ -2,16 +2,16 @@
   "$schema": "https://raw.githubusercontent.com/beat-saber-modding-group/BSIPA-MetadataFileSchema/master/Schema.json",
   "id": "EnhancedStreamChat",
   "name": "Enhanced Stream Chat",
-  "author": "brian91292",
-  "version": "5.0.0-rc18",
+  "author": "denpadokei",
+  "version": "5.0.0",
   "description": "Enhanced Stream Chat is a rich text chat integration mod, with full unicode, emote, and emoji support.",
-  "gameVersion": "1.20.0",
+  "gameVersion": "1.22.0",
   "dependsOn": {
-    "BeatSaberMarkupLanguage": "^1.5.1",
+    "BeatSaberMarkupLanguage": "^1.6.4",
     "BSIPA": "^4.2.2",
     "BS Utils": "^1.8.0",
     "CatCore": "^1.0.0",
-    "SiraUtil": "^3.0.0"
+    "SiraUtil": "^3.0.6"
   },
   "links": {
     "project-home": "https://github.com/denpadokei/EnhancedStreamChat-v3",

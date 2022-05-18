@@ -1,9 +1,5 @@
 ﻿using EnhancedStreamChat.Interfaces;
 using HarmonyLib;
-using System;
-using System.Collections.Generic;
-using System.Reflection;
-using System.Text;
 
 namespace EnhancedStreamChat.HarmonyPatches
 {

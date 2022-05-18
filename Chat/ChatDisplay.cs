@@ -1,7 +1,6 @@
 ﻿using BeatSaberMarkupLanguage.Attributes;
 using BeatSaberMarkupLanguage.FloatingScreen;
 using BeatSaberMarkupLanguage.ViewControllers;
-using BS_Utils.Utilities;
 using EnhancedStreamChat.Configuration;
 using EnhancedStreamChat.Graphics;
 using EnhancedStreamChat.HarmonyPatches;
@@ -21,6 +20,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using VRUIControls;
 using Zenject;
@@ -60,8 +60,7 @@ namespace EnhancedStreamChat.Chat
             }
             TwitchIrcServicePatch.RegistReceiver(this);
             this._chatConfig.OnConfigChanged += this.Instance_OnConfigChanged;
-            BSEvents.menuSceneActive += this.BSEvents_menuSceneActive;
-            BSEvents.gameSceneActive += this.BSEvents_gameSceneActive;
+            SceneManager.activeSceneChanged += this.SceneManager_activeSceneChanged;
             this._catCoreManager.OnJoinChannel += this.CatCoreManager_OnJoinChannel;
             this._catCoreManager.OnTwitchTextMessageReceived += this.CatCoreManager_OnTwitchTextMessageReceived;
             this._catCoreManager.OnMessageDeleted += this.OnCatCoreManager_OnMessageDeleted;
@@ -214,21 +213,23 @@ namespace EnhancedStreamChat.Chat
             }
         }
 
-        private void BSEvents_gameSceneActive()
+        private void SceneManager_activeSceneChanged(Scene arg0, Scene arg1)
         {
-            this._isInGame = true;
-            foreach (var canvas in this._chatScreen.GetComponentsInChildren<Canvas>(true)) {
-                canvas.sortingOrder = 0;
+            if (arg1.name != s_game && arg1.name != s_menu) {
+                return;
             }
-            this.AddToVRPointer();
-            this.UpdateChatUI();
-        }
+            if (arg1.name == s_game) {
+                this._isInGame = true;
+                foreach (var canvas in this._chatScreen.GetComponentsInChildren<Canvas>(true)) {
+                    canvas.sortingOrder = 0;
+                }
 
-        private void BSEvents_menuSceneActive()
-        {
-            this._isInGame = false;
-            foreach (var canvas in this._chatScreen.GetComponentsInChildren<Canvas>(true)) {
-                canvas.sortingOrder = 3;
+            }
+            else if (arg1.name == s_menu) {
+                this._isInGame = false;
+                foreach (var canvas in this._chatScreen.GetComponentsInChildren<Canvas>(true)) {
+                    canvas.sortingOrder = 3;
+                }
             }
             this.AddToVRPointer();
             this.UpdateChatUI();
@@ -463,6 +464,8 @@ namespace EnhancedStreamChat.Chat
         private ChatMessageBuilder _chatMessageBuilder;
         private ESCFontManager _fontManager;
         private bool _disposedValue;
+        private static readonly string s_menu = "MainMenu";
+        private static readonly string s_game = "GameCore";
         #endregion
         //ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*
         #region // 構築・破棄
@@ -510,8 +513,7 @@ namespace EnhancedStreamChat.Chat
             Logger.Debug("OnDestroy()");
             base.OnDestroy();
             this._chatConfig.OnConfigChanged -= this.Instance_OnConfigChanged;
-            BSEvents.menuSceneActive -= this.BSEvents_menuSceneActive;
-            BSEvents.gameSceneActive -= this.BSEvents_gameSceneActive;
+            SceneManager.activeSceneChanged -= this.SceneManager_activeSceneChanged;
             this._catCoreManager.OnJoinChannel -= this.CatCoreManager_OnJoinChannel;
             this._catCoreManager.OnTwitchTextMessageReceived -= this.CatCoreManager_OnTwitchTextMessageReceived;
             this._catCoreManager.OnMessageDeleted -= this.OnCatCoreManager_OnMessageDeleted;

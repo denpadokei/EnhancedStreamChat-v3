@@ -3,13 +3,13 @@ using CatCore.Models.Twitch.IRC;
 using CatCore.Models.Twitch.PubSub.Responses;
 using CatCore.Models.Twitch.PubSub.Responses.ChannelPointsChannelV1;
 using CatCore.Services.Multiplexer;
+using CatCore.Services.Twitch;
 using CatCore.Services.Twitch.Interfaces;
 using EnhancedStreamChat.Interfaces;
 using System;
-using Zenject;
-using CatCore.Services.Twitch;
 using System.Reflection;
 using System.Threading.Tasks;
+using Zenject;
 #if DEBUG
 using CatCore.Logging;
 using IPA.Logging;
