@@ -363,9 +363,8 @@ namespace EnhancedStreamChat.Chat
             }
             try {
                 this.ReconnectEnable = false;
-                this._catCoreManager.Stop().ContinueWith(async task =>
+                this._catCoreManager.Start().ContinueWith(task =>
                 {
-                    await this._catCoreManager.Start();
                     this.ReconnectEnable = true;
                 });
             }
