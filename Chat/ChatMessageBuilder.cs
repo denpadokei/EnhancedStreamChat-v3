@@ -42,7 +42,7 @@ namespace EnhancedStreamChat.Chat
                 if (!font.CharacterLookupTable.ContainsKey(emote.Id)) {
                     pendingEmoteDownloads.Add(emote.Id);
                     var tcs = new TaskCompletionSource<EnhancedImageInfo>();
-                    SharedCoroutineStarter.instance.StartCoroutine(this._chatImageProvider.TryCacheSingleImage(emote.Id, emote.Url, emote.Animated, (info) =>
+                    SharedCoroutineStarter.instance.StartCoroutine(this._chatImageProvider.TryCacheSingleImage(emote.Id, emote.Url, emote.Animated ? ChatImageProvider.ESCAnimationType.GIF : ChatImageProvider.ESCAnimationType.MAYBE_GIF, (info) =>
                     {
                         if (info == null || !font.TryRegisterImageInfo(info, out var character)) {
                             Logger.Warn($"Failed to register emote \"{emote.Id}\" in font {font.Font.name}.");
@@ -61,7 +61,7 @@ namespace EnhancedStreamChat.Chat
                     if (!font.CharacterLookupTable.ContainsKey(badge.Id)) {
                         pendingEmoteDownloads.Add(badge.Id);
                         var tcs = new TaskCompletionSource<EnhancedImageInfo>();
-                        SharedCoroutineStarter.instance.StartCoroutine(this._chatImageProvider.TryCacheSingleImage(badge.Id, badge.Uri, false, (info) =>
+                        SharedCoroutineStarter.instance.StartCoroutine(this._chatImageProvider.TryCacheSingleImage(badge.Id, badge.Uri, ChatImageProvider.ESCAnimationType.NONE, (info) =>
                         {
                             if (info != null) {
                                 if (!font.TryRegisterImageInfo(info, out var character)) {

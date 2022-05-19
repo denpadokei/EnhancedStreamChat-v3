@@ -223,7 +223,6 @@ namespace EnhancedStreamChat.Chat
                 foreach (var canvas in this._chatScreen.GetComponentsInChildren<Canvas>(true)) {
                     canvas.sortingOrder = 0;
                 }
-
             }
             else if (arg1.name == s_menu) {
                 this._isInGame = false;
