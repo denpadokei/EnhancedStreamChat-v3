@@ -32,8 +32,8 @@ namespace EnhancedStreamChat
             "channel:manage:polls",
             "channel:manage:predictions",
             "channel:manage:redemptions",
+            "channel:read:subscriptions",
             "channel:read:redemptions",
-            "channel:read:subscriptions"
         };
         [Init]
         public void Init(IPALogger logger, PluginMetadata meta, Config config, Zenjector zenjector)
@@ -117,14 +117,13 @@ namespace EnhancedStreamChat
             }
 
         }
-#endif
-
         [HarmonyPatch("CatCore.Services.Twitch.TwitchAuthService, CatCore", "AuthorizationUrl")]
         [HarmonyPrefix]
         public static void StaticConstractPrefix(ref string[] ____twitchAuthorizationScope)
         {
             ____twitchAuthorizationScope = s_twitchAuthorizationScope;
         }
+#endif
     }
 
     public enum BuildMessageTarget
