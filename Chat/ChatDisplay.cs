@@ -465,6 +465,8 @@ namespace EnhancedStreamChat.Chat
         private bool _disposedValue;
         private static readonly string s_menu = "MainMenu";
         private static readonly string s_game = "GameCore";
+        private static readonly int s_reconnectDelay = 500;
+        private readonly SemaphoreSlim _connectSemaphore = new SemaphoreSlim(1, 1);
         #endregion
         //ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*
         #region // 構築・破棄
@@ -482,6 +484,7 @@ namespace EnhancedStreamChat.Chat
             if (!this._disposedValue) {
                 if (disposing) {
                     try {
+                        this._connectSemaphore.Dispose();
                         if (this._rootGameObject != null) {
                             Destroy(this._rootGameObject);
                         }

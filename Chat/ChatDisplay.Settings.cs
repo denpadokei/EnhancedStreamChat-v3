@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -356,20 +357,23 @@ namespace EnhancedStreamChat.Chat
         }
 
         [UIAction("re-connect")]
-        protected void ReConnect()
+        protected async void ReConnect()
         {
-            if (!this.ReconnectEnable) {
-                return;
-            }
+            await this._connectSemaphore.WaitAsync();
             try {
+                if (!this.ReconnectEnable) {
+                    return;
+                }
                 this.ReconnectEnable = false;
-                this._catCoreManager.Start().ContinueWith(task =>
-                {
-                    this.ReconnectEnable = true;
-                });
+                await Task.Delay(s_reconnectDelay);
+                await this._catCoreManager.Start();
             }
             catch (System.Exception e) {
                 Logger.Error(e);
+            }
+            finally {
+                this.ReconnectEnable = true;
+                this._connectSemaphore.Release();
             }
         }
 

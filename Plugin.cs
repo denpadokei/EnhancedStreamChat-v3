@@ -34,7 +34,11 @@ namespace EnhancedStreamChat
             "channel:manage:redemptions",
             "channel:read:subscriptions",
             "channel:read:redemptions",
+            "channel:read:hype_train",
+            "channel:read:predictions",
+            "user:edit:broadcast"
         };
+
         [Init]
         public void Init(IPALogger logger, PluginMetadata meta, Config config, Zenjector zenjector)
         {
@@ -75,6 +79,7 @@ namespace EnhancedStreamChat
                 Logger.Error(e);
             }
         }
+
         [OnStart]
         public void OnStart()
         {
@@ -83,15 +88,12 @@ namespace EnhancedStreamChat
         [OnExit]
         public void OnExit()
         {
-
         }
 #if DEBUG
         [HarmonyPatch("CatCore.Services.Twitch.TwitchIrcService, CatCore", "MessageReceivedHandler")]
         [HarmonyPrefix]
         public static void MessageReceivedHandlerPrefix(ref string message)
         {
-
-
             try {
                 if (message.Contains(@"JOIN #")) {
                     return;
@@ -101,29 +103,27 @@ namespace EnhancedStreamChat
             catch (System.Exception r) {
                 Logger.Error(r);
             }
-
         }
 
         [HarmonyPatch("CatCore.Services.Twitch.TwitchPubSubServiceExperimentalAgent, CatCore", "MessageReceivedHandler")]
         [HarmonyPrefix]
         public static void HandleMessageTypeInternalPrefix(ref string receivedMessage)
         {
-
             try {
                 Logger.Info(receivedMessage);
             }
             catch (System.Exception r) {
                 Logger.Error(r);
             }
-
         }
+#endif
         [HarmonyPatch("CatCore.Services.Twitch.TwitchAuthService, CatCore", "AuthorizationUrl")]
         [HarmonyPrefix]
         public static void StaticConstractPrefix(ref string[] ____twitchAuthorizationScope)
         {
+            Logger.Info("StaticConstractPrefix");
             ____twitchAuthorizationScope = s_twitchAuthorizationScope;
         }
-#endif
     }
 
     public enum BuildMessageTarget
