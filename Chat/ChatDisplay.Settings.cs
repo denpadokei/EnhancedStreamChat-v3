@@ -359,11 +359,11 @@ namespace EnhancedStreamChat.Chat
         [UIAction("re-connect")]
         protected async void ReConnect()
         {
+            if (!this.ReconnectEnable) {
+                return;
+            }
             await this._connectSemaphore.WaitAsync();
             try {
-                if (!this.ReconnectEnable) {
-                    return;
-                }
                 this.ReconnectEnable = false;
                 await Task.Delay(s_reconnectDelay);
                 await this._catCoreManager.Start();
