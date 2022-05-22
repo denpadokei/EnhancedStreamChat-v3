@@ -11,7 +11,9 @@ using IPALogger = IPA.Logging.Logger;
 
 namespace EnhancedStreamChat
 {
+#if DEBUG
     [HarmonyPatch]
+#endif
     [Plugin(RuntimeOptions.DynamicInit)]
     public class Plugin
     {
@@ -21,6 +23,7 @@ namespace EnhancedStreamChat
         internal static string Version => s_meta.HVersion.ToString() ?? Assembly.GetExecutingAssembly().GetName().Version.ToString();
         private static PluginMetadata s_meta;
         private static Harmony s_harmony;
+#if DEBUG
         private static readonly string[] s_twitchAuthorizationScope =
         {
             "channel:moderate",
@@ -38,7 +41,7 @@ namespace EnhancedStreamChat
             "channel:read:predictions",
             "user:edit:broadcast"
         };
-
+#endif
         [Init]
         public void Init(IPALogger logger, PluginMetadata meta, Config config, Zenjector zenjector)
         {
@@ -116,7 +119,6 @@ namespace EnhancedStreamChat
                 Logger.Error(r);
             }
         }
-#endif
         [HarmonyPatch("CatCore.Services.Twitch.TwitchAuthService, CatCore", "AuthorizationUrl")]
         [HarmonyPrefix]
         public static void StaticConstractPrefix(ref string[] ____twitchAuthorizationScope)
@@ -124,6 +126,7 @@ namespace EnhancedStreamChat
             Logger.Info("StaticConstractPrefix");
             ____twitchAuthorizationScope = s_twitchAuthorizationScope;
         }
+#endif
     }
 
     public enum BuildMessageTarget
