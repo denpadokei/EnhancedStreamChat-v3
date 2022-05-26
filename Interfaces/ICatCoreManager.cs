@@ -24,8 +24,10 @@ namespace EnhancedStreamChat.Interfaces
 
         void RunService();
         void LaunchWebPortal(bool shouldLaunchPortal = true);
-        Task Start();
-        Task Stop();
+        Task IrcStart();
+        Task IrcStop();
+        Task PubSubStart(object instance);
+        Task PubSubStop(object instance);
     }
 
     public delegate void OnRewardRedeemedHandler(string channelId, in RewardRedeemedData data);

@@ -6,27 +6,49 @@ namespace EnhancedStreamChat.HarmonyPatches
     [HarmonyPatch]
     public class TwitchIrcServicePatch
     {
-        private static readonly LazyCopyHashSet<IIrcServiceDisconnectReceiver> s_reciver = new LazyCopyHashSet<IIrcServiceDisconnectReceiver>();
-        public static ILazyCopyHashSet<IIrcServiceDisconnectReceiver> Recevires => s_reciver;
+        private static readonly LazyCopyHashSet<IIrcServiceDisconnectReceiver> s_ircreciver = new LazyCopyHashSet<IIrcServiceDisconnectReceiver>();
+        private static readonly LazyCopyHashSet<IPubSubServiceDisconnectReceiver> s_pubsubreciver = new LazyCopyHashSet<IPubSubServiceDisconnectReceiver>();
+        public static ILazyCopyHashSet<IIrcServiceDisconnectReceiver> IrcRecevires => s_ircreciver;
+        public static ILazyCopyHashSet<IPubSubServiceDisconnectReceiver> PubSubRecevires => s_pubsubreciver;
 
         [HarmonyPatch("CatCore.Services.Twitch.TwitchIrcService, CatCore", "DisconnectHappenedHandler")]
         [HarmonyPostfix]
         public static void DisconnectHappenedHandlerPostfix(object __instance)
         {
             Logger.Info("TwitchIrcService disconnect.");
-            foreach (var receiver in s_reciver.items) {
-                receiver?.OnDisconnect(__instance);
-            }
+            //foreach (var receiver in s_ircreciver.items) {
+            //    receiver?.OnIrcDisconnect(__instance);
+            //}
         }
 
-        public static void RegistReceiver(IIrcServiceDisconnectReceiver receiver)
+        [HarmonyPatch("CatCore.Services.Twitch.TwitchPubSubServiceExperimentalAgent, CatCore", "DisconnectHappenedHandler")]
+        [HarmonyPostfix]
+        public static void PubsubDisconnectHappenedHandlerPostfix(object __instance)
         {
-            Recevires.Add(receiver);
+            Logger.Info("TwitchPubsubService disconnect.");
+            //foreach (var reciver in s_pubsubreciver.items) {
+            //    reciver?.OnPubsubDisconnect(__instance);
+            //}
         }
 
-        public static void UnRegistReceiver(IIrcServiceDisconnectReceiver receiver)
+        public static void RegistIrcReceiver(IIrcServiceDisconnectReceiver receiver)
         {
-            Recevires.Remove(receiver);
+            IrcRecevires.Add(receiver);
+        }
+
+        public static void UnRegistIrcReceiver(IIrcServiceDisconnectReceiver receiver)
+        {
+            IrcRecevires.Remove(receiver);
+        }
+
+        public static void RegistPubSubReceiver(IPubSubServiceDisconnectReceiver receiver)
+        {
+            PubSubRecevires.Add(receiver);
+        }
+
+        public static void UnRegistPubSubReceiver(IPubSubServiceDisconnectReceiver receiver)
+        {
+            PubSubRecevires.Remove(receiver);
         }
     }
 }
