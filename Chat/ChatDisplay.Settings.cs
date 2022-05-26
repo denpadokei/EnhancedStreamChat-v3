@@ -357,22 +357,37 @@ namespace EnhancedStreamChat.Chat
         }
 
         [UIAction("re-connect")]
-        protected async void ReConnect()
+        protected async void ReIrcConnect()
         {
+            if (!this.ReconnectEnable) {
+                return;
+            }
             await this._connectSemaphore.WaitAsync();
             try {
-                if (!this.ReconnectEnable) {
-                    return;
-                }
                 this.ReconnectEnable = false;
                 await Task.Delay(s_reconnectDelay);
-                await this._catCoreManager.Start();
+                await this._catCoreManager.IrcStart();
             }
             catch (System.Exception e) {
                 Logger.Error(e);
             }
             finally {
                 this.ReconnectEnable = true;
+                this._connectSemaphore.Release();
+            }
+        }
+
+        protected async void PubSubReconnect(object instance)
+        {
+            await this._connectSemaphore.WaitAsync();
+            try {
+                await Task.Delay(s_reconnectDelay);
+                await this._catCoreManager.PubSubStart(instance);
+            }
+            catch (System.Exception e) {
+                Logger.Error(e);
+            }
+            finally {
                 this._connectSemaphore.Release();
             }
         }

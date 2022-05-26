@@ -29,7 +29,7 @@ using Color = UnityEngine.Color;
 namespace EnhancedStreamChat.Chat
 {
     [HotReload]
-    public partial class ChatDisplay : BSMLAutomaticViewController, IAsyncInitializable, IChatDisplay, IDisposable, IAffinity, ILatePreRenderRebuildReciver, IIrcServiceDisconnectReceiver
+    public partial class ChatDisplay : BSMLAutomaticViewController, IAsyncInitializable, IChatDisplay, IDisposable, IAffinity, ILatePreRenderRebuildReciver, IIrcServiceDisconnectReceiver, IPubSubServiceDisconnectReceiver
     {
         //ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*
         #region // プロパティ
@@ -58,10 +58,13 @@ namespace EnhancedStreamChat.Chat
             while (s_backupMessageQueue.TryDequeue(out var msg)) {
                 await this.OnTextMessageReceived(msg.Value, msg.Key);
             }
-            TwitchIrcServicePatch.RegistReceiver(this);
+            TwitchIrcServicePatch.RegistIrcReceiver(this);
+            TwitchIrcServicePatch.RegistPubSubReceiver(this);
             this._chatConfig.OnConfigChanged += this.Instance_OnConfigChanged;
             SceneManager.activeSceneChanged += this.SceneManager_activeSceneChanged;
+            this._catCoreManager.OnChatConnected += this.CatCoreManager_OnChatConnected;
             this._catCoreManager.OnJoinChannel += this.CatCoreManager_OnJoinChannel;
+            this._catCoreManager.OnLeaveChannel += this.CatCoreManager_OnLeaveChannel;
             this._catCoreManager.OnTwitchTextMessageReceived += this.CatCoreManager_OnTwitchTextMessageReceived;
             this._catCoreManager.OnMessageDeleted += this.OnCatCoreManager_OnMessageDeleted;
             this._catCoreManager.OnChatCleared += this.OnCatCoreManager_OnChatCleared;
@@ -108,12 +111,20 @@ namespace EnhancedStreamChat.Chat
             this.PointerOnEnabled(__instance);
         }
 
-        public void OnDisconnect(object ircService)
+        public void OnIrcDisconnect(object ircService)
         {
             if (!this._chatConfig.ForceAutoReconnect || !this.ReconnectEnable) {
                 return;
             }
-            this.ReConnect();
+            this.ReIrcConnect();
+        }
+
+        public void OnPubsubDisconnect(object pubSubService)
+        {
+            if (!this._chatConfig.ForceAutoReconnect || !this.ReconnectEnable) {
+                return;
+            }
+            this.PubSubReconnect(pubSubService);
         }
 
         public void LatePreRenderRebuildHandler(object sender, EventArgs e)
@@ -390,24 +401,35 @@ namespace EnhancedStreamChat.Chat
                 this._updateMessagePositions = true;
             });
         }
+
+        private void CatCoreManager_OnChatConnected(CatCore.Services.Multiplexer.MultiplexedPlatformService obj)
+        {
+            var mes = new ESCChatMessage(Guid.NewGuid().ToString(), $"Success connected service. {obj.GetType().Name}")
+            {
+                IsSystemMessage = true,
+                IsHighlighted = false,
+            };
+            _ = this.OnTextMessageReceived(mes, DateTime.Now);
+        }
+
         private void CatCoreManager_OnJoinChannel(CatCore.Services.Multiplexer.MultiplexedPlatformService arg1, CatCore.Services.Multiplexer.MultiplexedChannel arg2)
         {
-            MainThreadInvoker.Invoke(() =>
+            var mes = new ESCChatMessage(Guid.NewGuid().ToString(), $"[{arg2.Name}] Success joining channel {arg2.Id}")
             {
-                var newMsg = this._textPoolContaner.Spawn();
-                var dummyMessage = new ESCChatMessage(Guid.NewGuid().ToString(), $"<color=#bbbbbbff>[{arg2.Name}] Success joining {arg2.Id}</color>");
-                newMsg.Text.ChatMessage = dummyMessage;
-                newMsg.SubText.ChatMessage = dummyMessage;
-                newMsg.transform.SetParent(this._chatContainer.transform, false);
-                this.UpdateMessage(newMsg);
-                newMsg.Text.text = dummyMessage.Message;
-                newMsg.HighlightEnabled = true;
-                newMsg.HighlightColor = Color.gray.ColorWithAlpha(0.05f);
-                newMsg.ReceivedDate = DateTime.Now;
-                newMsg.SubTextEnabled = false;
-                this.AddMessage(newMsg);
-                this._updateMessagePositions = true;
-            });
+                IsSystemMessage = true,
+                IsHighlighted = false,
+            };
+            _ = this.OnTextMessageReceived(mes, DateTime.Now);
+        }
+
+        private void CatCoreManager_OnLeaveChannel(CatCore.Services.Multiplexer.MultiplexedPlatformService arg1, CatCore.Services.Multiplexer.MultiplexedChannel arg2)
+        {
+            var mes = new ESCChatMessage(Guid.NewGuid().ToString(), $"[{arg2.Name}] Success leaved channel {arg2.Id}")
+            {
+                IsSystemMessage = true,
+                IsHighlighted = false,
+            };
+            _ = this.OnTextMessageReceived(mes, DateTime.Now);
         }
 
         private void CatCoreManager_OnTwitchTextMessageReceived(CatCore.Services.Twitch.Interfaces.ITwitchService arg1, CatCore.Models.Twitch.IRC.TwitchMessage arg2)
@@ -516,13 +538,16 @@ namespace EnhancedStreamChat.Chat
             base.OnDestroy();
             this._chatConfig.OnConfigChanged -= this.Instance_OnConfigChanged;
             SceneManager.activeSceneChanged -= this.SceneManager_activeSceneChanged;
+            this._catCoreManager.OnChatConnected -= this.CatCoreManager_OnChatConnected;
             this._catCoreManager.OnJoinChannel -= this.CatCoreManager_OnJoinChannel;
+            this._catCoreManager.OnLeaveChannel -= this.CatCoreManager_OnLeaveChannel;
             this._catCoreManager.OnTwitchTextMessageReceived -= this.CatCoreManager_OnTwitchTextMessageReceived;
             this._catCoreManager.OnMessageDeleted -= this.OnCatCoreManager_OnMessageDeleted;
             this._catCoreManager.OnChatCleared -= this.OnCatCoreManager_OnChatCleared;
             this._catCoreManager.OnFollow -= this.OnCatCoreManager_OnFollow;
             this._catCoreManager.OnRewardRedeemed -= this.OnCatCoreManager_OnRewardRedeemed;
-            TwitchIrcServicePatch.UnRegistReceiver(this);
+            TwitchIrcServicePatch.UnRegistIrcReceiver(this);
+            TwitchIrcServicePatch.UnRegistPubSubReceiver(this);
             this.StopAllCoroutines();
             while (this._messages.TryDequeue(out var msg)) {
                 if (msg != null) {
@@ -530,9 +555,6 @@ namespace EnhancedStreamChat.Chat
                 }
                 if (msg.Text.ChatMessage != null) {
                     s_backupMessageQueue.Enqueue(new KeyValuePair<DateTime, IESCChatMessage>(msg.ReceivedDate, msg.Text.ChatMessage));
-                }
-                if (msg.SubText.ChatMessage != null) {
-                    s_backupMessageQueue.Enqueue(new KeyValuePair<DateTime, IESCChatMessage>(msg.ReceivedDate, msg.SubText.ChatMessage));
                 }
                 this._textPoolContaner?.Despawn(msg);
             }

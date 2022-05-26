@@ -2,6 +2,6 @@
 {
     public interface IIrcServiceDisconnectReceiver
     {
-        void OnDisconnect(object ircService);
+        void OnIrcDisconnect(object ircService);
     }
 }

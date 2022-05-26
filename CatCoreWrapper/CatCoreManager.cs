@@ -1,4 +1,5 @@
 ﻿using CatCore;
+using CatCore.Logging;
 using CatCore.Models.Twitch.IRC;
 using CatCore.Models.Twitch.PubSub.Responses;
 using CatCore.Models.Twitch.PubSub.Responses.ChannelPointsChannelV1;
@@ -6,14 +7,11 @@ using CatCore.Services.Multiplexer;
 using CatCore.Services.Twitch;
 using CatCore.Services.Twitch.Interfaces;
 using EnhancedStreamChat.Interfaces;
+using IPA.Logging;
 using System;
 using System.Reflection;
 using System.Threading.Tasks;
 using Zenject;
-#if DEBUG
-using CatCore.Logging;
-using IPA.Logging;
-#endif
 
 namespace EnhancedStreamChat.CatCoreWrapper
 {
@@ -78,15 +76,27 @@ namespace EnhancedStreamChat.CatCoreWrapper
             this._instance.LaunchWebPortal();
         }
 
-        public Task Start()
+        public Task IrcStart()
         {
-            var task = this._start?.Invoke(this._twitchIrcService, null);
+            var task = this._ircstart?.Invoke(this._twitchIrcService, null);
             return task as Task ?? Task.CompletedTask;
         }
 
-        public Task Stop()
+        public Task IrcStop()
         {
-            var task = this._stop?.Invoke(this._twitchIrcService, null);
+            var task = this._ircstop?.Invoke(this._twitchIrcService, null);
+            return task as Task ?? Task.CompletedTask;
+        }
+
+        public Task PubSubStart(object instance)
+        {
+            var task = this._pubsubstart?.Invoke(instance, new object[] { false });
+            return task as Task ?? Task.CompletedTask;
+        }
+
+        public Task PubSubStop(object instance)
+        {
+            var task = this._pubsubstop?.Invoke(instance, new object[] { "Forced to go close" });
             return task as Task ?? Task.CompletedTask;
         }
         #endregion
@@ -153,14 +163,15 @@ namespace EnhancedStreamChat.CatCoreWrapper
         private ITwitchPubSubServiceManager _twitchPubSubServiceManager;
         private bool _disposedValue;
         private object _twitchIrcService;
-        private readonly MethodInfo _start = Type.GetType("CatCore.Services.Twitch.TwitchIrcService, CatCore").GetMethod("CatCore.Services.Twitch.Interfaces.ITwitchIrcService.Start", BindingFlags.NonPublic | BindingFlags.Instance);
-        private readonly MethodInfo _stop = Type.GetType("CatCore.Services.Twitch.TwitchIrcService, CatCore").GetMethod("CatCore.Services.Twitch.Interfaces.ITwitchIrcService.Stop", BindingFlags.NonPublic | BindingFlags.Instance);
+        private readonly MethodInfo _ircstart = Type.GetType("CatCore.Services.Twitch.TwitchIrcService, CatCore").GetMethod("CatCore.Services.Twitch.Interfaces.ITwitchIrcService.Start", BindingFlags.NonPublic | BindingFlags.Instance);
+        private readonly MethodInfo _ircstop = Type.GetType("CatCore.Services.Twitch.TwitchIrcService, CatCore").GetMethod("CatCore.Services.Twitch.Interfaces.ITwitchIrcService.Stop", BindingFlags.NonPublic | BindingFlags.Instance);
+        private readonly MethodInfo _pubsubstart = Type.GetType("CatCore.Services.Twitch.TwitchPubSubServiceExperimentalAgent, CatCore").GetMethod("CatCore.Services.Twitch.TwitchPubSubServiceExperimentalAgent.Start", BindingFlags.NonPublic | BindingFlags.Instance);
+        private readonly MethodInfo _pubsubstop = Type.GetType("CatCore.Services.Twitch.TwitchPubSubServiceExperimentalAgent, CatCore").GetMethod("CatCore.Services.Twitch.TwitchPubSubServiceExperimentalAgent.Stop", BindingFlags.NonPublic | BindingFlags.Instance);
         #endregion
         //ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*
         #region // 構築・破棄
         public CatCoreManager()
         {
-#if DEBUG
             this._instance = CatCoreInstance.
             Create((level, context, message) => Logger.Log
                 .GetChildLogger("CatCore")
@@ -174,9 +185,6 @@ namespace EnhancedStreamChat.CatCoreWrapper
                     CustomLogLevel.Critical => IPA.Logging.Logger.Level.Critical,
                     _ => IPA.Logging.Logger.Level.Debug
                 }, $"{context} | {message}"));
-#else
-            this._instance = CatCoreInstance.Create();
-#endif
         }
 
         protected virtual void Dispose(bool disposing)

@@ -11,7 +11,9 @@ using IPALogger = IPA.Logging.Logger;
 
 namespace EnhancedStreamChat
 {
+#if DEBUG
     [HarmonyPatch]
+#endif
     [Plugin(RuntimeOptions.DynamicInit)]
     public class Plugin
     {
@@ -21,24 +23,25 @@ namespace EnhancedStreamChat
         internal static string Version => s_meta.HVersion.ToString() ?? Assembly.GetExecutingAssembly().GetName().Version.ToString();
         private static PluginMetadata s_meta;
         private static Harmony s_harmony;
-        private static readonly string[] s_twitchAuthorizationScope =
-        {
-            "channel:moderate",
-            "chat:edit",
-            "chat:read",
-            "bits:read",
-            "user:read:follows",
-            "channel:manage:broadcast",
-            "channel:manage:polls",
-            "channel:manage:predictions",
-            "channel:manage:redemptions",
-            "channel:read:subscriptions",
-            "channel:read:redemptions",
-            "channel:read:hype_train",
-            "channel:read:predictions",
-            "user:edit:broadcast"
-        };
-
+#if DEBUG
+        //private static readonly string[] s_twitchAuthorizationScope =
+        //{
+        //    "channel:moderate",
+        //    "chat:edit",
+        //    "chat:read",
+        //    "bits:read",
+        //    "user:read:follows",
+        //    "channel:manage:broadcast",
+        //    "channel:manage:polls",
+        //    "channel:manage:predictions",
+        //    "channel:manage:redemptions",
+        //    "channel:read:subscriptions",
+        //    "channel:read:redemptions",
+        //    "channel:read:hype_train",
+        //    "channel:read:predictions",
+        //    "user:edit:broadcast"
+        //};
+#endif
         [Init]
         public void Init(IPALogger logger, PluginMetadata meta, Config config, Zenjector zenjector)
         {
@@ -116,14 +119,40 @@ namespace EnhancedStreamChat
                 Logger.Error(r);
             }
         }
-#endif
-        [HarmonyPatch("CatCore.Services.Twitch.TwitchAuthService, CatCore", "AuthorizationUrl")]
+
+        [HarmonyPatch("CatCore.Services.Twitch.TwitchIrcService, CatCore", "HandleParsedIrcMessage")]
         [HarmonyPrefix]
-        public static void StaticConstractPrefix(ref string[] ____twitchAuthorizationScope)
+        public static void HandleParsedIrcMessagePrefix(ref string commandType, ref string prefix)
         {
-            Logger.Info("StaticConstractPrefix");
-            ____twitchAuthorizationScope = s_twitchAuthorizationScope;
+            try {
+                Logger.Info(prefix);
+                Logger.Info(commandType);
+            }
+            catch (System.Exception r) {
+                Logger.Error(r);
+            }
         }
+
+        //[HarmonyPatch("CatCore.Services.Twitch.TwitchAuthService, CatCore", "AuthorizationUrl")]
+        //[HarmonyPrefix]
+        //public static void StaticConstractPrefix(ref string[] ____twitchAuthorizationScope)
+        //{
+        //    Logger.Info("StaticConstractPrefix");
+        //    ____twitchAuthorizationScope = s_twitchAuthorizationScope;
+        //}
+        [HarmonyPatch("CatCore.Services.WebSocketConnection, CatCore", "SendMessage")]
+        [HarmonyPostfix]
+        public static void SendMessagePostfix(ref string message, ref object ____wss)
+        {
+            try {
+                var isConnected = (bool)____wss.GetType().GetProperty("IsConnected", BindingFlags.Public | BindingFlags.Instance).GetValue(____wss);
+                Logger.Info($"{isConnected}, {message}");
+            }
+            catch (System.Exception r) {
+                Logger.Error(r);
+            }
+        }
+#endif
     }
 
     public enum BuildMessageTarget
