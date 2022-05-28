@@ -227,8 +227,11 @@ namespace EnhancedStreamChat.Chat
         private void SceneManager_activeSceneChanged(Scene arg0, Scene arg1)
         {
             if (arg1.name != s_game && arg1.name != s_menu) {
+                this._isInGame = false;
+                this._rootGameObject.SetActive(false);
                 return;
             }
+            this._rootGameObject.SetActive(true);
             if (arg1.name == s_game) {
                 this._isInGame = true;
                 foreach (var canvas in this._chatScreen.GetComponentsInChildren<Canvas>(true)) {
@@ -507,6 +510,39 @@ namespace EnhancedStreamChat.Chat
                 if (disposing) {
                     try {
                         this._connectSemaphore.Dispose();
+                        this._chatConfig.OnConfigChanged -= this.Instance_OnConfigChanged;
+                        SceneManager.activeSceneChanged -= this.SceneManager_activeSceneChanged;
+                        this._catCoreManager.OnChatConnected -= this.CatCoreManager_OnChatConnected;
+                        this._catCoreManager.OnJoinChannel -= this.CatCoreManager_OnJoinChannel;
+                        this._catCoreManager.OnLeaveChannel -= this.CatCoreManager_OnLeaveChannel;
+                        this._catCoreManager.OnTwitchTextMessageReceived -= this.CatCoreManager_OnTwitchTextMessageReceived;
+                        this._catCoreManager.OnMessageDeleted -= this.OnCatCoreManager_OnMessageDeleted;
+                        this._catCoreManager.OnChatCleared -= this.OnCatCoreManager_OnChatCleared;
+                        this._catCoreManager.OnFollow -= this.OnCatCoreManager_OnFollow;
+                        this._catCoreManager.OnRewardRedeemed -= this.OnCatCoreManager_OnRewardRedeemed;
+                        TwitchIrcServicePatch.UnRegistIrcReceiver(this);
+                        TwitchIrcServicePatch.UnRegistPubSubReceiver(this);
+                        this.StopAllCoroutines();
+                        while (this._messages.TryDequeue(out var msg)) {
+                            if (msg != null) {
+                                msg.RemoveReciver(this);
+                            }
+                            if (msg.Text.ChatMessage != null) {
+                                s_backupMessageQueue.Enqueue(new KeyValuePair<DateTime, IESCChatMessage>(msg.ReceivedDate, msg.Text.ChatMessage));
+                            }
+                            this._textPoolContaner?.Despawn(msg);
+                        }
+                        if (this._chatMoverMaterial != null) {
+                            Destroy(this._chatMoverMaterial);
+                            this._chatMoverMaterial = null;
+                        }
+                        if (this._bg != null) {
+                            Destroy(this._bg.material);
+                        }
+                        if (this._chatScreen != null) {
+                            Destroy(this._chatScreen);
+                            this._chatScreen = null;
+                        }
                         if (this._rootGameObject != null) {
                             Destroy(this._rootGameObject);
                         }
@@ -530,46 +566,6 @@ namespace EnhancedStreamChat.Chat
         protected void Awake()
         {
             DontDestroyOnLoad(this.gameObject);
-        }
-
-        protected override void OnDestroy()
-        {
-            Logger.Debug("OnDestroy()");
-            base.OnDestroy();
-            this._chatConfig.OnConfigChanged -= this.Instance_OnConfigChanged;
-            SceneManager.activeSceneChanged -= this.SceneManager_activeSceneChanged;
-            this._catCoreManager.OnChatConnected -= this.CatCoreManager_OnChatConnected;
-            this._catCoreManager.OnJoinChannel -= this.CatCoreManager_OnJoinChannel;
-            this._catCoreManager.OnLeaveChannel -= this.CatCoreManager_OnLeaveChannel;
-            this._catCoreManager.OnTwitchTextMessageReceived -= this.CatCoreManager_OnTwitchTextMessageReceived;
-            this._catCoreManager.OnMessageDeleted -= this.OnCatCoreManager_OnMessageDeleted;
-            this._catCoreManager.OnChatCleared -= this.OnCatCoreManager_OnChatCleared;
-            this._catCoreManager.OnFollow -= this.OnCatCoreManager_OnFollow;
-            this._catCoreManager.OnRewardRedeemed -= this.OnCatCoreManager_OnRewardRedeemed;
-            TwitchIrcServicePatch.UnRegistIrcReceiver(this);
-            TwitchIrcServicePatch.UnRegistPubSubReceiver(this);
-            this.StopAllCoroutines();
-            while (this._messages.TryDequeue(out var msg)) {
-                if (msg != null) {
-                    msg.RemoveReciver(this);
-                }
-                if (msg.Text.ChatMessage != null) {
-                    s_backupMessageQueue.Enqueue(new KeyValuePair<DateTime, IESCChatMessage>(msg.ReceivedDate, msg.Text.ChatMessage));
-                }
-                this._textPoolContaner?.Despawn(msg);
-            }
-
-            if (this._chatScreen != null) {
-                Destroy(this._chatScreen);
-                this._chatScreen = null;
-            }
-            if (this._chatMoverMaterial != null) {
-                Destroy(this._chatMoverMaterial);
-                this._chatMoverMaterial = null;
-            }
-            if (this._bg != null) {
-                Destroy(this._bg.material);
-            }
         }
 
         protected void Update()
