@@ -9,8 +9,8 @@ Enhanced Stream Chat is a rich text chat integration mod for Beat Saber. It supp
 また、各自でオリジナルのフォントアセットを作成し読み込むことも可能です。  
 詳しくは[こちら](https://github.com/denpadokei/ESCFontProject)  
 # Basic Configuration (for users)
-1. Follow the instructions at https://github.com/brian91292/CatCore#basic-configuration-for-beat-saber-mod-users
-2. Grab the latest EnhancedStreamChat release from https://github.com/brian91292/EnhancedStreamChat-v3/releases
+1. Follow the instructions at https://github.com/ErisApps/CatCore#catcore
+2. Grab the latest EnhancedStreamChat release from https://github.com/denpadokei/EnhancedStreamChat-v3/releases
 3. Extract the latest EnhancedStreamChat zip to your `Beat Saber` directory
 4. Once you launch the game, the CatCore settings web app will open in your default browser. Use this to login, join/leave channels, and configure various settings.
 
