@@ -48,19 +48,31 @@ namespace EnhancedStreamChat.Chat
                 this._chatConfig.ChatWidth = this.ChatWidth;
             }
             else if (e.PropertyName == nameof(this.ChatPosition)) {
-                if (this._isInGame) {
+                if (this._chatConfig.SyncOrientation) {
+                    this._chatConfig.Menu_ChatPosition = this.ChatPosition;
                     this._chatConfig.Song_ChatPosition = this.ChatPosition;
                 }
                 else {
-                    this._chatConfig.Menu_ChatPosition = this.ChatPosition;
+                    if (this._isInGame) {
+                        this._chatConfig.Song_ChatPosition = this.ChatPosition;
+                    }
+                    else {
+                        this._chatConfig.Menu_ChatPosition = this.ChatPosition;
+                    }
                 }
             }
             else if (e.PropertyName == nameof(this.ChatRotation)) {
-                if (this._isInGame) {
+                if (this._chatConfig.SyncOrientation) {
+                    this._chatConfig.Menu_ChatRotation = this.ChatRotation;
                     this._chatConfig.Song_ChatRotation = this.ChatRotation;
                 }
                 else {
-                    this._chatConfig.Menu_ChatRotation = this.ChatRotation;
+                    if (this._isInGame) {
+                        this._chatConfig.Song_ChatRotation = this.ChatRotation;
+                    }
+                    else {
+                        this._chatConfig.Menu_ChatRotation = this.ChatRotation;
+                    }
                 }
             }
             else if (e.PropertyName == nameof(this.FontSize)) {
@@ -77,7 +89,7 @@ namespace EnhancedStreamChat.Chat
             }
             else if (e.PropertyName == nameof(this.SyncOrientation)) {
                 this._chatConfig.SyncOrientation = this.SyncOrientation;
-                if (this.SyncOrientation) {
+                if (this._chatConfig.SyncOrientation) {
                     if (this._isInGame) {
                         this._chatConfig.Menu_ChatPosition = this._chatConfig.Song_ChatPosition;
                         this._chatConfig.Menu_ChatRotation = this._chatConfig.Song_ChatRotation;
@@ -409,6 +421,11 @@ namespace EnhancedStreamChat.Chat
             this.AllowMovement = this._chatConfig.AllowMovement;
             this.ChatHeight = this._chatConfig.ChatHeight;
             this.ChatWidth = this._chatConfig.ChatWidth;
+            this.FontSize = this._chatConfig.FontSize;
+            this.HighlightColor = this._chatConfig.HighlightColor;
+            this.PingColor = this._chatConfig.PingColor;
+            this.ReverseChatOrder = this._chatConfig.ReverseChatOrder;
+            this.SyncOrientation = this._chatConfig.SyncOrientation;
             if (this._isInGame) {
                 this.ChatPosition = this._chatConfig.Song_ChatPosition;
                 this.ChatRotation = this._chatConfig.Song_ChatRotation;
@@ -417,11 +434,6 @@ namespace EnhancedStreamChat.Chat
                 this.ChatPosition = this._chatConfig.Menu_ChatPosition;
                 this.ChatRotation = this._chatConfig.Menu_ChatRotation;
             }
-            this.FontSize = this._chatConfig.FontSize;
-            this.HighlightColor = this._chatConfig.HighlightColor;
-            this.PingColor = this._chatConfig.PingColor;
-            this.ReverseChatOrder = this._chatConfig.ReverseChatOrder;
-            this.SyncOrientation = this._chatConfig.SyncOrientation;
         }
     }
 }

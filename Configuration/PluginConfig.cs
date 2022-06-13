@@ -36,7 +36,6 @@ namespace EnhancedStreamChat.Configuration
         public virtual Vector3 Song_ChatPosition { get; set; } = new Vector3(0, 3.75f, 2.5f);
         [UseConverter(typeof(Vector3Conveter))]
         public virtual Vector3 Song_ChatRotation { get; set; } = new Vector3(325, 0, 0);
-        public virtual bool ForceAutoReconnect { get; set; } = true;
 
         public event Action OnConfigChanged;
 

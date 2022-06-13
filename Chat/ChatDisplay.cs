@@ -3,7 +3,6 @@ using BeatSaberMarkupLanguage.FloatingScreen;
 using BeatSaberMarkupLanguage.ViewControllers;
 using EnhancedStreamChat.Configuration;
 using EnhancedStreamChat.Graphics;
-using EnhancedStreamChat.HarmonyPatches;
 using EnhancedStreamChat.Interfaces;
 using EnhancedStreamChat.Models;
 using EnhancedStreamChat.Utilities;
@@ -29,7 +28,7 @@ using Color = UnityEngine.Color;
 namespace EnhancedStreamChat.Chat
 {
     [HotReload]
-    public partial class ChatDisplay : BSMLAutomaticViewController, IAsyncInitializable, IChatDisplay, IDisposable, IAffinity, ILatePreRenderRebuildReciver, IIrcServiceDisconnectReceiver, IPubSubServiceDisconnectReceiver
+    public partial class ChatDisplay : BSMLAutomaticViewController, IAsyncInitializable, IChatDisplay, IDisposable, IAffinity, ILatePreRenderRebuildReciver
     {
         //ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*
         #region // プロパティ
@@ -58,8 +57,6 @@ namespace EnhancedStreamChat.Chat
             while (s_backupMessageQueue.TryDequeue(out var msg)) {
                 await this.OnTextMessageReceived(msg.Value, msg.Key);
             }
-            TwitchIrcServicePatch.RegistIrcReceiver(this);
-            TwitchIrcServicePatch.RegistPubSubReceiver(this);
             this._chatConfig.OnConfigChanged += this.Instance_OnConfigChanged;
             SceneManager.activeSceneChanged += this.SceneManager_activeSceneChanged;
             this._catCoreManager.OnChatConnected += this.CatCoreManager_OnChatConnected;
@@ -109,22 +106,6 @@ namespace EnhancedStreamChat.Chat
         public void VRPointerOnEnable(VRPointer __instance)
         {
             this.PointerOnEnabled(__instance);
-        }
-
-        public void OnIrcDisconnect(object ircService)
-        {
-            if (!this._chatConfig.ForceAutoReconnect || !this.ReconnectEnable) {
-                return;
-            }
-            this.ReIrcConnect();
-        }
-
-        public void OnPubsubDisconnect(object pubSubService)
-        {
-            if (!this._chatConfig.ForceAutoReconnect || !this.ReconnectEnable) {
-                return;
-            }
-            this.PubSubReconnect(pubSubService);
         }
 
         public void LatePreRenderRebuildHandler(object sender, EventArgs e)
@@ -520,8 +501,6 @@ namespace EnhancedStreamChat.Chat
                         this._catCoreManager.OnChatCleared -= this.OnCatCoreManager_OnChatCleared;
                         this._catCoreManager.OnFollow -= this.OnCatCoreManager_OnFollow;
                         this._catCoreManager.OnRewardRedeemed -= this.OnCatCoreManager_OnRewardRedeemed;
-                        TwitchIrcServicePatch.UnRegistIrcReceiver(this);
-                        TwitchIrcServicePatch.UnRegistPubSubReceiver(this);
                         this.StopAllCoroutines();
                         while (this._messages.TryDequeue(out var msg)) {
                             if (msg != null) {

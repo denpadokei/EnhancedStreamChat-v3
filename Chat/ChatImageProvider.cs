@@ -162,7 +162,7 @@ namespace EnhancedStreamChat.Chat
                     break;
 
                 case ESCAnimationType.MAYBE_GIF:
-                    if (6 <= bytes.Length && (ContainBytePattern(bytes, s_animattedGIF89aPattern) || ContainBytePattern(bytes, s_animattedGIF87aPattern))) {
+                    if (6 <= bytes.Length && (this.ContainBytePattern(bytes, s_animattedGIF89aPattern) || this.ContainBytePattern(bytes, s_animattedGIF87aPattern))) {
                         AnimationLoader.Process(AnimationType.GIF, bytes, (tex, atlas, delays, width, height) =>
                         {
                             animControllerData = AnimationController.instance.Register(id, tex, atlas, delays);
@@ -232,7 +232,7 @@ namespace EnhancedStreamChat.Chat
         /// <param name="array">Input array</param>
         /// <param name="pattern">Lookup pattern</param>
         /// <returns></returns>
-        private static bool ContainBytePattern(byte[] array, byte[] pattern)
+        private bool ContainBytePattern(byte[] array, byte[] pattern)
         {
             var patternPosition = 0;
             for (var i = 0; i < array.Length; ++i) {
