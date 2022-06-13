@@ -7,7 +7,7 @@
     <NoWarn>1591</NoWarn>
     <AssemblyName>EnhancedStreamChat</AssemblyName>
     <RootNamespace>EnhancedStreamChat</RootNamespace>
-    <Version>5.0.3</Version>
+    <Version>5.0.4</Version>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <DebugType>embedded</DebugType>
     <AssemblySearchPath>$(ReferencePath)</AssemblySearchPath>
