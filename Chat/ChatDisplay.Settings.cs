@@ -24,7 +24,10 @@ namespace EnhancedStreamChat.Chat
             return true;
         }
 
-        private void OnPropertyChanged(PropertyChangedEventArgs e) => this.NotifyPropertyChanged(e.PropertyName);
+        private void OnPropertyChanged(PropertyChangedEventArgs e)
+        {
+            this.NotifyPropertyChanged(e.PropertyName);
+        }
 
         [UIAction("#post-parse")]
         private void PostParse()
@@ -256,16 +259,28 @@ namespace EnhancedStreamChat.Chat
         public string ModVersion => Plugin.Version;
 
         [UIAction("launch-web-app")]
-        private void LaunchWebApp() => ChatManager.instance._chatCoreInstance.LaunchWebApp();
+        private void LaunchWebApp()
+        {
+            ChatManager.instance._chatCoreInstance.LaunchWebApp();
+        }
 
         [UIAction("launch-kofi")]
-        private void LaunchKofi() => Application.OpenURL("https://ko-fi.com/brian91292");
+        private void LaunchKofi()
+        {
+            Application.OpenURL("https://ko-fi.com/brian91292");
+        }
 
         [UIAction("launch-github")]
-        private void LaunchGitHub() => Application.OpenURL("https://github.com/Auros/EnhancedStreamChat-v3");
+        private void LaunchGitHub()
+        {
+            Application.OpenURL("https://github.com/Auros/EnhancedStreamChat-v3");
+        }
 
         [UIAction("on-settings-clicked")]
-        private void OnSettingsClick() => Logger.Info("Settings clicked!");
+        private void OnSettingsClick()
+        {
+            Logger.Info("Settings clicked!");
+        }
 
         [UIAction("#hide-settings")]
         private void OnHideSettings()
@@ -274,8 +289,14 @@ namespace EnhancedStreamChat.Chat
             this._chatConfig.Save();
         }
 
-        private void HideSettings() => this.parserParams.EmitEvent("hide-settings");
+        private void HideSettings()
+        {
+            this.parserParams.EmitEvent("hide-settings");
+        }
 
-        private void ShowSettings() => this.parserParams.EmitEvent("show-settings");
+        private void ShowSettings()
+        {
+            this.parserParams.EmitEvent("show-settings");
+        }
     }
 }

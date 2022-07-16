@@ -95,7 +95,9 @@ namespace EnhancedStreamChat.Chat
             return Task.WaitAll(tasks.ToArray(), 15000);
         }
 
-        public static Task<string> BuildMessage(IChatMessage msg, EnhancedFontInfo font) => Task.Run(() =>
+        public static Task<string> BuildMessage(IChatMessage msg, EnhancedFontInfo font)
+        {
+            return Task.Run(() =>
         {
             try {
                 if (!PrepareImages(msg, font)) {
@@ -184,5 +186,6 @@ namespace EnhancedStreamChat.Chat
             }
             return msg.Message;
         });
+        }
     }
 }

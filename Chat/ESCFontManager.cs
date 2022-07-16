@@ -53,7 +53,11 @@ namespace EnhancedStreamChat.Chat
         }
         public EnhancedFontInfo FontInfo { get; private set; } = null;
 
-        private void Awake() => HMMainThreadDispatcher.instance.Enqueue(this.CreateChatFont());
+        private void Awake()
+        {
+            HMMainThreadDispatcher.instance.Enqueue(this.CreateChatFont());
+        }
+
         public IEnumerator CreateChatFont()
         {
             this.IsInitialized = false;
@@ -151,8 +155,10 @@ namespace EnhancedStreamChat.Chat
                 if (Path.GetFileNameWithoutExtension(osFontPath).ToLower() != "meiryo") {
                     continue;
                 }
-                var meiryo = new Font(osFontPath);
-                meiryo.name = Path.GetFileNameWithoutExtension(osFontPath);
+                var meiryo = new Font(osFontPath)
+                {
+                    name = Path.GetFileNameWithoutExtension(osFontPath)
+                };
                 asset = TMP_FontAsset.CreateFontAsset(meiryo);
                 this._fallbackFonts.Add(asset);
             }

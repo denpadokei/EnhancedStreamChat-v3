@@ -101,7 +101,7 @@ namespace EnhancedStreamChat.Chat
 
         public IEnumerator PrecacheAnimatedImage(string uri, string id, int forcedHeight = -1)
         {
-            yield return this.TryCacheSingleImage(id, uri, ESCAnimationType.GIF);   
+            yield return this.TryCacheSingleImage(id, uri, ESCAnimationType.GIF);
         }
 
 

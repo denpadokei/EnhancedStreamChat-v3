@@ -165,19 +165,54 @@ namespace EnhancedStreamChat.Chat
             }
         }
 
-        private void QueueOrSendOnChannelResourceDataCached(IChatService svc, IChatChannel channel, Dictionary<string, IChatResourceData> resources) => this.QueueOrSendMessage(svc, channel, resources, this.OnChannelResourceDataCached);
-        private void OnChannelResourceDataCached(IChatService svc, IChatChannel channel, Dictionary<string, IChatResourceData> resources) => this._chatDisplay.OnChannelResourceDataCached(channel, resources);
+        private void QueueOrSendOnChannelResourceDataCached(IChatService svc, IChatChannel channel, Dictionary<string, IChatResourceData> resources)
+        {
+            this.QueueOrSendMessage(svc, channel, resources, this.OnChannelResourceDataCached);
+        }
 
-        private void QueueOrSendOnTextMessageReceived(IChatService svc, IChatMessage msg) => this.QueueOrSendMessage(svc, msg, this.OnTextMesssageReceived);
-        private void OnTextMesssageReceived(IChatService svc, IChatMessage msg) => this._chatDisplay.OnTextMessageReceived(msg);
+        private void OnChannelResourceDataCached(IChatService svc, IChatChannel channel, Dictionary<string, IChatResourceData> resources)
+        {
+            this._chatDisplay.OnChannelResourceDataCached(channel, resources);
+        }
 
-        private void QueueOrSendOnJoinChannel(IChatService svc, IChatChannel channel) => this.QueueOrSendMessage(svc, channel, this.OnJoinChannel);
-        private void OnJoinChannel(IChatService svc, IChatChannel channel) => this._chatDisplay.OnJoinChannel(svc, channel);
+        private void QueueOrSendOnTextMessageReceived(IChatService svc, IChatMessage msg)
+        {
+            this.QueueOrSendMessage(svc, msg, this.OnTextMesssageReceived);
+        }
 
-        private void QueueOrSendOnClearMessage(IChatService svc, string messageId) => this.QueueOrSendMessage(svc, messageId, this.OnClearMessage);
-        private void OnClearMessage(IChatService svc, string messageId) => this._chatDisplay.OnMessageCleared(messageId);
+        private void OnTextMesssageReceived(IChatService svc, IChatMessage msg)
+        {
+            this._chatDisplay.OnTextMessageReceived(msg);
+        }
 
-        private void QueueOrSendOnClearChat(IChatService svc, string userId) => this.QueueOrSendMessage(svc, userId, this.OnClearChat);
-        private void OnClearChat(IChatService svc, string userId) => this._chatDisplay.OnChatCleared(userId);
+        private void QueueOrSendOnJoinChannel(IChatService svc, IChatChannel channel)
+        {
+            this.QueueOrSendMessage(svc, channel, this.OnJoinChannel);
+        }
+
+        private void OnJoinChannel(IChatService svc, IChatChannel channel)
+        {
+            this._chatDisplay.OnJoinChannel(svc, channel);
+        }
+
+        private void QueueOrSendOnClearMessage(IChatService svc, string messageId)
+        {
+            this.QueueOrSendMessage(svc, messageId, this.OnClearMessage);
+        }
+
+        private void OnClearMessage(IChatService svc, string messageId)
+        {
+            this._chatDisplay.OnMessageCleared(messageId);
+        }
+
+        private void QueueOrSendOnClearChat(IChatService svc, string userId)
+        {
+            this.QueueOrSendMessage(svc, userId, this.OnClearChat);
+        }
+
+        private void OnClearChat(IChatService svc, string userId)
+        {
+            this._chatDisplay.OnChatCleared(userId);
+        }
     }
 }

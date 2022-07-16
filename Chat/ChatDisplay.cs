@@ -212,9 +212,15 @@ namespace EnhancedStreamChat.Chat
             }
         }
 
-        private void Instance_OnConfigChanged(ChatConfig obj) => this.UpdateChatUI();
+        private void Instance_OnConfigChanged(ChatConfig obj)
+        {
+            this.UpdateChatUI();
+        }
 
-        private void OnHandleReleased(object sender, FloatingScreenHandleEventArgs e) => this.FloatingScreenOnRelease(e.Position, e.Rotation);
+        private void OnHandleReleased(object sender, FloatingScreenHandleEventArgs e)
+        {
+            this.FloatingScreenOnRelease(e.Position, e.Rotation);
+        }
 
         private void FloatingScreenOnRelease(in Vector3 pos, in Quaternion rot)
         {
@@ -283,7 +289,10 @@ namespace EnhancedStreamChat.Chat
             }
         }
 
-        private void OnRenderRebuildComplete() => this._updateMessagePositions = true;
+        private void OnRenderRebuildComplete()
+        {
+            this._updateMessagePositions = true;
+        }
 
         public void AddMessage(EnhancedTextMeshProUGUIWithBackground newMsg)
         {
@@ -425,7 +434,9 @@ namespace EnhancedStreamChat.Chat
             }
         }
 
-        public void OnChatCleared(string userId) => MainThreadInvoker.Invoke(() =>
+        public void OnChatCleared(string userId)
+        {
+            MainThreadInvoker.Invoke(() =>
                                                   {
                                                       foreach (var msg in this._messages.ToArray()) {
                                                           if (msg.Text.ChatMessage == null) {
@@ -436,8 +447,11 @@ namespace EnhancedStreamChat.Chat
                                                           }
                                                       }
                                                   });
+        }
 
-        public void OnJoinChannel(IChatService svc, IChatChannel channel) => MainThreadInvoker.Invoke(() =>
+        public void OnJoinChannel(IChatService svc, IChatChannel channel)
+        {
+            MainThreadInvoker.Invoke(() =>
                                                                            {
                                                                                var newMsg = this.TextPool.Alloc();
                                                                                newMsg.Text.text = $"<color=#bbbbbbbb>[{svc.DisplayName}] Success joining {channel.Id}</color>";
@@ -445,8 +459,11 @@ namespace EnhancedStreamChat.Chat
                                                                                newMsg.HighlightColor = Color.gray.ColorWithAlpha(0.05f);
                                                                                this.AddMessage(newMsg);
                                                                            });
+        }
 
-        public void OnChannelResourceDataCached(IChatChannel channel, Dictionary<string, IChatResourceData> resources) => MainThreadInvoker.Invoke(() =>
+        public void OnChannelResourceDataCached(IChatChannel channel, Dictionary<string, IChatResourceData> resources)
+        {
+            MainThreadInvoker.Invoke(() =>
                                                                                                                         {
                                                                                                                             var count = 0;
                                                                                                                             if (this._chatConfig.PreCacheAnimatedEmotes) {
@@ -462,9 +479,14 @@ namespace EnhancedStreamChat.Chat
                                                                                                                                 Logger.Warn("Pre-caching of animated emotes disabled by the user. If you're experiencing lag, re-enable emote precaching.");
                                                                                                                             }
                                                                                                                         });
+        }
 
         private EnhancedTextMeshProUGUIWithBackground _lastMessage;
-        public void OnTextMessageReceived(IChatMessage msg) => _ = this.OnTextMessageReceived(msg, DateTime.Now);
+        public void OnTextMessageReceived(IChatMessage msg)
+        {
+            _ = this.OnTextMessageReceived(msg, DateTime.Now);
+        }
+
         public async Task OnTextMessageReceived(IChatMessage msg, DateTime dateTime)
         {
             var parsedMessage = await ChatMessageBuilder.BuildMessage(msg, ESCFontManager.instance.FontInfo);

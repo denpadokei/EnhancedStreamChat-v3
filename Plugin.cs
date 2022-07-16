@@ -38,7 +38,10 @@ namespace EnhancedStreamChat
         }
 
 
-        private void Font_textureRebuilt(Font obj) => Logger.Log.Debug($"FontTexture({obj.name}) width: {obj.material.mainTexture.width}, height: {obj.material.mainTexture.height}");
+        private void Font_textureRebuilt(Font obj)
+        {
+            Logger.Log.Debug($"FontTexture({obj.name}) width: {obj.material.mainTexture.width}, height: {obj.material.mainTexture.height}");
+        }
 
         [OnEnable]
         public void OnEnable()
@@ -60,6 +63,9 @@ namespace EnhancedStreamChat
         }
 
         [OnExit]
-        public void OnExit() => Font.textureRebuilt -= this.Font_textureRebuilt;
+        public void OnExit()
+        {
+            Font.textureRebuilt -= this.Font_textureRebuilt;
+        }
     }
 }

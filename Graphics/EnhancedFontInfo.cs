@@ -28,9 +28,15 @@ namespace EnhancedStreamChat.Graphics
             return ret;
         }
 
-        public bool TryGetCharacter(string id, out uint character) => this.CharacterLookupTable.TryGetValue(id, out character);
+        public bool TryGetCharacter(string id, out uint character)
+        {
+            return this.CharacterLookupTable.TryGetValue(id, out character);
+        }
 
-        public bool TryGetImageInfo(uint character, out EnhancedImageInfo imageInfo) => this.ImageInfoLookupTable.TryGetValue(character, out imageInfo);
+        public bool TryGetImageInfo(uint character, out EnhancedImageInfo imageInfo)
+        {
+            return this.ImageInfoLookupTable.TryGetValue(character, out imageInfo);
+        }
 
         public bool TryRegisterImageInfo(EnhancedImageInfo imageInfo, out uint replaceCharacter)
         {
