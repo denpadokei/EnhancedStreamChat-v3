@@ -41,7 +41,7 @@ namespace EnhancedStreamChat.Chat
                     var tcs = new TaskCompletionSource<EnhancedImageInfo>();
                     switch (emote.Type) {
                         case EmoteType.SingleImage:
-                            SharedCoroutineStarter.instance.StartCoroutine(ChatImageProvider.instance.TryCacheSingleImage(emote.Id, emote.Uri, emote.IsAnimated, (info) =>
+                            SharedCoroutineStarter.instance.StartCoroutine(ChatImageProvider.instance.TryCacheSingleImage(emote.Id, emote.Uri, ChatImageProvider.ESCAnimationType.MAYBE_GIF, (info) =>
                             {
                                 if (info != null) {
                                     if (!font.TryRegisterImageInfo(info, out var character)) {
@@ -78,7 +78,7 @@ namespace EnhancedStreamChat.Chat
                 if (!font.CharacterLookupTable.ContainsKey(badge.Id)) {
                     pendingEmoteDownloads.Add(badge.Id);
                     var tcs = new TaskCompletionSource<EnhancedImageInfo>();
-                    SharedCoroutineStarter.instance.StartCoroutine(ChatImageProvider.instance.TryCacheSingleImage(badge.Id, badge.Uri, false, (info) =>
+                    SharedCoroutineStarter.instance.StartCoroutine(ChatImageProvider.instance.TryCacheSingleImage(badge.Id, badge.Uri, ChatImageProvider.ESCAnimationType.NONE, (info) =>
                     {
                         if (info != null) {
                             if (!font.TryRegisterImageInfo(info, out var character)) {

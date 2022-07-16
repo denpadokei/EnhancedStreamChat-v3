@@ -8,7 +8,7 @@
     <AssemblyName>EnhancedStreamChat</AssemblyName>
     <RootNamespace>EnhancedStreamChat</RootNamespace>
     <OutDir>$(ProjectDir)bin\$(Configuration)</OutDir>
-    <Version>4.1.0</Version>
+    <Version>4.1.1</Version>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <DebugType>embedded</DebugType>
 	  <AssemblySearchPath>$(ReferencePath)</AssemblySearchPath>
@@ -64,7 +64,7 @@
 			<Private>False</Private>
         </Reference>
         <Reference Include="SiraUtil">
-          <HintPath>D:\Oculus\Software\hyperbolic-magnetism-beat-saber\Plugins\SiraUtil.dll</HintPath>
+          <HintPath>$(BeatSaberDir)\SiraUtil.dll</HintPath>
           <Private>False</Private>
         </Reference>
         <Reference Include="Unity.TextMeshPro">

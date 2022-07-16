@@ -5,6 +5,7 @@ using EnhancedStreamChat.Utilities;
 using System;
 using System.Collections;
 using System.Collections.Concurrent;
+using System.Text;
 using UnityEngine;
 using UnityEngine.Networking;
 
@@ -19,9 +20,20 @@ namespace EnhancedStreamChat.Chat
 
     public class ChatImageProvider : PersistentSingleton<ChatImageProvider>
     {
+        public enum ESCAnimationType
+        {
+            NONE,
+            GIF,
+            APNG,
+            WEBP,
+            MAYBE_GIF
+        }
+
         public ConcurrentDictionary<string, EnhancedImageInfo> CachedImageInfo { get; } = new ConcurrentDictionary<string, EnhancedImageInfo>();
         private readonly ConcurrentDictionary<string, ActiveDownload> _activeDownloads = new ConcurrentDictionary<string, ActiveDownload>();
         private readonly ConcurrentDictionary<string, Texture2D> _cachedSpriteSheets = new ConcurrentDictionary<string, Texture2D>();
+        private static readonly byte[] s_animattedGIF89aPattern = Encoding.ASCII.GetBytes("GIF89a");
+        private static readonly byte[] s_animattedGIF87aPattern = Encoding.ASCII.GetBytes("GIF87a");
         /// <summary>
         /// Retrieves the requested content from the provided Uri. 
         /// <para>
@@ -38,7 +50,11 @@ namespace EnhancedStreamChat.Chat
                 Finally?.Invoke(null);
                 yield break;
             }
-
+            Logger.Debug($"old:{uri}");
+            var sb = new StringBuilder(uri);
+            sb.Replace(@"/v1/", @"/v2/").Replace(@"/3.0", @"/default/dark/3.0");
+            uri = sb.ToString();
+            Logger.Debug($"new:{uri}");
             if (!isRetry && this._activeDownloads.TryGetValue(uri, out var activeDownload)) {
                 Logger.Info($"Request already active for {uri}");
                 activeDownload.Finally -= Finally;
@@ -85,7 +101,7 @@ namespace EnhancedStreamChat.Chat
 
         public IEnumerator PrecacheAnimatedImage(string uri, string id, int forcedHeight = -1)
         {
-            yield return this.TryCacheSingleImage(id, uri, true);
+            yield return this.TryCacheSingleImage(id, uri, ESCAnimationType.GIF);   
         }
 
 
@@ -99,7 +115,7 @@ namespace EnhancedStreamChat.Chat
             spriteHeight = (int)(scale * spriteHeight);
         }
 
-        public IEnumerator TryCacheSingleImage(string id, string uri, bool isAnimated, Action<EnhancedImageInfo> Finally = null, int forcedHeight = -1)
+        public IEnumerator TryCacheSingleImage(string id, string uri, ESCAnimationType animatedType, Action<EnhancedImageInfo> Finally = null, int forcedHeight = -1)
         {
             if (this.CachedImageInfo.TryGetValue(id, out var info)) {
                 Finally?.Invoke(info);
@@ -107,10 +123,10 @@ namespace EnhancedStreamChat.Chat
             }
             var bytes = new byte[0];
             yield return this.DownloadContent(uri, (b) => bytes = b);
-            yield return this.OnSingleImageCached(bytes, id, isAnimated, Finally, forcedHeight);
+            yield return this.OnSingleImageCached(bytes, id, animatedType, Finally, forcedHeight);
         }
 
-        public IEnumerator OnSingleImageCached(byte[] bytes, string id, bool isAnimated, Action<EnhancedImageInfo> Finally = null, int forcedHeight = -1)
+        public IEnumerator OnSingleImageCached(byte[] bytes, string id, ESCAnimationType animatedType, Action<EnhancedImageInfo> Finally = null, int forcedHeight = -1)
         {
             if (bytes.Length == 0) {
                 Finally(null);
@@ -120,27 +136,65 @@ namespace EnhancedStreamChat.Chat
             Sprite sprite = null;
             int spriteWidth = 0, spriteHeight = 0;
             AnimationControllerData animControllerData = null;
-            if (isAnimated) {
-                AnimationLoader.Process(AnimationType.GIF, bytes, (tex, atlas, delays, width, height) =>
-                {
-                    animControllerData = AnimationController.instance.Register(id, tex, atlas, delays);
-                    sprite = animControllerData.sprite;
-                    spriteWidth = width;
-                    spriteHeight = height;
-                });
-                yield return new WaitUntil(() => animControllerData != null);
+            switch (animatedType) {
+                case ESCAnimationType.GIF:
+                    AnimationLoader.Process(AnimationType.GIF, bytes, (tex, atlas, delays, width, height) =>
+                    {
+                        animControllerData = AnimationController.instance.Register(id, tex, atlas, delays);
+                        sprite = animControllerData.sprite;
+                        spriteWidth = width;
+                        spriteHeight = height;
+                    });
+                    yield return new WaitUntil(() => animControllerData != null);
+                    break;
+                case ESCAnimationType.APNG:
+                    AnimationLoader.Process(AnimationType.APNG, bytes, (tex, atlas, delays, width, height) =>
+                    {
+                        animControllerData = AnimationController.instance.Register(id, tex, atlas, delays);
+                        sprite = animControllerData.sprite;
+                        spriteWidth = width;
+                        spriteHeight = height;
+                    });
+                    yield return new WaitUntil(() => animControllerData != null);
+                    break;
+                case ESCAnimationType.MAYBE_GIF:
+                    if (6 <= bytes.Length && (this.ContainBytePattern(bytes, s_animattedGIF89aPattern) || this.ContainBytePattern(bytes, s_animattedGIF87aPattern))) {
+                        AnimationLoader.Process(AnimationType.GIF, bytes, (tex, atlas, delays, width, height) =>
+                        {
+                            animControllerData = AnimationController.instance.Register(id, tex, atlas, delays);
+                            sprite = animControllerData.sprite;
+                            spriteWidth = width;
+                            spriteHeight = height;
+                        });
+                        yield return new WaitUntil(() => animControllerData != null);
+                    }
+                    else {
+                        try {
+                            sprite = GraphicUtils.LoadSpriteRaw(bytes);
+                            spriteWidth = sprite.texture.width;
+                            spriteHeight = sprite.texture.height;
+                        }
+                        catch (Exception ex) {
+                            Logger.Error(ex);
+                            sprite = null;
+                        }
+                    }
+                    break;
+                case ESCAnimationType.NONE:
+                case ESCAnimationType.WEBP:
+                default:
+                    try {
+                        sprite = GraphicUtils.LoadSpriteRaw(bytes);
+                        spriteWidth = sprite.texture.width;
+                        spriteHeight = sprite.texture.height;
+                    }
+                    catch (Exception ex) {
+                        Logger.Error(ex);
+                        sprite = null;
+                    }
+                    break;
             }
-            else {
-                try {
-                    sprite = GraphicUtils.LoadSpriteRaw(bytes);
-                    spriteWidth = sprite.texture.width;
-                    spriteHeight = sprite.texture.height;
-                }
-                catch (Exception ex) {
-                    Logger.Error(ex);
-                    sprite = null;
-                }
-            }
+
             EnhancedImageInfo ret = null;
             if (sprite != null) {
                 if (forcedHeight != -1) {
@@ -207,6 +261,29 @@ namespace EnhancedStreamChat.Chat
                 }
                 instance.CachedImageInfo.Clear();
             }
+        }
+
+        /// <summary>
+        /// Fast lookup for byte pattern
+        /// </summary>
+        /// <param name="array">Input array</param>
+        /// <param name="pattern">Lookup pattern</param>
+        /// <returns></returns>
+        private bool ContainBytePattern(byte[] array, byte[] pattern)
+        {
+            var patternPosition = 0;
+            for (var i = 0; i < array.Length; ++i) {
+                if (array[i] != pattern[patternPosition]) {
+                    patternPosition = 0;
+                    continue;
+                }
+
+                patternPosition++;
+                if (patternPosition == pattern.Length) {
+                    return true;
+                }
+            }
+            return patternPosition == pattern.Length;
         }
     }
 }
