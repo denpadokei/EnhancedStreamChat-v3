@@ -98,94 +98,94 @@ namespace EnhancedStreamChat.Chat
         public static Task<string> BuildMessage(IChatMessage msg, EnhancedFontInfo font)
         {
             return Task.Run(() =>
-        {
-            try {
-                if (!PrepareImages(msg, font)) {
-                    Logger.Warn($"Failed to prepare some/all images for msg \"{msg.Message}\"!");
-                    //return msg.Message;
-                }
-
-                var badges = ImageStackPool.Alloc();
-                foreach (var badge in msg.Sender.Badges) {
-                    if (!ChatImageProvider.instance.CachedImageInfo.TryGetValue(badge.Id, out var badgeInfo)) {
-                        Logger.Warn($"Failed to find cached image info for badge \"{badge.Id}\"!");
-                        continue;
-                    }
-                    badges.Push(badgeInfo);
-                }
-
-                var sb = new StringBuilder(msg.Message); // Replace all instances of < with a zero-width non-breaking character
-
-                // Escape all html tags in the message
-                sb.Replace("<", "<\u2060");
-
-                foreach (var emote in msg.Emotes) {
-                    if (!ChatImageProvider.instance.CachedImageInfo.TryGetValue(emote.Id, out var replace)) {
-                        Logger.Warn($"Emote {emote.Name} was missing from the emote dict! The request to {emote.Uri} may have timed out?");
-                        continue;
-                    }
-                    //Logger.Info($"Emote: {emote.Name}, StartIndex: {emote.StartIndex}, EndIndex: {emote.EndIndex}, Len: {sb.Length}");
-                    if (!font.TryGetCharacter(replace.ImageId, out var character)) {
-                        Logger.Warn($"Emote {emote.Name} was missing from the character dict! Font hay have run out of usable characters.");
-                        continue;
+            {
+                try {
+                    if (!PrepareImages(msg, font)) {
+                        Logger.Warn($"Failed to prepare some/all images for msg \"{msg.Message}\"!");
+                        //return msg.Message;
                     }
 
-                    try {
-                        // Replace emotes by index, in reverse order (msg.Emotes is sorted by emote.StartIndex in descending order)
-                        sb.Replace(emote.Name, emote switch
-                        {
-                            TwitchEmote t when t.Bits > 0 => $"{char.ConvertFromUtf32((int)character)}\u00A0<color={t.Color}><size=77%><b>{t.Bits}\u00A0</b></size></color>",
-                            _ => char.ConvertFromUtf32((int)character)
-                        },
-                        emote.StartIndex, emote.EndIndex - emote.StartIndex + 1);
-                    }
-                    catch (Exception ex) {
-                        Logger.Error($"An unknown error occurred while trying to swap emote {emote.Name} into string of length {sb.Length} at location ({emote.StartIndex}, {emote.EndIndex})\r\n{ex}");
-                    }
-                }
-
-                if (msg.IsSystemMessage) {
-                    // System messages get a grayish color to differenciate them from normal messages in chat, and do not receive a username/badge prefix
-                    sb.Insert(0, $"<color=#bbbbbbbb>");
-                    sb.Append("</color>");
-                }
-                else {
-                    var nameColorCode = msg.Sender.Color;
-                    Logger.Debug(nameColorCode);
-                    if (ColorUtility.TryParseHtmlString(msg.Sender.Color.Substring(0, 7), out var nameColor)) {
-                        Color.RGBToHSV(nameColor, out var h, out var s, out var v);
-                        if (v < 0.85f) {
-                            v = 0.85f;
-                            nameColor = Color.HSVToRGB(h, s, v);
+                    var badges = ImageStackPool.Alloc();
+                    foreach (var badge in msg.Sender.Badges) {
+                        if (!ChatImageProvider.instance.CachedImageInfo.TryGetValue(badge.Id, out var badgeInfo)) {
+                            Logger.Warn($"Failed to find cached image info for badge \"{badge.Id}\"!");
+                            continue;
                         }
-                        nameColorCode = ColorUtility.ToHtmlStringRGBA(nameColor);
-                        nameColorCode = nameColorCode.Insert(0, "#");
+                        badges.Push(badgeInfo);
                     }
-                    if (msg.IsActionMessage) {
-                        // Message becomes the color of their name if it's an action message
-                        sb.Insert(0, $"<color={nameColorCode}><b>{msg.Sender.DisplayName}</b> ");
+
+                    var sb = new StringBuilder(msg.Message); // Replace all instances of < with a zero-width non-breaking character
+
+                    // Escape all html tags in the message
+                    sb.Replace("<", "<\u2060");
+
+                    foreach (var emote in msg.Emotes) {
+                        if (!ChatImageProvider.instance.CachedImageInfo.TryGetValue(emote.Id, out var replace)) {
+                            Logger.Warn($"Emote {emote.Name} was missing from the emote dict! The request to {emote.Uri} may have timed out?");
+                            continue;
+                        }
+                        //Logger.Info($"Emote: {emote.Name}, StartIndex: {emote.StartIndex}, EndIndex: {emote.EndIndex}, Len: {sb.Length}");
+                        if (!font.TryGetCharacter(replace.ImageId, out var character)) {
+                            Logger.Warn($"Emote {emote.Name} was missing from the character dict! Font hay have run out of usable characters.");
+                            continue;
+                        }
+
+                        try {
+                            // Replace emotes by index, in reverse order (msg.Emotes is sorted by emote.StartIndex in descending order)
+                            sb.Replace(emote.Name, emote switch
+                            {
+                                TwitchEmote t when t.Bits > 0 => $"{char.ConvertFromUtf32((int)character)}\u00A0<color={t.Color}><size=77%><b>{t.Bits}\u00A0</b></size></color>",
+                                _ => char.ConvertFromUtf32((int)character)
+                            },
+                            emote.StartIndex, emote.EndIndex - emote.StartIndex + 1);
+                        }
+                        catch (Exception ex) {
+                            Logger.Error($"An unknown error occurred while trying to swap emote {emote.Name} into string of length {sb.Length} at location ({emote.StartIndex}, {emote.EndIndex})\r\n{ex}");
+                        }
+                    }
+
+                    if (msg.IsSystemMessage) {
+                        // System messages get a grayish color to differenciate them from normal messages in chat, and do not receive a username/badge prefix
+                        sb.Insert(0, $"<color=#bbbbbbbb>");
                         sb.Append("</color>");
                     }
                     else {
-                        // Insert username w/ color
-                        sb.Insert(0, $"<color={nameColorCode}><b>{msg.Sender.DisplayName}</b></color>: ");
-                    }
-
-                    for (var i = 0; i < msg.Sender.Badges.Length; i++) {
-                        // Insert user badges at the beginning of the string in reverse order
-                        if (badges.TryPop(out var badge) && font.TryGetCharacter(badge.ImageId, out var character)) {
-                            sb.Insert(0, $"{char.ConvertFromUtf32((int)character)} ");
+                        var nameColorCode = msg.Sender.Color;
+                        Logger.Debug(nameColorCode);
+                        if (ColorUtility.TryParseHtmlString(msg.Sender.Color.Substring(0, 7), out var nameColor)) {
+                            Color.RGBToHSV(nameColor, out var h, out var s, out var v);
+                            if (v < 0.85f) {
+                                v = 0.85f;
+                                nameColor = Color.HSVToRGB(h, s, v);
+                            }
+                            nameColorCode = ColorUtility.ToHtmlStringRGBA(nameColor);
+                            nameColorCode = nameColorCode.Insert(0, "#");
                         }
+                        if (msg.IsActionMessage) {
+                            // Message becomes the color of their name if it's an action message
+                            sb.Insert(0, $"<color={nameColorCode}><b>{msg.Sender.DisplayName}</b> ");
+                            sb.Append("</color>");
+                        }
+                        else {
+                            // Insert username w/ color
+                            sb.Insert(0, $"<color={nameColorCode}><b>{msg.Sender.DisplayName}</b></color>: ");
+                        }
+
+                        for (var i = 0; i < msg.Sender.Badges.Length; i++) {
+                            // Insert user badges at the beginning of the string in reverse order
+                            if (badges.TryPop(out var badge) && font.TryGetCharacter(badge.ImageId, out var character)) {
+                                sb.Insert(0, $"{char.ConvertFromUtf32((int)character)} ");
+                            }
+                        }
+                        ImageStackPool.Free(badges);
                     }
-                    ImageStackPool.Free(badges);
+                    return sb.ToString();
                 }
-                return sb.ToString();
-            }
-            catch (Exception ex) {
-                Logger.Error($"An exception occurred in ChatMessageBuilder while parsing msg with {msg.Emotes.Length} emotes. Msg: \"{msg.Message}\". {ex.ToString()}");
-            }
-            return msg.Message;
-        });
+                catch (Exception ex) {
+                    Logger.Error($"An exception occurred in ChatMessageBuilder while parsing msg with {msg.Emotes.Length} emotes. Msg: \"{msg.Message}\". {ex.ToString()}");
+                }
+                return msg.Message;
+            });
         }
     }
 }

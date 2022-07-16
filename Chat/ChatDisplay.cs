@@ -437,48 +437,48 @@ namespace EnhancedStreamChat.Chat
         public void OnChatCleared(string userId)
         {
             MainThreadInvoker.Invoke(() =>
-                                                  {
-                                                      foreach (var msg in this._messages.ToArray()) {
-                                                          if (msg.Text.ChatMessage == null) {
-                                                              continue;
-                                                          }
-                                                          if (userId == null || msg.Text.ChatMessage.Sender.Id == userId) {
-                                                              this.ClearMessage(msg);
-                                                          }
-                                                      }
-                                                  });
+            {
+                foreach (var msg in this._messages.ToArray()) {
+                    if (msg.Text.ChatMessage == null) {
+                        continue;
+                    }
+                    if (userId == null || msg.Text.ChatMessage.Sender.Id == userId) {
+                        this.ClearMessage(msg);
+                    }
+                }
+            });
         }
 
         public void OnJoinChannel(IChatService svc, IChatChannel channel)
         {
             MainThreadInvoker.Invoke(() =>
-                                                                           {
-                                                                               var newMsg = this.TextPool.Alloc();
-                                                                               newMsg.Text.text = $"<color=#bbbbbbbb>[{svc.DisplayName}] Success joining {channel.Id}</color>";
-                                                                               newMsg.HighlightEnabled = true;
-                                                                               newMsg.HighlightColor = Color.gray.ColorWithAlpha(0.05f);
-                                                                               this.AddMessage(newMsg);
-                                                                           });
+            {
+                var newMsg = this.TextPool.Alloc();
+                newMsg.Text.text = $"<color=#bbbbbbbb>[{svc.DisplayName}] Success joining {channel.Id}</color>";
+                newMsg.HighlightEnabled = true;
+                newMsg.HighlightColor = Color.gray.ColorWithAlpha(0.05f);
+                this.AddMessage(newMsg);
+            });
         }
 
         public void OnChannelResourceDataCached(IChatChannel channel, Dictionary<string, IChatResourceData> resources)
         {
             MainThreadInvoker.Invoke(() =>
-                                                                                                                        {
-                                                                                                                            var count = 0;
-                                                                                                                            if (this._chatConfig.PreCacheAnimatedEmotes) {
-                                                                                                                                foreach (var emote in resources) {
-                                                                                                                                    if (emote.Value.IsAnimated) {
-                                                                                                                                        HMMainThreadDispatcher.instance.Enqueue(ChatImageProvider.instance.PrecacheAnimatedImage(emote.Value.Uri, emote.Key, 110));
-                                                                                                                                        count++;
-                                                                                                                                    }
-                                                                                                                                }
-                                                                                                                                Logger.Info($"Pre-cached {count} animated emotes.");
-                                                                                                                            }
-                                                                                                                            else {
-                                                                                                                                Logger.Warn("Pre-caching of animated emotes disabled by the user. If you're experiencing lag, re-enable emote precaching.");
-                                                                                                                            }
-                                                                                                                        });
+            {
+                var count = 0;
+                if (this._chatConfig.PreCacheAnimatedEmotes) {
+                    foreach (var emote in resources) {
+                        if (emote.Value.IsAnimated) {
+                            HMMainThreadDispatcher.instance.Enqueue(ChatImageProvider.instance.PrecacheAnimatedImage(emote.Value.Uri, emote.Key, 110));
+                            count++;
+                        }
+                    }
+                    Logger.Info($"Pre-cached {count} animated emotes.");
+                }
+                else {
+                    Logger.Warn("Pre-caching of animated emotes disabled by the user. If you're experiencing lag, re-enable emote precaching.");
+                }
+            });
         }
 
         private EnhancedTextMeshProUGUIWithBackground _lastMessage;
