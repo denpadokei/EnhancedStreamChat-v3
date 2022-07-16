@@ -50,11 +50,9 @@ namespace EnhancedStreamChat.Chat
                 Finally?.Invoke(null);
                 yield break;
             }
-            Logger.Debug($"old:{uri}");
             var sb = new StringBuilder(uri);
             sb.Replace(@"/v1/", @"/v2/").Replace(@"/3.0", @"/default/dark/3.0");
             uri = sb.ToString();
-            Logger.Debug($"new:{uri}");
             if (!isRetry && this._activeDownloads.TryGetValue(uri, out var activeDownload)) {
                 Logger.Info($"Request already active for {uri}");
                 activeDownload.Finally -= Finally;
