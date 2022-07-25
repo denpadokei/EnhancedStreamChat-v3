@@ -50,9 +50,12 @@ namespace EnhancedStreamChat.Chat
                 Finally?.Invoke(null);
                 yield break;
             }
-            var sb = new StringBuilder(uri);
-            sb.Replace(@"/v1/", @"/v2/").Replace(@"/3.0", @"/default/dark/3.0");
-            uri = sb.ToString();
+            
+            if (uri.Contains("https://static-cdn.jtvnw.net/emoticons/v1/")) {
+                var sb = new StringBuilder(uri);
+                sb.Replace(@"https://static-cdn.jtvnw.net/emoticons/v1/", @"https://static-cdn.jtvnw.net/emoticons/v2/").Replace(@"/3.0", @"/default/dark/3.0");
+                uri = sb.ToString();
+            }
             if (!isRetry && this._activeDownloads.TryGetValue(uri, out var activeDownload)) {
                 Logger.Info($"Request already active for {uri}");
                 activeDownload.Finally -= Finally;
