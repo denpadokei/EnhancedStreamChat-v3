@@ -1,12 +1,14 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <!-- This file contains project properties used by the build. -->
 <Project>
-	<PropertyGroup>
-		<ImportBSMTTargets>True</ImportBSMTTargets>
-		<BSMTProjectType>BSIPA</BSMTProjectType>
-	</PropertyGroup>
-	<ItemGroup>
-		<OutputCopy Include="$(TargetPath)" OutputPath="Plugins\$(TargetName).dll" />
-		<OutputCopy Include="FontAssets\mplus-1m-medium sdf.assets" OutputPath="UserData\FontAssets\Main\mplus-1m-medium sdf.assets" />
-	</ItemGroup>
+  <PropertyGroup>
+    <ImportBSMTTargets>True</ImportBSMTTargets>
+    <BSMTProjectType>BSIPA</BSMTProjectType>
+  </PropertyGroup>
+  <ItemGroup>
+    <OutputCopy Include="$(TargetPath)" OutputPath="Plugins\$(TargetName).dll" />
+    <OutputCopy Include="FontAssets\mplus-1m-medium sdf.assets" OutputPath="UserData\FontAssets\Main\mplus-1m-medium sdf.assets" />
+    <OutputCopy Include="Libs\Libs\ChatCore.dll" OutputPath="Libs\ChatCore.dll" />
+    <OutputCopy Include="Libs\Plugins\ChatCore.manifest" OutputPath="Plugins\ChatCore.manifest" />
+  </ItemGroup>
 </Project>

@@ -1,0 +1,16 @@
+{
+  "$schema": "https://raw.githubusercontent.com/beat-saber-modding-group/BSIPA-MetadataFileSchema/master/Schema.json",
+  "author": "Eris",
+  "description": "ChatCore is a shared chat client library written in .NET Standard 2.0",
+  "gameVersion": "1.13.0",
+  "id": "ChatCore",
+  "name": "ChatCore",
+  "version": "2.1.2",
+  "files": [
+	  "Libs/ChatCore.dll"
+  ],
+  "links": {
+    "project-home": "https://github.com/ErisApps/ChatCore",
+	  "donate": "https://ko-fi.com/brian91292"
+  }
+}
