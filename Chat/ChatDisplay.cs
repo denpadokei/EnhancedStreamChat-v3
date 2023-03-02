@@ -145,7 +145,12 @@ namespace EnhancedStreamChat.Chat
             if (this._chatScreen == null) {
                 var screenSize = new Vector2(this.ChatWidth, this.ChatHeight);
                 this._chatScreen = FloatingScreen.CreateFloatingScreen(screenSize, true, this.ChatPosition, Quaternion.identity, 0f, true);
-                this._chatScreen.gameObject.layer = 5;
+                if (this._chatConfig.Layer == PluginConfig.LayerType.Manual) {
+                    this.SetCurrentLayer(this._chatConfig.UILayer);
+                }
+                else {
+                    this.SetCurrentLayer((int)this._chatConfig.Layer);
+                }
                 var rectMask2D = this._chatScreen.GetComponent<RectMask2D>();
                 if (rectMask2D) {
                     Destroy(rectMask2D);
@@ -181,6 +186,17 @@ namespace EnhancedStreamChat.Chat
                 this.AddToVRPointer();
                 this.UpdateChatUI();
             }
+        }
+
+        private void SetCurrentLayer(int layer)
+        {
+            if (this._chatScreen != null) {
+                this._chatScreen.gameObject.layer = layer;
+            }
+            if (this._settingsModalGameObject != null) {
+                this._chatScreen.gameObject.layer = layer;
+            }
+            this.gameObject.layer = layer;
         }
 
         private void Instance_OnConfigChanged()
@@ -284,6 +300,7 @@ namespace EnhancedStreamChat.Chat
             this._chatScreen.handle.transform.localRotation = Quaternion.identity;
 
             this.AllowMovement = this._chatConfig.AllowMovement;
+            this.Layer = this._chatConfig.Layer.ToString();
             this.UpdateMessages();
         }
 

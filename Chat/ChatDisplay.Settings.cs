@@ -2,8 +2,11 @@
 using BeatSaberMarkupLanguage.Components.Settings;
 using BeatSaberMarkupLanguage.Parser;
 using BeatSaberMarkupLanguage.ViewControllers;
+using EnhancedStreamChat.Configuration;
 using EnhancedStreamChat.Utilities;
 using HMUI;
+using IPA.Config.Data;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
@@ -11,6 +14,7 @@ using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UI;
+using static EnhancedStreamChat.Configuration.PluginConfig;
 
 namespace EnhancedStreamChat.Chat
 {
@@ -18,6 +22,9 @@ namespace EnhancedStreamChat.Chat
     {
         private bool SetProperty<T>(ref T oldValue, T newValue, [CallerMemberName] string name = null)
         {
+#if DEBUG
+            Logger.Info($"Change value:{oldValue}, {newValue}");
+#endif
             if (EqualityComparer<T>.Default.Equals(oldValue, newValue)) {
                 return false;
             }
@@ -29,6 +36,9 @@ namespace EnhancedStreamChat.Chat
         private void OnPropertyChanged(PropertyChangedEventArgs e)
         {
             this.NotifyPropertyChanged(e.PropertyName);
+#if DEBUG
+            Logger.Info($"property changed:{e.PropertyName}");
+#endif
             if (e.PropertyName == nameof(this.AccentColor)) {
                 this._chatConfig.AccentColor = this.AccentColor;
             }
@@ -100,6 +110,20 @@ namespace EnhancedStreamChat.Chat
                     }
                 }
             }
+            else if (e.PropertyName == nameof(this.Layer)) {
+                var layer = Enum.GetValues(typeof(PluginConfig.LayerType)).OfType<PluginConfig.LayerType>().FirstOrDefault(x => x.ToString() == this.Layer.ToString());
+                this._chatConfig.Layer = layer;
+                switch (layer) {
+                    case LayerType.HMDOnly:
+                    case LayerType.UI:
+                        this._chatConfig.UILayer = (int)layer;
+                        break;
+                    case LayerType.Manual:
+                    default:
+                        break;
+                }
+                this.SetCurrentLayer(this._chatConfig.UILayer);
+            }
         }
 
         [UIAction("#post-parse")]
@@ -131,8 +155,12 @@ namespace EnhancedStreamChat.Chat
             this._settingsModalGameObject.transform.localPosition = new Vector3(this._settingsModalGameObject.transform.localPosition.x, this._settingsModalGameObject.transform.localPosition.y, -2f);
             this._settingsIconGameObject.transform.localPosition = new Vector3(this._settingsIconGameObject.transform.localPosition.x, this._settingsIconGameObject.transform.localPosition.y, -2f);
 
-            this._settingsIconGameObject.layer = 5;
-            this._settingsModalGameObject.layer = 5;
+            if (this._chatConfig.Layer == PluginConfig.LayerType.Manual) {
+                this.SetCurrentLayer(this._chatConfig.UILayer);
+            }
+            else {
+                this.SetCurrentLayer((int)this._chatConfig.Layer);
+            }
         }
 
         [UIParams]
@@ -229,6 +257,20 @@ namespace EnhancedStreamChat.Chat
                 this.SetProperty(ref this._fontsize, value);
                 this.UpdateMessages();
             }
+        }
+
+        [UIValue("layer-types")]
+        private readonly List<object> _layerTypes= new List<object>() { $"{PluginConfig.LayerType.UI}", $"{PluginConfig.LayerType.HMDOnly}", $"{PluginConfig.LayerType.Manual}" };
+
+        /// <summary>説明 を取得、設定</summary>
+        private string _layer = $"{PluginConfig.LayerType.UI}";
+        /// <summary>説明 を取得、設定</summary>
+        [UIValue("layer-type")]
+        public string Layer
+        {
+            get => this._layer;
+
+            set => this.SetProperty(ref this._layer, value);
         }
 
         private int _settingsWidth = 110;
@@ -434,6 +476,7 @@ namespace EnhancedStreamChat.Chat
                 this.ChatPosition = this._chatConfig.Menu_ChatPosition;
                 this.ChatRotation = this._chatConfig.Menu_ChatRotation;
             }
+            this.Layer = this._chatConfig.Layer.ToString();
         }
     }
 }
