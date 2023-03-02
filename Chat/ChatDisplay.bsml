@@ -18,6 +18,7 @@
             <slider-setting text='Chat Width' min='5' max='1000' increment='5' pref-height='6' value='chat-width' apply-on-change='true' integer-only='true' bind-value='true'></slider-setting>
             <slider-setting text='Chat Height' min='5' max='1000' increment='5' pref-height='6' value='chat-height' apply-on-change='true' integer-only='true' bind-value='true'></slider-setting>
             <slider-setting text='Font Size' min='1' max='20' increment='0.1' pref-height='6' value='font-size' apply-on-change='true' bind-value='true'></slider-setting>
+            <dropdown-list-setting text='Layer' value='layer-type' choices='layer-types' apply-on-change='true' bind-value='true'></dropdown-list-setting>
           </vertical>
         </tab>
         <tab tags ='settings-tab' tab-name='Colors'>

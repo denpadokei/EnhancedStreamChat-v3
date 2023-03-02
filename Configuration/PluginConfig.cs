@@ -1,6 +1,7 @@
 ﻿using EnhancedStreamChat.Converters;
 using IPA.Config.Stores;
 using IPA.Config.Stores.Attributes;
+using IPA.Config.Stores.Converters;
 using System;
 using System.Runtime.CompilerServices;
 using UnityEngine;
@@ -10,6 +11,13 @@ namespace EnhancedStreamChat.Configuration
 {
     public class PluginConfig
     {
+        public enum LayerType
+        {
+            Manual,
+            UI = 5,
+            HMDOnly = 6
+        }
+
         public virtual bool PreCacheAnimatedEmotes { get; set; } = true;
         public virtual string SystemFontName { get; set; } = "Segoe UI";
         [UseConverter(typeof(ColorConverterWithAlpha))]
@@ -36,6 +44,9 @@ namespace EnhancedStreamChat.Configuration
         public virtual Vector3 Song_ChatPosition { get; set; } = new Vector3(0, 3.75f, 2.5f);
         [UseConverter(typeof(Vector3Conveter))]
         public virtual Vector3 Song_ChatRotation { get; set; } = new Vector3(325, 0, 0);
+        [UseConverter(typeof(EnumConverter<LayerType>))]
+        public virtual LayerType Layer { get; set; } = LayerType.UI;
+        public virtual int UILayer { get; set; } = 5;
 
         public event Action OnConfigChanged;
 
