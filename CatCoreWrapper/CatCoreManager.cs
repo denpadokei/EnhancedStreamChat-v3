@@ -12,6 +12,7 @@ using System;
 using System.Reflection;
 using System.Threading.Tasks;
 using Zenject;
+using static IPA.Logging.Logger;
 
 namespace EnhancedStreamChat.CatCoreWrapper
 {
@@ -154,6 +155,22 @@ namespace EnhancedStreamChat.CatCoreWrapper
         {
             this.OnFollow?.Invoke(arg1, arg2);
         }
+
+        private void CatCoreLogHandler(CustomLogLevel logLevel, string context, string message)
+        {
+            Logger.Log.GetChildLogger("CatCore").Log(
+                logLevel switch
+                {
+                    CustomLogLevel.Trace => IPA.Logging.Logger.Level.Trace,
+                    CustomLogLevel.Debug => IPA.Logging.Logger.Level.Debug,
+                    CustomLogLevel.Information => IPA.Logging.Logger.Level.Info,
+                    CustomLogLevel.Warning => IPA.Logging.Logger.Level.Warning,
+                    CustomLogLevel.Error => IPA.Logging.Logger.Level.Error,
+                    CustomLogLevel.Critical => IPA.Logging.Logger.Level.Critical,
+                    _ => IPA.Logging.Logger.Level.Debug
+                },
+                $"{context} | {message}");
+        }
         #endregion
         //ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*
         #region // メンバ変数
@@ -172,25 +189,14 @@ namespace EnhancedStreamChat.CatCoreWrapper
         #region // 構築・破棄
         public CatCoreManager()
         {
-            this._instance = CatCoreInstance.
-            Create((level, context, message) => Logger.Log
-                .GetChildLogger("CatCore")
-                .Log(level switch
-                {
-                    CustomLogLevel.Trace => IPA.Logging.Logger.Level.Trace,
-                    CustomLogLevel.Debug => IPA.Logging.Logger.Level.Debug,
-                    CustomLogLevel.Information => IPA.Logging.Logger.Level.Info,
-                    CustomLogLevel.Warning => IPA.Logging.Logger.Level.Warning,
-                    CustomLogLevel.Error => IPA.Logging.Logger.Level.Error,
-                    CustomLogLevel.Critical => IPA.Logging.Logger.Level.Critical,
-                    _ => IPA.Logging.Logger.Level.Debug
-                }, $"{context} | {message}"));
+            this._instance = CatCoreInstance.Create(this.CatCoreLogHandler);
         }
 
         protected virtual void Dispose(bool disposing)
         {
             if (!this._disposedValue) {
                 if (disposing) {
+                    this._instance.OnLogReceived -= this.CatCoreLogHandler;
                     this._chatServiceMultiplexer.OnAuthenticatedStateChanged -= this.ChatServiceMultiplexerOnAuthenticatedStateChanged;
                     this._chatServiceMultiplexer.OnChatConnected -= this.ChatServiceMultiplexerOnChatConnected;
                     this._chatServiceMultiplexer.OnTextMessageReceived -= this.ChatServiceMultiplexerOnTextMessageReceived;
@@ -199,8 +205,11 @@ namespace EnhancedStreamChat.CatCoreWrapper
                     this._chatServiceMultiplexer.OnRoomStateUpdated -= this.ChatServiceMultiplexer_OnRoomStateUpdated;
                     this._chatServiceMultiplexer.OnMessageDeleted -= this.ChatServiceMultiplexer_OnMessageDeleted;
                     this._chatServiceMultiplexer.OnChatCleared -= this.ChatServiceMultiplexer_OnChatCleared;
+
                     this._twitchPubSubServiceManager.OnFollow -= this.OnTwitchPubSubServiceManager_OnFollow;
                     this._twitchPubSubServiceManager.OnRewardRedeemed -= this.OnTwitchPubSubServiceManager_OnRewardRedeemed;
+
+                    this._twitchPratformService.OnTextMessageReceived -= this.OnTwitchPratformService_OnTextMessageReceived;
                 }
                 this._disposedValue = true;
             }
