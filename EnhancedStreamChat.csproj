@@ -7,7 +7,7 @@
     <NoWarn>1591</NoWarn>
     <AssemblyName>EnhancedStreamChat</AssemblyName>
     <RootNamespace>EnhancedStreamChat</RootNamespace>
-    <Version>5.0.5</Version>
+    <Version>5.0.6</Version>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <DebugType>embedded</DebugType>
     <AssemblySearchPath>$(ReferencePath)</AssemblySearchPath>
@@ -28,6 +28,10 @@
     </Reference>
     <Reference Include="BSML">
       <HintPath>$(BeatSaberDir)\Plugins\BSML.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="CameraUtils">
+      <HintPath>$(BeatSaberDir)\Plugins\CameraUtils.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="CatCore">
