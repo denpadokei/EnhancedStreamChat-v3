@@ -47,7 +47,7 @@ namespace EnhancedStreamChat.Graphics
                         next = this.GetNextReplaceChar();
                     }
                     while (this.Font.characterLookupTable.ContainsKey(next));
-                    this.Font.characterLookupTable.Add(next, new TMP_Character(next, new Glyph(next, new GlyphMetrics(0, 0, 0, 0, imageInfo.Width), new GlyphRect(0, 0, 0, 0))));
+                    this.Font.characterLookupTable.Add(next, new TMP_Character(next, this.Font, new Glyph(next, new GlyphMetrics(0, 0, 0, 0, imageInfo.Width), new GlyphRect(0, 0, 0, 0))));
                     this.CharacterLookupTable.TryAdd(imageInfo.ImageId, next);
                     this.ImageInfoLookupTable.TryAdd(next, imageInfo);
                     replaceCharacter = next;
