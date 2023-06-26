@@ -1,6 +1,7 @@
 ﻿using BeatSaberMarkupLanguage.Attributes;
 using BeatSaberMarkupLanguage.FloatingScreen;
 using BeatSaberMarkupLanguage.ViewControllers;
+using CameraUtils.Core;
 using EnhancedStreamChat.Configuration;
 using EnhancedStreamChat.Graphics;
 using EnhancedStreamChat.Interfaces;
@@ -188,13 +189,27 @@ namespace EnhancedStreamChat.Chat
 
         private void SetCurrentLayer(int layer)
         {
+            var visible = VisibilityLayer.HmdOnlyAndReflected;
+            switch ((PluginConfig.LayerType)layer) {
+                
+                case PluginConfig.LayerType.UI:
+                    visible = VisibilityLayer.UI;
+                    break;
+                case PluginConfig.LayerType.HMDOnly:
+                    visible = VisibilityLayer.HmdOnlyAndReflected;
+                    break;
+                case PluginConfig.LayerType.Manual:
+                default:
+                    visible = (VisibilityLayer)layer;
+                    break;
+            }
             if (this._chatScreen != null) {
-                this._chatScreen.gameObject.layer = layer;
+                this._chatScreen.gameObject.SetLayer(visible);
             }
             if (this._settingsModalGameObject != null) {
-                this._chatScreen.gameObject.layer = layer;
+                _settingsModalGameObject.gameObject.SetLayer(visible);
             }
-            this.gameObject.layer = layer;
+            this.gameObject.SetLayer(visible);
         }
 
         private void Instance_OnConfigChanged()
