@@ -81,9 +81,10 @@ namespace EnhancedStreamChat.Graphics
                                 else {
                                     img.sprite = imageInfo.Sprite;
                                 }
-                                img.rectTransform.localScale = new Vector3(this.fontScale * 1.08f, this.fontScale * 1.08f, this.fontScale * 1.08f);
+                                var fontScale = 0.010f * this.fontSize;
+                                img.rectTransform.localScale = new Vector3(fontScale * 1.08f, fontScale * 1.08f, fontScale * 1.08f);
                                 img.rectTransform.sizeDelta = new Vector2(imageInfo.Width, imageInfo.Height);
-                                img.rectTransform.localPosition = c.topLeft - new Vector3(0, imageInfo.Height * this.fontScale * 0.558f / 2);
+                                img.rectTransform.localPosition = c.topLeft - new Vector3(0, imageInfo.Height * fontScale * 0.558f / 2);
                                 img.rectTransform.localRotation = Quaternion.identity;
                                 img.material = BeatSaberUtils.UINoGlowMaterial;
                                 img.SetAllDirty();

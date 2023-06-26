@@ -7,7 +7,7 @@
     <NoWarn>1591</NoWarn>
     <AssemblyName>EnhancedStreamChat</AssemblyName>
     <RootNamespace>EnhancedStreamChat</RootNamespace>
-    <Version>5.0.6</Version>
+    <Version>6.0.0</Version>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <DebugType>embedded</DebugType>
     <AssemblySearchPath>$(ReferencePath)</AssemblySearchPath>
@@ -78,9 +78,10 @@
       <HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\UnityEngine.ImageConversionModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="UnityEngine.TextCoreModule">
-      <HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\UnityEngine.TextCoreModule.dll</HintPath>
+    <Reference Include="UnityEngine.TextCoreFontEngineModule">
+      <HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\UnityEngine.TextCoreFontEngineModule.dll</HintPath>
       <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
     </Reference>
     <Reference Include="UnityEngine.TextRenderingModule">
       <HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\UnityEngine.TextRenderingModule.dll</HintPath>

@@ -9,7 +9,6 @@ using EnhancedStreamChat.Models;
 using EnhancedStreamChat.Utilities;
 using HMUI;
 using IPA.Utilities;
-using SiraUtil.Affinity;
 using SiraUtil.Zenject;
 using System;
 using System.Collections.Concurrent;
@@ -29,7 +28,7 @@ using Color = UnityEngine.Color;
 namespace EnhancedStreamChat.Chat
 {
     [HotReload]
-    public partial class ChatDisplay : BSMLAutomaticViewController, IAsyncInitializable, IChatDisplay, IDisposable, IAffinity, ILatePreRenderRebuildReciver
+    public partial class ChatDisplay : BSMLAutomaticViewController, IAsyncInitializable, IChatDisplay, IDisposable, ILatePreRenderRebuildReciver//, IAffinity
     {
         //ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*
         #region // プロパティ
@@ -58,6 +57,7 @@ namespace EnhancedStreamChat.Chat
             while (s_backupMessageQueue.TryDequeue(out var msg)) {
                 await this.OnTextMessageReceived(msg.Value, msg.Key);
             }
+            VRPointerHelper.OnPointerEnable += this.OnVRPointerHelper_OnPointerEnable;
             this._chatConfig.OnConfigChanged += this.Instance_OnConfigChanged;
             SceneManager.activeSceneChanged += this.SceneManager_activeSceneChanged;
             this._catCoreManager.OnChatConnected += this.CatCoreManager_OnChatConnected;
@@ -102,11 +102,9 @@ namespace EnhancedStreamChat.Chat
             _ = MainThreadInvoker.Invoke(() => this.CreateMessage(msg, dateTime, main, sub));
         }
 
-        [AffinityPatch(typeof(VRPointer), nameof(VRPointer.OnEnable))]
-        [AffinityPostfix]
-        public void VRPointerOnEnable(VRPointer __instance)
+        private void OnVRPointerHelper_OnPointerEnable(VRPointer arg1, EventArgs arg2)
         {
-            this.PointerOnEnabled(__instance);
+            this.PointerOnEnabled(arg1);
         }
 
         public void LatePreRenderRebuildHandler(object sender, EventArgs e)
@@ -522,6 +520,7 @@ namespace EnhancedStreamChat.Chat
             if (!this._disposedValue) {
                 if (disposing) {
                     try {
+                        VRPointerHelper.OnPointerEnable -= this.OnVRPointerHelper_OnPointerEnable;
                         this._connectSemaphore.Dispose();
                         this._chatConfig.OnConfigChanged -= this.Instance_OnConfigChanged;
                         SceneManager.activeSceneChanged -= this.SceneManager_activeSceneChanged;

@@ -12,7 +12,6 @@ using System;
 using System.Reflection;
 using System.Threading.Tasks;
 using Zenject;
-using static IPA.Logging.Logger;
 
 namespace EnhancedStreamChat.CatCoreWrapper
 {
