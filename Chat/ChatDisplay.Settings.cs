@@ -5,7 +5,6 @@ using BeatSaberMarkupLanguage.ViewControllers;
 using EnhancedStreamChat.Configuration;
 using EnhancedStreamChat.Utilities;
 using HMUI;
-using IPA.Config.Data;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -260,7 +259,7 @@ namespace EnhancedStreamChat.Chat
         }
 
         [UIValue("layer-types")]
-        private readonly List<object> _layerTypes= new List<object>() { $"{PluginConfig.LayerType.UI}", $"{PluginConfig.LayerType.HMDOnly}", $"{PluginConfig.LayerType.Manual}" };
+        private readonly List<object> _layerTypes = new List<object>() { $"{PluginConfig.LayerType.UI}", $"{PluginConfig.LayerType.HMDOnly}", $"{PluginConfig.LayerType.Manual}" };
 
         /// <summary>説明 を取得、設定</summary>
         private string _layer = $"{PluginConfig.LayerType.UI}";
