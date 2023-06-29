@@ -13,14 +13,14 @@ namespace EnhancedStreamChat.Installers
     {
         public override void InstallBindings()
         {
-            this.Container.BindInterfacesAndSelfTo<CatCoreManager>().AsCached().NonLazy();
-            this.Container.BindMemoryPool<EnhancedImageInfo, EnhancedImageInfo.Pool>().WithInitialSize(20);
-            this.Container.BindMemoryPool<EnhancedImage, EnhancedImage.Pool>().WithInitialSize(50).FromComponentInNewPrefab(this._image);
-            this.Container.BindFactory<EnhancedTextMeshProUGUI, EnhancedTextMeshProUGUI.Factory>().FromMethod(this.CreateText);
-            this.Container.BindMemoryPool<EnhancedTextMeshProUGUIWithBackground, EnhancedTextMeshProUGUIWithBackground.Pool>().WithInitialSize(64).FromComponentInNewPrefab(this._enhancedTextMeshProUGUIWithBackground);
-            this.Container.BindInterfacesAndSelfTo<ChatMessageBuilder>().AsCached().NonLazy();
-            this.Container.BindInterfacesAndSelfTo<ESCFontManager>().AsSingle().NonLazy();
-            this.Container.BindInterfacesAndSelfTo<ChatImageProvider>().AsSingle();
+            _ = this.Container.BindInterfacesAndSelfTo<CatCoreManager>().AsCached().NonLazy();
+            _ = this.Container.BindMemoryPool<EnhancedImageInfo, EnhancedImageInfo.Pool>().WithInitialSize(20);
+            _ = this.Container.BindMemoryPool<EnhancedImage, EnhancedImage.Pool>().WithInitialSize(50).FromComponentInNewPrefab(this._image);
+            _ = this.Container.BindFactory<EnhancedTextMeshProUGUI, EnhancedTextMeshProUGUI.Factory>().FromMethod(this.CreateText);
+            _ = this.Container.BindMemoryPool<EnhancedTextMeshProUGUIWithBackground, EnhancedTextMeshProUGUIWithBackground.Pool>().WithInitialSize(64).FromComponentInNewPrefab(this._enhancedTextMeshProUGUIWithBackground);
+            _ = this.Container.BindInterfacesAndSelfTo<ChatMessageBuilder>().AsCached().NonLazy();
+            _ = this.Container.BindInterfacesAndSelfTo<ESCFontManager>().AsSingle().NonLazy();
+            _ = this.Container.BindInterfacesAndSelfTo<ChatImageProvider>().AsSingle();
         }
 
         private EnhancedTextMeshProUGUI CreateText(DiContainer container)

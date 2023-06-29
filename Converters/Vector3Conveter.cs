@@ -16,9 +16,9 @@ namespace EnhancedStreamChat.Converters
         public override Vector3 FromValue(Value value, object parent)
         {
             if (value is Map m) {
-                m.TryGetValue("x", out var x);
-                m.TryGetValue("y", out var y);
-                m.TryGetValue("z", out var z);
+                _ = m.TryGetValue("x", out var x);
+                _ = m.TryGetValue("y", out var y);
+                _ = m.TryGetValue("z", out var z);
                 var vec = Vector3.zero;
                 if (x is FloatingPoint pointX) {
                     vec.x = (float)pointX.Value;

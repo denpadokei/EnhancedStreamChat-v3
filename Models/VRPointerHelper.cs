@@ -1,5 +1,4 @@
 ﻿using HarmonyLib;
-using SiraUtil.Affinity;
 using System;
 using System.Collections;
 using UnityEngine;
@@ -14,23 +13,27 @@ namespace EnhancedStreamChat.Models
 
         protected void OnEnable()
         {
-            this.StartCoroutine(this.InvokeEvent());
+            _ = this.StartCoroutine(this.InvokeEvent());
         }
 
         private IEnumerator InvokeEvent()
         {
             var waitInit = new WaitWhile(() => !this);
             yield return waitInit;
-            var vrpointer = this.GetComponent<VRPointer>();
-            if (vrpointer != null) {
-                OnPointerEnable.Invoke(vrpointer, EventArgs.Empty);
+            try {
+                var vrpointer = this.GetComponent<VRPointer>();
+                if (vrpointer != null) {
+                    OnPointerEnable?.Invoke(vrpointer, EventArgs.Empty);
+                }
+            }
+            catch (Exception e) {
+                Logger.Error(e);
             }
         }
 
-        
         public static void Postfix(VRPointer __instance)
         {
-            __instance.gameObject.AddComponent<VRPointerHelper>();
+            _ = __instance.gameObject.AddComponent<VRPointerHelper>();
         }
     }
 }

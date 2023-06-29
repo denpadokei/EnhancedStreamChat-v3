@@ -19,15 +19,11 @@ namespace EnhancedStreamChat.Converters
         /// <exception cref="ArgumentException">if <paramref name="value"/> is not a <see cref="Text"/> node or couldn't be parsed into a Color object</exception>
         public override Color FromValue(Value value, object parent)
         {
-            if (value is Text t) {
-                if (ColorUtility.TryParseHtmlString(t.Value, out var color)) {
-                    return color;
-                }
-
-                throw new ArgumentException("Value cannot be parsed into a Color.", nameof(value));
-            }
-
-            throw new ArgumentException("Value not a string", nameof(value));
+            return value is Text t
+                ? ColorUtility.TryParseHtmlString(t.Value, out var color)
+                    ? color
+                    : throw new ArgumentException("Value cannot be parsed into a Color.", nameof(value))
+                : throw new ArgumentException("Value not a string", nameof(value));
         }
 
         /// <summary>

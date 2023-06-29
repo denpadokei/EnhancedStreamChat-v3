@@ -40,6 +40,7 @@ namespace EnhancedStreamChat.Chat
         private readonly MemoryPoolContainer<EnhancedImageInfo> _imageInfoContaner;
         private static readonly byte[] s_animattedGIF89aPattern = Encoding.ASCII.GetBytes("GIF89a");
         private static readonly byte[] s_animattedGIF87aPattern = Encoding.ASCII.GetBytes("GIF87a");
+
         //private readonly ConcurrentDictionary<string, Texture2D> _cachedSpriteSheets = new ConcurrentDictionary<string, Texture2D>();
         /// <summary>
         /// Retrieves the requested content from the provided Uri. 
@@ -71,33 +72,38 @@ namespace EnhancedStreamChat.Chat
                     Finally = Finally,
                     Request = wr
                 };
-                this._activeDownloads.TryAdd(uri, activeDownload);
+                _ = this._activeDownloads.TryAdd(uri, activeDownload);
 
                 yield return wr.SendWebRequest();
-                if (wr.isHttpError) {
-                    // Failed to download due to http error, don't retry
-                    Logger.Error($"An http error occurred during request to {uri}. Aborting! {wr.error}");
-                    activeDownload.Finally?.Invoke(new byte[0]);
-                    this._activeDownloads.TryRemove(uri, out var d1);
-                    yield break;
-                }
-
-                if (wr.isNetworkError) {
-                    if (!isRetry) {
-                        Logger.Error($"A network error occurred during request to {uri}. Retrying in 3 seconds... {wr.error}");
-                        yield return new WaitForSeconds(3);
-                        SharedCoroutineStarter.instance.StartCoroutine(this.DownloadContent(uri, Finally, true));
+                switch (wr.result) {
+                    case UnityWebRequest.Result.InProgress:
+                        Logger.Error($"Why?");
                         yield break;
-                    }
-                    activeDownload.Finally?.Invoke(new byte[0]);
-                    this._activeDownloads.TryRemove(uri, out var d2);
-                    yield break;
+                    case UnityWebRequest.Result.Success:
+                        break;
+                    case UnityWebRequest.Result.ConnectionError:
+                    case UnityWebRequest.Result.DataProcessingError:
+                        if (!isRetry) {
+                            Logger.Error($"A network error occurred during request to {uri}. Retrying in 3 seconds... {wr.error}");
+                            yield return new WaitForSeconds(3);
+                            _ = SharedCoroutineStarter.instance.StartCoroutine(this.DownloadContent(uri, Finally, true));
+                            yield break;
+                        }
+                        activeDownload.Finally?.Invoke(new byte[0]);
+                        _ = this._activeDownloads.TryRemove(uri, out var d2);
+                        yield break;
+                    case UnityWebRequest.Result.ProtocolError:
+                    default:
+                        // Failed to download due to http error, don't retry
+                        Logger.Error($"An http error occurred during request to {uri}. Aborting! {wr.error}");
+                        activeDownload.Finally?.Invoke(new byte[0]);
+                        _ = this._activeDownloads.TryRemove(uri, out var d1);
+                        yield break;
                 }
-
                 var data = wr.downloadHandler.data;
                 activeDownload.Finally?.Invoke(data);
                 activeDownload.IsCompleted = true;
-                this._activeDownloads.TryRemove(uri, out var d3);
+                _ = this._activeDownloads.TryRemove(uri, out var d3);
             }
         }
 
@@ -105,7 +111,6 @@ namespace EnhancedStreamChat.Chat
         {
             yield return this.TryCacheSingleImage(id, uri, ESCAnimationType.GIF);
         }
-
 
         private void SetImageHeight(ref int spriteHeight, ref int spriteWidth, int height)
         {
@@ -208,7 +213,7 @@ namespace EnhancedStreamChat.Chat
                 ret.Width = spriteWidth;
                 ret.Height = spriteHeight;
                 ret.AnimControllerData = animControllerData;
-                this.CachedImageInfo.TryAdd(id, ret);
+                _ = this.CachedImageInfo.TryAdd(id, ret);
             }
             else {
                 this._imageInfoContaner.Despawn(ret);

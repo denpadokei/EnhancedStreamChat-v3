@@ -28,7 +28,7 @@ using Color = UnityEngine.Color;
 namespace EnhancedStreamChat.Chat
 {
     [HotReload]
-    public partial class ChatDisplay : BSMLAutomaticViewController, IAsyncInitializable, IChatDisplay, IDisposable, ILatePreRenderRebuildReciver//, IAffinity
+    public partial class ChatDisplay : BSMLAutomaticViewController, IAsyncInitializable, IChatDisplay, IDisposable, ILatePreRenderRebuildReciver
     {
         //ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*
         #region // プロパティ
@@ -41,6 +41,12 @@ namespace EnhancedStreamChat.Chat
         #endregion
         //ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*
         #region // パブリックメソッド
+        /// <summary>
+        /// 初期化処理
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
+
         public async Task InitializeAsync(CancellationToken token)
         {
             while (!this._fontManager.IsInitialized) {
@@ -75,7 +81,7 @@ namespace EnhancedStreamChat.Chat
             if (string.IsNullOrEmpty(messageId)) {
                 return;
             }
-            MainThreadInvoker.Invoke(() =>
+            _ = MainThreadInvoker.Invoke(() =>
             {
                 foreach (var msg in this._messages.Where(x => x.Text.ChatMessage?.Id == messageId)) {
                     this.ClearMessage(msg);
@@ -87,7 +93,7 @@ namespace EnhancedStreamChat.Chat
             if (string.IsNullOrEmpty(userId)) {
                 return;
             }
-            MainThreadInvoker.Invoke(() =>
+            _ = MainThreadInvoker.Invoke(() =>
             {
                 foreach (var msg in this._messages.Where(x => x.Text.ChatMessage?.Sender?.Id == userId)) {
                     this.ClearMessage(msg);
@@ -99,7 +105,7 @@ namespace EnhancedStreamChat.Chat
         {
             var main = await this._chatMessageBuilder.BuildMessage(msg, this._fontManager.FontInfo, BuildMessageTarget.Main);
             var sub = await this._chatMessageBuilder.BuildMessage(msg, this._fontManager.FontInfo, BuildMessageTarget.Sub);
-            _ = MainThreadInvoker.Invoke(() => this.CreateMessage(msg, dateTime, main, sub));
+            await MainThreadInvoker.Invoke(() => this.CreateMessage(msg, dateTime, main, sub));
         }
 
         private void OnVRPointerHelper_OnPointerEnable(VRPointer arg1, EventArgs arg2)
@@ -189,9 +195,9 @@ namespace EnhancedStreamChat.Chat
 
         private void SetCurrentLayer(int layer)
         {
-            var visible = VisibilityLayer.HmdOnlyAndReflected;
+            VisibilityLayer visible;
             switch ((PluginConfig.LayerType)layer) {
-                
+
                 case PluginConfig.LayerType.UI:
                     visible = VisibilityLayer.UI;
                     break;
@@ -383,9 +389,9 @@ namespace EnhancedStreamChat.Chat
             var sb = new StringBuilder($"<color={nameColorCode}>{msg.ChatMessage.Sender.DisplayName}</color>");
             var badgeEndIndex = msg.text.IndexOf("<color=");
             if (badgeEndIndex != -1) {
-                sb.Insert(0, msg.text.Substring(0, badgeEndIndex));
+                _ = sb.Insert(0, msg.text.Substring(0, badgeEndIndex));
             }
-            sb.Append(": <color=#bbbbbbff><message deleted></color>");
+            _ = sb.Append(": <color=#bbbbbbff><message deleted></color>");
             return sb.ToString();
         }
 
@@ -400,7 +406,7 @@ namespace EnhancedStreamChat.Chat
         }
         private void CreateMessage(IESCChatMessage msg, DateTime date, string mainMessage, string subMassage)
         {
-            MainThreadInvoker.Invoke(() =>
+            _ = MainThreadInvoker.Invoke(() =>
             {
                 var newMsg = this._textPoolContaner.Spawn();
                 newMsg.transform.SetParent(this._chatContainer.transform, false);
@@ -470,6 +476,7 @@ namespace EnhancedStreamChat.Chat
             };
             _ = this.OnTextMessageReceived(mes, DateTime.Now);
         }
+
         private void OnCatCoreManager_OnRewardRedeemed(string channelId, in CatCore.Models.Twitch.PubSub.Responses.ChannelPointsChannelV1.RewardRedeemedData data)
         {
             var mes = new ESCChatMessage(Guid.NewGuid().ToString(), $"{data.User.DisplayName} used points {data.Reward.Title}({data.Reward.Cost}).")
@@ -493,7 +500,6 @@ namespace EnhancedStreamChat.Chat
         private Material _chatMoverMaterial;
         private ImageView _bg;
         private bool _updateMessagePositions = false;
-        private readonly WaitForEndOfFrame _waitForEndOfFrame = new WaitForEndOfFrame();
         private MemoryPoolContainer<EnhancedTextMeshProUGUIWithBackground> _textPoolContaner;
         private ICatCoreManager _catCoreManager;
         private ChatMessageBuilder _chatMessageBuilder;

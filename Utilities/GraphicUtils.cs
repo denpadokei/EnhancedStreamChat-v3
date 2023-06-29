@@ -54,7 +54,7 @@ namespace EnhancedStreamChat.Utilities
             }
 
             var data = new byte[stream.Length];
-            stream.Read(data, 0, (int)stream.Length);
+            _ = stream.Read(data, 0, (int)stream.Length);
             return data;
         }
     }

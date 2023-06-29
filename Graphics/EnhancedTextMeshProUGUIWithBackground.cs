@@ -50,12 +50,7 @@ namespace EnhancedStreamChat.Graphics
             set
             {
                 this._highlight.enabled = value;
-                if (value) {
-                    this._verticalLayoutGroup.padding = new RectOffset(5, 5, 2, 2);
-                }
-                else {
-                    this._verticalLayoutGroup.padding = new RectOffset(5, 5, 1, 1);
-                }
+                this._verticalLayoutGroup.padding = value ? new RectOffset(5, 5, 2, 2) : new RectOffset(5, 5, 1, 1);
             }
         }
 

@@ -7,7 +7,7 @@ namespace EnhancedStreamChat.Installers
     {
         public override void InstallBindings()
         {
-            this.Container.BindInterfacesAndSelfTo<ChatDisplay>().FromNewComponentAsViewController().AsSingle().NonLazy();
+            _ = this.Container.BindInterfacesAndSelfTo<ChatDisplay>().FromNewComponentAsViewController().AsSingle().NonLazy();
         }
     }
 }

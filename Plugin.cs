@@ -52,7 +52,7 @@ namespace EnhancedStreamChat
             s_pluginConfig = config.Generated<PluginConfig>();
             zenjector.Install(Location.App, container =>
             {
-                container.BindInterfacesAndSelfTo<PluginConfig>().FromInstance(s_pluginConfig);
+                _ = container.BindInterfacesAndSelfTo<PluginConfig>().FromInstance(s_pluginConfig);
             });
             zenjector.Install<ESCAppInstaller>(Location.App);
             zenjector.Install<ESCMenuInstaller>(Location.Menu);

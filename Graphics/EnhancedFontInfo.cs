@@ -48,8 +48,8 @@ namespace EnhancedStreamChat.Graphics
                     }
                     while (this.Font.characterLookupTable.ContainsKey(next));
                     this.Font.characterLookupTable.Add(next, new TMP_Character(next, this.Font, new Glyph(next, new GlyphMetrics(0, 0, 0, 0, imageInfo.Width), new GlyphRect(0, 0, 0, 0))));
-                    this.CharacterLookupTable.TryAdd(imageInfo.ImageId, next);
-                    this.ImageInfoLookupTable.TryAdd(next, imageInfo);
+                    _ = this.CharacterLookupTable.TryAdd(imageInfo.ImageId, next);
+                    _ = this.ImageInfoLookupTable.TryAdd(next, imageInfo);
                     replaceCharacter = next;
                     return true;
                 }
@@ -66,9 +66,9 @@ namespace EnhancedStreamChat.Graphics
                     return false;
                 }
                 if (this.Font.characterLookupTable.ContainsKey(c)) {
-                    this.Font.characterLookupTable.Remove(c);
+                    _ = this.Font.characterLookupTable.Remove(c);
                 }
-                this.CharacterLookupTable.TryRemove(id, out unregisteredCharacter);
+                _ = this.CharacterLookupTable.TryRemove(id, out unregisteredCharacter);
                 return this.ImageInfoLookupTable.TryRemove(unregisteredCharacter, out var unregisteredImageInfo);
             }
         }

@@ -63,7 +63,7 @@ namespace EnhancedStreamChat.Chat
         public EnhancedFontInfo FontInfo { get; private set; } = null;
         public void Initialize()
         {
-            SharedCoroutineStarter.instance.StartCoroutine(this.CreateChatFont());
+            _ = SharedCoroutineStarter.instance.StartCoroutine(this.CreateChatFont());
         }
         public IEnumerator CreateChatFont()
         {
@@ -79,13 +79,13 @@ namespace EnhancedStreamChat.Chat
             }
 
             if (!Directory.Exists(FontPath)) {
-                Directory.CreateDirectory(FontPath);
+                _ = Directory.CreateDirectory(FontPath);
             }
             if (!Directory.Exists(MainFontPath)) {
-                Directory.CreateDirectory(MainFontPath);
+                _ = Directory.CreateDirectory(MainFontPath);
             }
             if (!Directory.Exists(FallBackFontPath)) {
-                Directory.CreateDirectory(FallBackFontPath);
+                _ = Directory.CreateDirectory(FallBackFontPath);
             }
 
             var fontName = this._pluginConfig.SystemFontName;
@@ -137,7 +137,7 @@ namespace EnhancedStreamChat.Chat
                 else {
                     Logger.Error($"Could not find font {fontName}! Falling back to Segoe UI");
                     fontName = "Segoe UI";
-                    FontManager.TryGetTMPFontByFamily(fontName, out asset);
+                    _ = FontManager.TryGetTMPFontByFamily(fontName, out asset);
                     asset.ReadFontAssetDefinition();
                     this.MainFont = asset;
                 }

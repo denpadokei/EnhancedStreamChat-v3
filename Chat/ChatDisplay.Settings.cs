@@ -194,7 +194,7 @@ namespace EnhancedStreamChat.Chat
 
             set
             {
-                this.SetProperty(ref this._accentColor, value);
+                _ = this.SetProperty(ref this._accentColor, value);
                 this.UpdateMessages();
             }
         }
@@ -205,7 +205,7 @@ namespace EnhancedStreamChat.Chat
             get => this._highlightColor;
             set
             {
-                this.SetProperty(ref this._highlightColor, value);
+                _ = this.SetProperty(ref this._highlightColor, value);
                 this.UpdateMessages();
             }
         }
@@ -217,7 +217,7 @@ namespace EnhancedStreamChat.Chat
             get => this._pingColor;
             set
             {
-                this.SetProperty(ref this._pingColor, value);
+                _ = this.SetProperty(ref this._pingColor, value);
                 this.UpdateMessages();
             }
         }
@@ -229,7 +229,7 @@ namespace EnhancedStreamChat.Chat
             get => this._backGroundColor;
             set
             {
-                this.SetProperty(ref this._backGroundColor, value);
+                _ = this.SetProperty(ref this._backGroundColor, value);
                 this._chatScreen.GetComponentsInChildren<ImageView>().FirstOrDefault(x => x.name == "bg").color = value;
             }
         }
@@ -241,7 +241,7 @@ namespace EnhancedStreamChat.Chat
             get => this._textColor;
             set
             {
-                this.SetProperty(ref this._textColor, value);
+                _ = this.SetProperty(ref this._textColor, value);
                 this.UpdateMessages();
             }
         }
@@ -253,7 +253,7 @@ namespace EnhancedStreamChat.Chat
             get => this._fontsize;
             set
             {
-                this.SetProperty(ref this._fontsize, value);
+                _ = this.SetProperty(ref this._fontsize, value);
                 this.UpdateMessages();
             }
         }
@@ -287,7 +287,7 @@ namespace EnhancedStreamChat.Chat
             get => this._chatWidth;
             set
             {
-                this.SetProperty(ref this._chatWidth, value);
+                _ = this.SetProperty(ref this._chatWidth, value);
                 this._chatScreen.ScreenSize = new Vector2(this.ChatWidth, this.ChatHeight);
                 this._chatContainer.GetComponent<RectMask2D>().rectTransform.sizeDelta = new Vector2(this.ChatWidth, this.ChatHeight);
                 this.UpdateMessages();
@@ -301,7 +301,7 @@ namespace EnhancedStreamChat.Chat
             get => this._chatHeight;
             set
             {
-                this.SetProperty(ref this._chatHeight, value);
+                _ = this.SetProperty(ref this._chatHeight, value);
                 this._chatScreen.ScreenSize = new Vector2(this.ChatWidth, this.ChatHeight);
                 this._chatContainer.GetComponent<RectMask2D>().rectTransform.sizeDelta = new Vector2(this.ChatWidth, this.ChatHeight);
                 this.UpdateMessages();
@@ -315,7 +315,7 @@ namespace EnhancedStreamChat.Chat
             get => this._chatPosition;
             set
             {
-                this.SetProperty(ref this._chatPosition, value);
+                _ = this.SetProperty(ref this._chatPosition, value);
                 this._chatScreen.ScreenPosition = value;
             }
         }
@@ -327,7 +327,7 @@ namespace EnhancedStreamChat.Chat
             get => this._chatRotation;
             set
             {
-                this.SetProperty(ref this._chatRotation, value);
+                _ = this.SetProperty(ref this._chatRotation, value);
                 this._chatScreen.ScreenRotation = Quaternion.Euler(value);
             }
         }
@@ -339,7 +339,7 @@ namespace EnhancedStreamChat.Chat
             get => this._allowMovement;
             set
             {
-                this.SetProperty(ref this._allowMovement, value);
+                _ = this.SetProperty(ref this._allowMovement, value);
                 this._chatScreen.ShowHandle = value;
             }
         }
@@ -359,7 +359,7 @@ namespace EnhancedStreamChat.Chat
             get => this._reverseChatOrder;
             set
             {
-                this.SetProperty(ref this._reverseChatOrder, value);
+                _ = this.SetProperty(ref this._reverseChatOrder, value);
                 this._updateMessagePositions = true;
                 //this.UpdateMessages();
             }
@@ -426,7 +426,7 @@ namespace EnhancedStreamChat.Chat
             }
             finally {
                 this.ReconnectEnable = true;
-                this._connectSemaphore.Release();
+                _ = this._connectSemaphore.Release();
             }
         }
 
@@ -441,7 +441,7 @@ namespace EnhancedStreamChat.Chat
                 Logger.Error(e);
             }
             finally {
-                this._connectSemaphore.Release();
+                _ = this._connectSemaphore.Release();
             }
         }
 

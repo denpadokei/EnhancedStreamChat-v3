@@ -49,7 +49,7 @@ namespace EnhancedStreamChat.Graphics
         {
             switch (update) {
                 case CanvasUpdate.LatePreRender:
-                    MainThreadInvoker.Invoke(() =>
+                    _ = MainThreadInvoker.Invoke(() =>
                     {
                         this.ClearImages();
                         for (var i = 0; i < this.textInfo.characterCount; i++) {
