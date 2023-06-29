@@ -209,10 +209,10 @@ namespace EnhancedStreamChat.Chat
                     visible = (VisibilityLayer)layer;
                     break;
             }
-            if (this._chatScreen != null) {
+            if (this._chatScreen) {
                 this._chatScreen.gameObject.SetLayer(visible);
             }
-            if (this._settingsModalGameObject != null) {
+            if (this._settingsModalGameObject) {
                 _settingsModalGameObject.gameObject.SetLayer(visible);
             }
             this.gameObject.SetLayer(visible);
@@ -278,7 +278,7 @@ namespace EnhancedStreamChat.Chat
             //float msgPos =  (ReverseChatOrder ?  ChatHeight : 0);
             float? msgPos = this.ChatHeight / (this.ReverseChatOrder ? 2f : -2f);
             foreach (var chatMsg in this._messages.OrderBy(x => x.ReceivedDate).Reverse()) {
-                if (chatMsg == null) {
+                if (!chatMsg) {
                     continue;
                 }
                 var msgHeight = (chatMsg.transform as RectTransform)?.sizeDelta.y;
@@ -540,7 +540,7 @@ namespace EnhancedStreamChat.Chat
                         this._catCoreManager.OnRewardRedeemed -= this.OnCatCoreManager_OnRewardRedeemed;
                         this.StopAllCoroutines();
                         while (this._messages.TryDequeue(out var msg)) {
-                            if (msg != null) {
+                            if (msg) {
                                 msg.RemoveReciver(this);
                             }
                             if (msg.Text.ChatMessage != null) {
