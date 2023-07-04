@@ -63,7 +63,7 @@ namespace EnhancedStreamChat.Chat
         public EnhancedFontInfo FontInfo { get; private set; } = null;
         public void Initialize()
         {
-            _ = SharedCoroutineStarter.instance.StartCoroutine(this.CreateChatFont());
+            _ = SharedCoroutineStarter.Instance.StartCoroutine(this.CreateChatFont());
         }
         public IEnumerator CreateChatFont()
         {

@@ -2,6 +2,7 @@
 using CatCore.Models.Twitch.Media;
 using EnhancedStreamChat.Graphics;
 using EnhancedStreamChat.Interfaces;
+using EnhancedStreamChat.Utilities;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -42,7 +43,7 @@ namespace EnhancedStreamChat.Chat
                 if (!font.CharacterLookupTable.ContainsKey(emote.Id)) {
                     _ = pendingEmoteDownloads.Add(emote.Id);
                     var tcs = new TaskCompletionSource<EnhancedImageInfo>();
-                    _ = SharedCoroutineStarter.instance.StartCoroutine(this._chatImageProvider.TryCacheSingleImage(emote.Id, emote.Url, emote.Animated ? ChatImageProvider.ESCAnimationType.GIF : ChatImageProvider.ESCAnimationType.MAYBE_GIF, (info) =>
+                    _ = SharedCoroutineStarter.Instance.StartCoroutine(this._chatImageProvider.TryCacheSingleImage(emote.Id, emote.Url, emote.Animated ? ChatImageProvider.ESCAnimationType.GIF : ChatImageProvider.ESCAnimationType.MAYBE_GIF, (info) =>
                     {
                         if (info == null || !font.TryRegisterImageInfo(info, out var character)) {
                             Logger.Warn($"Failed to register emote \"{emote.Id}\" in font {font.Font.name}.");
@@ -61,7 +62,7 @@ namespace EnhancedStreamChat.Chat
                     if (!font.CharacterLookupTable.ContainsKey(badge.Id)) {
                         _ = pendingEmoteDownloads.Add(badge.Id);
                         var tcs = new TaskCompletionSource<EnhancedImageInfo>();
-                        _ = SharedCoroutineStarter.instance.StartCoroutine(this._chatImageProvider.TryCacheSingleImage(badge.Id, badge.Uri, ChatImageProvider.ESCAnimationType.NONE, (info) =>
+                        _ = SharedCoroutineStarter.Instance.StartCoroutine(this._chatImageProvider.TryCacheSingleImage(badge.Id, badge.Uri, ChatImageProvider.ESCAnimationType.NONE, (info) =>
                         {
                             if (info != null) {
                                 if (!font.TryRegisterImageInfo(info, out var character)) {
