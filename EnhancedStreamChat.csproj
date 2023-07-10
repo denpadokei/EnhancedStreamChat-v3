@@ -33,6 +33,7 @@
     <Reference Include="CameraUtils">
       <HintPath>$(BeatSaberDir)\Plugins\CameraUtils.dll</HintPath>
       <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
     </Reference>
     <Reference Include="CatCore">
       <HintPath>$(BeatSaberDir)\Libs\CatCore.dll</HintPath>

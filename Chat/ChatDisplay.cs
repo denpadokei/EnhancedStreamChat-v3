@@ -63,7 +63,6 @@ namespace EnhancedStreamChat.Chat
             while (s_backupMessageQueue.TryDequeue(out var msg)) {
                 await this.OnTextMessageReceived(msg.Value, msg.Key);
             }
-            VRPointerHelper.OnPointerEnable += this.OnVRPointerHelper_OnPointerEnable;
             this._chatConfig.OnConfigChanged += this.Instance_OnConfigChanged;
             SceneManager.activeSceneChanged += this.SceneManager_activeSceneChanged;
             this._catCoreManager.OnChatConnected += this.CatCoreManager_OnChatConnected;
@@ -108,11 +107,6 @@ namespace EnhancedStreamChat.Chat
             await MainThreadInvoker.Invoke(() => this.CreateMessage(msg, dateTime, main, sub));
         }
 
-        private void OnVRPointerHelper_OnPointerEnable(VRPointer arg1, EventArgs arg2)
-        {
-            this.PointerOnEnabled(arg1);
-        }
-
         public void LatePreRenderRebuildHandler(object sender, EventArgs e)
         {
             this._updateMessagePositions = true;
@@ -127,24 +121,7 @@ namespace EnhancedStreamChat.Chat
             this._messages.Enqueue(newMsg);
             this.ClearOldMessages();
         }
-        private void PointerOnEnabled(VRPointer obj)
-        {
-            if (obj == null || this._chatScreen == null) {
-                return;
-            }
-            try {
-                var mover = this._chatScreen.gameObject.GetComponent<FloatingScreenMoverPointer>();
-                if (!mover) {
-                    mover = this._chatScreen.gameObject.AddComponent<FloatingScreenMoverPointer>();
-                    Destroy(this._chatScreen.screenMover);
-                }
-                this._chatScreen.screenMover = mover;
-                this._chatScreen.screenMover.Init(this._chatScreen, obj);
-            }
-            catch (Exception e) {
-                Logger.Error(e);
-            }
-        }
+        
         private void SetupScreens()
         {
             if (this._chatScreen == null) {
@@ -188,7 +165,6 @@ namespace EnhancedStreamChat.Chat
                 this._bg.material.color = Color.white.ColorWithAlpha(1);
                 this._bg.color = this.BackgroundColor;
                 this._bg.SetAllDirty();
-                this.AddToVRPointer();
                 this.UpdateChatUI();
             }
         }
@@ -260,17 +236,7 @@ namespace EnhancedStreamChat.Chat
                     canvas.sortingOrder = 3;
                 }
             }
-            this.AddToVRPointer();
             this.UpdateChatUI();
-        }
-
-        private void AddToVRPointer()
-        {
-            if (this._chatScreen.screenMover) {
-                this._chatScreen.HandleReleased -= this.OnHandleReleased;
-                this._chatScreen.HandleReleased += this.OnHandleReleased;
-                this._chatScreen.screenMover.transform.SetAsFirstSibling();
-            }
         }
         private void UpdateMessagePositions()
         {
@@ -526,7 +492,6 @@ namespace EnhancedStreamChat.Chat
             if (!this._disposedValue) {
                 if (disposing) {
                     try {
-                        VRPointerHelper.OnPointerEnable -= this.OnVRPointerHelper_OnPointerEnable;
                         this._connectSemaphore.Dispose();
                         this._chatConfig.OnConfigChanged -= this.Instance_OnConfigChanged;
                         SceneManager.activeSceneChanged -= this.SceneManager_activeSceneChanged;

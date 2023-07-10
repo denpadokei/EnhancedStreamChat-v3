@@ -30,6 +30,10 @@ namespace EnhancedStreamChat.Graphics
         {
             var ret = this.NextReplaceChar++;
             // If we used up all the Private Use Area characters, move onto Supplementary Private Use Area-A
+            if (this.NextReplaceChar < UNICODE_USER_FIRST_AREA_MINIMUM_VALUE) {
+                Logger.Warn("Font is out of characters! Switching to overflow range.");
+                this.NextReplaceChar = UNICODE_USER_FIRST_AREA_MINIMUM_VALUE;
+            }
             if (UNICODE_USER_FIRST_AREA_MAXIMUM_VALUE < this.NextReplaceChar && this.NextReplaceChar < UNICODE_USER_SECOND_AREA_MINIMUM_VALUE) {
                 Logger.Warn("Font is out of characters! Switching to overflow range.");
                 this.NextReplaceChar = UNICODE_USER_SECOND_AREA_MINIMUM_VALUE;
