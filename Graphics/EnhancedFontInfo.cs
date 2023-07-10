@@ -7,10 +7,19 @@ namespace EnhancedStreamChat.Graphics
     public class EnhancedFontInfo
     {
         public TMP_FontAsset Font { get; }
-        public uint NextReplaceChar { get; private set; } = 0xe000;
+        public uint NextReplaceChar { get; private set; } = UNICODE_USER_FIRST_AREA_MINIMUM_VALUE;
         public ConcurrentDictionary<string, uint> CharacterLookupTable { get; } = new ConcurrentDictionary<string, uint>();
         public ConcurrentDictionary<uint, EnhancedImageInfo> ImageInfoLookupTable { get; } = new ConcurrentDictionary<uint, EnhancedImageInfo>();
         private static readonly object s_lock = new object();
+
+        private const uint UNICODE_USER_FIRST_AREA_MINIMUM_VALUE = 0x0000E000;
+        private const uint UNICODE_USER_FIRST_AREA_MAXIMUM_VALUE = 0x0000F8FF;
+
+        private const uint UNICODE_USER_SECOND_AREA_MINIMUM_VALUE = 0x000F0000;
+        private const uint UNICODE_USER_SECOND_AREA_MAXIMUM_VALUE = 0x000FFFFD;
+
+        private const uint UNICODE_USER_THARD_AREA_MINIMUM_VALUE = 0x00100000;
+        private const uint UNICODE_USER_THARD_AREA_MAXIMUM_VALUE = 0x0010FFFD;
 
         public EnhancedFontInfo(TMP_FontAsset font)
         {
@@ -21,9 +30,21 @@ namespace EnhancedStreamChat.Graphics
         {
             var ret = this.NextReplaceChar++;
             // If we used up all the Private Use Area characters, move onto Supplementary Private Use Area-A
-            if (this.NextReplaceChar > 0xF8FF && this.NextReplaceChar < 0xF0000) {
+            if (this.NextReplaceChar < UNICODE_USER_FIRST_AREA_MINIMUM_VALUE) {
                 Logger.Warn("Font is out of characters! Switching to overflow range.");
-                this.NextReplaceChar = 0xF0000;
+                this.NextReplaceChar = UNICODE_USER_FIRST_AREA_MINIMUM_VALUE;
+            }
+            if (UNICODE_USER_FIRST_AREA_MAXIMUM_VALUE < this.NextReplaceChar && this.NextReplaceChar < UNICODE_USER_SECOND_AREA_MINIMUM_VALUE) {
+                Logger.Warn("Font is out of characters! Switching to overflow range.");
+                this.NextReplaceChar = UNICODE_USER_SECOND_AREA_MINIMUM_VALUE;
+            }
+            if (UNICODE_USER_SECOND_AREA_MAXIMUM_VALUE < this.NextReplaceChar && this.NextReplaceChar < UNICODE_USER_THARD_AREA_MINIMUM_VALUE) {
+                Logger.Warn("Font is out of characters! Switching to overflow range.");
+                this.NextReplaceChar = UNICODE_USER_THARD_AREA_MINIMUM_VALUE;
+            }
+            if (UNICODE_USER_THARD_AREA_MAXIMUM_VALUE < this.NextReplaceChar) {
+                Logger.Warn("Font is out of characters! Switching to overflow range.");
+                this.NextReplaceChar = UNICODE_USER_FIRST_AREA_MINIMUM_VALUE;
             }
             return ret;
         }
@@ -47,6 +68,9 @@ namespace EnhancedStreamChat.Graphics
                         next = this.GetNextReplaceChar();
                     }
                     while (this.Font.characterLookupTable.ContainsKey(next));
+#if DEBUG
+                    Logger.Debug($"Unicode : 0x{next:X8}");
+#endif
                     this.Font.characterLookupTable.Add(next, new TMP_Character(next, this.Font, new Glyph(next, new GlyphMetrics(0, 0, 0, 0, imageInfo.Width), new GlyphRect(0, 0, 0, 0))));
                     _ = this.CharacterLookupTable.TryAdd(imageInfo.ImageId, next);
                     _ = this.ImageInfoLookupTable.TryAdd(next, imageInfo);
