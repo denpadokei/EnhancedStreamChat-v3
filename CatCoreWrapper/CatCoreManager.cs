@@ -9,10 +9,8 @@ using CatCore.Services.Twitch.Interfaces;
 using EnhancedStreamChat.Interfaces;
 using IPA.Logging;
 using System;
-using System.Reflection;
 using System.Threading.Tasks;
 using Zenject;
-using static IPA.Logging.Logger;
 
 namespace EnhancedStreamChat.CatCoreWrapper
 {
@@ -54,7 +52,7 @@ namespace EnhancedStreamChat.CatCoreWrapper
             }
             this._chatServiceMultiplexer = this._instance.RunAllServices();
             this._twitchPratformService = this._chatServiceMultiplexer.GetTwitchPlatformService();
-            this._twitchIrcService = typeof(TwitchService).GetField("_twitchIrcService", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(this._twitchPratformService);
+            this._twitchIrcService = (this._twitchPratformService as TwitchService)?._twitchIrcService;
             this._twitchPubSubServiceManager = this._twitchPratformService.GetPubSubService();
             this._twitchPubSubServiceManager.OnFollow += this.OnTwitchPubSubServiceManager_OnFollow;
             this._twitchPubSubServiceManager.OnRewardRedeemed += this.OnTwitchPubSubServiceManager_OnRewardRedeemed;
@@ -79,26 +77,22 @@ namespace EnhancedStreamChat.CatCoreWrapper
 
         public Task IrcStart()
         {
-            var task = this._ircstart?.Invoke(this._twitchIrcService, null);
-            return task as Task ?? Task.CompletedTask;
+            return this._twitchIrcService is ITwitchIrcService service ? service.Start() : Task.CompletedTask;
         }
 
         public Task IrcStop()
         {
-            var task = this._ircstop?.Invoke(this._twitchIrcService, null);
-            return task as Task ?? Task.CompletedTask;
+            return this._twitchIrcService is ITwitchIrcService service ? service.Stop() : Task.CompletedTask;
         }
 
         public Task PubSubStart(object instance)
         {
-            var task = this._pubsubstart?.Invoke(instance, new object[] { false });
-            return task as Task ?? Task.CompletedTask;
+            return instance is TwitchPubSubServiceExperimentalAgent agent ? agent.Start(false) : Task.CompletedTask;
         }
 
         public Task PubSubStop(object instance)
         {
-            var task = this._pubsubstop?.Invoke(instance, new object[] { "Forced to go close" });
-            return task as Task ?? Task.CompletedTask;
+            return instance is TwitchPubSubServiceExperimentalAgent agent ? agent.Stop("Forced to go close") : Task.CompletedTask;
         }
         #endregion
         //ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*
@@ -179,11 +173,11 @@ namespace EnhancedStreamChat.CatCoreWrapper
         private ITwitchService _twitchPratformService;
         private ITwitchPubSubServiceManager _twitchPubSubServiceManager;
         private bool _disposedValue;
-        private object _twitchIrcService;
-        private readonly MethodInfo _ircstart = Type.GetType("CatCore.Services.Twitch.TwitchIrcService, CatCore").GetMethod("CatCore.Services.Twitch.Interfaces.ITwitchIrcService.Start", BindingFlags.NonPublic | BindingFlags.Instance);
-        private readonly MethodInfo _ircstop = Type.GetType("CatCore.Services.Twitch.TwitchIrcService, CatCore").GetMethod("CatCore.Services.Twitch.Interfaces.ITwitchIrcService.Stop", BindingFlags.NonPublic | BindingFlags.Instance);
-        private readonly MethodInfo _pubsubstart = Type.GetType("CatCore.Services.Twitch.TwitchPubSubServiceExperimentalAgent, CatCore").GetMethod("CatCore.Services.Twitch.TwitchPubSubServiceExperimentalAgent.Start", BindingFlags.NonPublic | BindingFlags.Instance);
-        private readonly MethodInfo _pubsubstop = Type.GetType("CatCore.Services.Twitch.TwitchPubSubServiceExperimentalAgent, CatCore").GetMethod("CatCore.Services.Twitch.TwitchPubSubServiceExperimentalAgent.Stop", BindingFlags.NonPublic | BindingFlags.Instance);
+        private ITwitchIrcService _twitchIrcService;
+        //private readonly MethodInfo _ircstart = Type.GetType("CatCore.Services.Twitch.TwitchIrcService, CatCore").GetMethod("CatCore.Services.Twitch.Interfaces.ITwitchIrcService.Start", BindingFlags.NonPublic | BindingFlags.Instance);
+        //private readonly MethodInfo _ircstop = Type.GetType("CatCore.Services.Twitch.TwitchIrcService, CatCore").GetMethod("CatCore.Services.Twitch.Interfaces.ITwitchIrcService.Stop", BindingFlags.NonPublic | BindingFlags.Instance);
+        //private readonly MethodInfo _pubsubstart = Type.GetType("CatCore.Services.Twitch.TwitchPubSubServiceExperimentalAgent, CatCore").GetMethod("CatCore.Services.Twitch.TwitchPubSubServiceExperimentalAgent.Start", BindingFlags.NonPublic | BindingFlags.Instance);
+        //private readonly MethodInfo _pubsubstop = Type.GetType("CatCore.Services.Twitch.TwitchPubSubServiceExperimentalAgent, CatCore").GetMethod("CatCore.Services.Twitch.TwitchPubSubServiceExperimentalAgent.Stop", BindingFlags.NonPublic | BindingFlags.Instance);
         #endregion
         //ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*
         #region // 構築・破棄

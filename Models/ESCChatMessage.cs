@@ -5,6 +5,7 @@ using EnhancedStreamChat.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Text;
 
 namespace EnhancedStreamChat.Models
 {
@@ -84,9 +85,11 @@ namespace EnhancedStreamChat.Models
                             }
                             else if (this.Metadata.TryGetValue("msg-param-profileImageURL", out var profileImage) && this.Metadata.TryGetValue("msg-param-login", out var loginUser)) {
                                 var emoteId = $"ProfileImage_{loginUser}";
+                                var sb = new StringBuilder(profileImage);
+                                sb = sb.Replace("_image-%s.png", "_image-300x300.png");
                                 this.Emotes = new ReadOnlyCollection<IChatEmote>(new IChatEmote[]
                                 {
-                                    new TwitchEmote(emoteId, $"[{emoteId}]", 0, emoteId.Length + 1, profileImage, false),
+                                    new TwitchEmote(emoteId, $"[{emoteId}]", 0, emoteId.Length + 1, sb.ToString(), false),
                                 });
                                 this.Message = $"{this.Emotes[0].Name}  {systemMsgText}";
                                 updateMessage = true;
