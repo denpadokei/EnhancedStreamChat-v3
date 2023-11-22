@@ -30,6 +30,10 @@
       <HintPath>$(BeatSaberDir)\Plugins\BSML.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="CameraUtils">
+      <HintPath>$(BeatSaberDir)\Plugins\CameraUtils.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="CatCore">
       <HintPath>$(BeatSaberDir)\Libs\CatCore.dll</HintPath>
       <Private>False</Private>
