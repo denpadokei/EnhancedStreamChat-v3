@@ -158,7 +158,7 @@ namespace EnhancedStreamChat.Chat
                 DontDestroyOnLoad(this._rootGameObject);
                 this._chatScreen.ScreenRotation = Quaternion.Euler(this.ChatRotation);
 
-                this._bg = this._chatScreen.GetComponentsInChildren<ImageView>().FirstOrDefault(x => x.name == "bg");
+                this._bg = this._chatScreen.GetComponentsInChildren<ImageView>().FirstOrDefault(x => x.name == "Background");
                 this._bg.raycastTarget = false;
                 this._bg.material = Instantiate(this._bg.material);
                 this._bg.SetField("_gradient", false);
@@ -218,6 +218,7 @@ namespace EnhancedStreamChat.Chat
 
         private void SceneManager_activeSceneChanged(Scene arg0, Scene arg1)
         {
+            Logger.Log?.Info($"arg0:{arg0.name}, arg1:{arg1.name}");
             if (arg1.name != s_game && arg1.name != s_menu) {
                 this._isInGame = false;
                 this._rootGameObject.SetActive(false);

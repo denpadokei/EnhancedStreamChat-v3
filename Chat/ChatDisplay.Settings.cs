@@ -230,7 +230,14 @@ namespace EnhancedStreamChat.Chat
             set
             {
                 _ = this.SetProperty(ref this._backGroundColor, value);
-                this._chatScreen.GetComponentsInChildren<ImageView>().FirstOrDefault(x => x.name == "bg").color = value;
+                if (this._chatScreen) {
+#if DEBUG
+                    foreach (var bg in this._chatScreen.GetComponentsInChildren<ImageView>()) {
+                        Logger.Debug($"{bg}:{bg.name}");
+                    }
+#endif
+                    this._chatScreen.GetComponentsInChildren<ImageView>().FirstOrDefault(x => x.name == "Background").color = value;
+                }
             }
         }
 
