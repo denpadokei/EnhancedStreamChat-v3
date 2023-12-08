@@ -218,7 +218,6 @@ namespace EnhancedStreamChat.Chat
 
         private void SceneManager_activeSceneChanged(Scene arg0, Scene arg1)
         {
-            Logger.Log?.Info($"arg0:{arg0.name}, arg1:{arg1.name}");
             if (arg1.name != s_game && arg1.name != s_menu) {
                 this._isInGame = false;
                 this._rootGameObject.SetActive(false);
