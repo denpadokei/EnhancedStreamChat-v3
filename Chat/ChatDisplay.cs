@@ -158,7 +158,7 @@ namespace EnhancedStreamChat.Chat
                 DontDestroyOnLoad(this._rootGameObject);
                 this._chatScreen.ScreenRotation = Quaternion.Euler(this.ChatRotation);
 
-                this._bg = this._chatScreen.GetComponentsInChildren<ImageView>().FirstOrDefault(x => x.name == "bg");
+                this._bg = this._chatScreen.GetComponentsInChildren<ImageView>().FirstOrDefault(x => x.name == "Background");
                 this._bg.raycastTarget = false;
                 this._bg.material = Instantiate(this._bg.material);
                 this._bg.SetField("_gradient", false);
