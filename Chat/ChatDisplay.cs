@@ -127,6 +127,7 @@ namespace EnhancedStreamChat.Chat
             if (this._chatScreen == null) {
                 var screenSize = new Vector2(this.ChatWidth, this.ChatHeight);
                 this._chatScreen = FloatingScreen.CreateFloatingScreen(screenSize, true, this.ChatPosition, Quaternion.identity, 0f, true);
+                this._chatScreen.HandleReleased += OnHandleReleased;
                 if (this._chatConfig.Layer == PluginConfig.LayerType.Manual) {
                     this.SetCurrentLayer(this._chatConfig.UILayer);
                 }
@@ -153,7 +154,6 @@ namespace EnhancedStreamChat.Chat
                 var renderer = this._chatScreen.handle.gameObject.GetComponent<Renderer>();
                 renderer.material = this._chatMoverMaterial;
                 renderer.material.mainTexture = this._chatMoverMaterial.mainTexture;
-
                 this._chatScreen.transform.SetParent(this._rootGameObject.transform);
                 DontDestroyOnLoad(this._rootGameObject);
                 this._chatScreen.ScreenRotation = Quaternion.Euler(this.ChatRotation);
@@ -521,6 +521,7 @@ namespace EnhancedStreamChat.Chat
                             Destroy(this._bg.material);
                         }
                         if (this._chatScreen != null) {
+                            this._chatScreen.HandleReleased -= OnHandleReleased;
                             Destroy(this._chatScreen);
                             this._chatScreen = null;
                         }
