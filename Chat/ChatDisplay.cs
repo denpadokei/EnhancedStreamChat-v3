@@ -151,7 +151,7 @@ namespace EnhancedStreamChat.Chat
                 this._chatMoverMaterial = Instantiate(BeatSaberUtils.UINoGlowMaterial);
                 this._chatMoverMaterial.color = Color.clear;
 
-                var renderer = this._chatScreen.handle.gameObject.GetComponent<Renderer>();
+                var renderer = this._chatScreen.Handle.gameObject.GetComponent<Renderer>();
                 renderer.material = this._chatMoverMaterial;
                 renderer.material.mainTexture = this._chatMoverMaterial.mainTexture;
                 this._chatScreen.transform.SetParent(this._rootGameObject.transform);
@@ -280,9 +280,9 @@ namespace EnhancedStreamChat.Chat
             var chatContainerTransform = this._chatContainer.GetComponent<RectMask2D>().rectTransform!;
             chatContainerTransform.sizeDelta = new Vector2(this.ChatWidth, this.ChatHeight);
 
-            this._chatScreen.handle.transform.localScale = new Vector3(this.ChatWidth, this.ChatHeight * 0.9f, 0.01f);
-            this._chatScreen.handle.transform.localPosition = Vector3.zero;
-            this._chatScreen.handle.transform.localRotation = Quaternion.identity;
+            this._chatScreen.Handle.transform.localScale = new Vector3(this.ChatWidth, this.ChatHeight * 0.9f, 0.01f);
+            this._chatScreen.Handle.transform.localPosition = Vector3.zero;
+            this._chatScreen.Handle.transform.localRotation = Quaternion.identity;
 
             this.AllowMovement = this._chatConfig.AllowMovement;
             this.Layer = this._chatConfig.Layer.ToString();

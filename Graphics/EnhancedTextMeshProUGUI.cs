@@ -75,8 +75,8 @@ namespace EnhancedStreamChat.Graphics
                             try {
                                 img.rectTransform.SetParent(this.rectTransform, false);
                                 if (imageInfo.AnimControllerData != null) {
-                                    img.AnimStateUpdater.controllerData = imageInfo.AnimControllerData;
-                                    img.sprite = imageInfo.AnimControllerData.sprites[imageInfo.AnimControllerData.uvIndex];
+                                    img.AnimStateUpdater.ControllerData = imageInfo.AnimControllerData;
+                                    img.sprite = imageInfo.AnimControllerData.Sprites[imageInfo.AnimControllerData.UvIndex];
                                 }
                                 else {
                                     img.sprite = imageInfo.Sprite;

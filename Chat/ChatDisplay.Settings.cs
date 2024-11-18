@@ -130,24 +130,24 @@ namespace EnhancedStreamChat.Chat
         {
             this.Load();
             // bg
-            this._backgroundColorSetting.editButton.onClick.AddListener(this.HideSettings);
-            this._backgroundColorSetting.modalColorPicker.cancelEvent += this.ShowSettings;
+            this._backgroundColorSetting.EditButton.onClick.AddListener(this.HideSettings);
+            this._backgroundColorSetting.ModalColorPicker.CancelEvent += this.ShowSettings;
             this._backgroundColorSetting.CurrentColor = this._chatConfig.BackgroundColor;
             // accent
-            this._accentColorSetting.editButton.onClick.AddListener(this.HideSettings);
-            this._accentColorSetting.modalColorPicker.cancelEvent += this.ShowSettings;
+            this._accentColorSetting.EditButton.onClick.AddListener(this.HideSettings);
+            this._accentColorSetting.ModalColorPicker.CancelEvent += this.ShowSettings;
             this._accentColorSetting.CurrentColor = this._chatConfig.AccentColor;
             // highlight
-            this._highlightColorSetting.editButton.onClick.AddListener(this.HideSettings);
-            this._highlightColorSetting.modalColorPicker.cancelEvent += this.ShowSettings;
+            this._highlightColorSetting.EditButton.onClick.AddListener(this.HideSettings);
+            this._highlightColorSetting.ModalColorPicker.CancelEvent += this.ShowSettings;
             this._highlightColorSetting.CurrentColor = this._chatConfig.HighlightColor;
             // ping
-            this._pingColorSetting.editButton.onClick.AddListener(this.HideSettings);
-            this._pingColorSetting.modalColorPicker.cancelEvent += this.ShowSettings;
+            this._pingColorSetting.EditButton.onClick.AddListener(this.HideSettings);
+            this._pingColorSetting.ModalColorPicker.CancelEvent += this.ShowSettings;
             this._pingColorSetting.CurrentColor = this._chatConfig.PingColor;
             // text
-            this._textColorSetting.editButton.onClick.AddListener(this.HideSettings);
-            this._textColorSetting.modalColorPicker.cancelEvent += this.ShowSettings;
+            this._textColorSetting.EditButton.onClick.AddListener(this.HideSettings);
+            this._textColorSetting.ModalColorPicker.CancelEvent += this.ShowSettings;
             this._textColorSetting.CurrentColor = this._chatConfig.TextColor;
 
             // Move interactables in front of the screen
