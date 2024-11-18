@@ -20,7 +20,7 @@ namespace EnhancedStreamChat.Graphics
                 img.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
                 img.rectTransform.pivot = new Vector2(0, 0);
                 img.AnimStateUpdater = img.gameObject.GetComponent<AnimationStateUpdater>();
-                img.AnimStateUpdater.image = img;
+                img.AnimStateUpdater.Image = img;
                 img.SetAllDirty();
             }
 
@@ -30,7 +30,7 @@ namespace EnhancedStreamChat.Graphics
                     return;
                 }
                 try {
-                    img.AnimStateUpdater.controllerData = null;
+                    img.AnimStateUpdater.ControllerData = null;
                     img.sprite = null;
                     img.SetAllDirty();
                     base.OnDespawned(img);

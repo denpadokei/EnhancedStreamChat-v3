@@ -4,7 +4,9 @@ using EnhancedStreamChat.Utilities;
 using System;
 using System.Collections;
 using System.Collections.Concurrent;
+using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Networking;
 using Zenject;
@@ -143,39 +145,37 @@ namespace EnhancedStreamChat.Chat
             Sprite sprite = null;
             int spriteWidth = 0, spriteHeight = 0;
             AnimationControllerData animControllerData = null;
-
+            AnimationData anmData = null;
+            Task<AnimationData> task;
             switch (animatedType) {
                 case ESCAnimationType.GIF:
-                    AnimationLoader.Process(AnimationType.GIF, bytes, (tex, atlas, delays, width, height) =>
-                    {
-                        animControllerData = AnimationController.instance.Register(id, tex, atlas, delays);
-                        sprite = animControllerData.sprite;
-                        spriteWidth = width;
-                        spriteHeight = height;
-                    });
-                    yield return new WaitUntil(() => animControllerData != null);
+                    task = AnimationLoader.ProcessGifAsync(bytes);
+                    yield return new WaitWhile(() => !task.IsCompleted);
+                    anmData = task.Result;
+                    animControllerData = AnimationController.Instance.Register(id, anmData);
+                    sprite = animControllerData.Sprites.FirstOrDefault();
+                    spriteHeight = anmData.Height;
+                    spriteWidth = anmData.Width;
                     break;
                 case ESCAnimationType.APNG:
-                    AnimationLoader.Process(AnimationType.APNG, bytes, (tex, atlas, delays, width, height) =>
-                    {
-                        animControllerData = AnimationController.instance.Register(id, tex, atlas, delays);
-                        sprite = animControllerData.sprite;
-                        spriteWidth = width;
-                        spriteHeight = height;
-                    });
-                    yield return new WaitUntil(() => animControllerData != null);
+                    task = AnimationLoader.ProcessApngAsync(bytes);
+                    yield return new WaitWhile(() => !task.IsCompleted);
+                    anmData = task.Result;
+                    animControllerData = AnimationController.Instance.Register(id, anmData);
+                    sprite = animControllerData.Sprites.FirstOrDefault();
+                    spriteHeight = anmData.Height;
+                    spriteWidth = anmData.Width;
                     break;
 
                 case ESCAnimationType.MAYBE_GIF:
                     if (6 <= bytes.Length && (this.ContainBytePattern(bytes, s_animattedGIF89aPattern) || this.ContainBytePattern(bytes, s_animattedGIF87aPattern))) {
-                        AnimationLoader.Process(AnimationType.GIF, bytes, (tex, atlas, delays, width, height) =>
-                        {
-                            animControllerData = AnimationController.instance.Register(id, tex, atlas, delays);
-                            sprite = animControllerData.sprite;
-                            spriteWidth = width;
-                            spriteHeight = height;
-                        });
-                        yield return new WaitUntil(() => animControllerData != null);
+                        task = AnimationLoader.ProcessGifAsync(bytes);
+                        yield return new WaitWhile(() => !task.IsCompleted);
+                        anmData = task.Result;
+                        animControllerData = AnimationController.Instance.Register(id, anmData);
+                        sprite = animControllerData.Sprites.FirstOrDefault();
+                        spriteHeight = anmData.Height;
+                        spriteWidth = anmData.Width;
                     }
                     else {
                         try {
