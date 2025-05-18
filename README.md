@@ -18,3 +18,14 @@ Enhanced Stream Chat is a rich text chat integration mod for Beat Saber. It supp
 - This is still a WIP
 - That means if you find something is missing or incomplete, it's probably because it's not done.
 - If you find any bugs (crashes/freezes) make an issue, but again keep in mind this isn't done.
+
+# Dependecy(依存mod)
+
+```
+    BSIPA
+    BeatSaberMarkupLanguage
+    BS Utils
+    CatCore
+    SiraUtil
+    CameraUtils
+  ```
