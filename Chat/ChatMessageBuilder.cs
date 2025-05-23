@@ -41,16 +41,19 @@ namespace EnhancedStreamChat.Chat
                     continue;
                 }
                 if (!font.CharacterLookupTable.ContainsKey(emote.Id)) {
-                    _ = pendingEmoteDownloads.Add(emote.Id);
-                    var tcs = new TaskCompletionSource<EnhancedImageInfo>();
-                    _ = SharedCoroutineStarter.Instance.StartCoroutine(this._chatImageProvider.TryCacheSingleImage(emote.Id, emote.Url, emote.Animated ? ChatImageProvider.ESCAnimationType.GIF : ChatImageProvider.ESCAnimationType.MAYBE_GIF, (info) =>
+                    await MainThreadInvoker.Invoke(() =>
                     {
-                        if (info == null || !font.TryRegisterImageInfo(info, out var character)) {
-                            Logger.Warn($"Failed to register emote \"{emote.Id}\" in font {font.Font.name}.");
-                        }
-                        tcs.SetResult(info);
-                    }, forcedHeight: 110));
-                    tasks.Add(tcs.Task);
+                        _ = pendingEmoteDownloads.Add(emote.Id);
+                        var tcs = new TaskCompletionSource<EnhancedImageInfo>();
+                        _ = SharedCoroutineStarter.Instance.StartCoroutine(this._chatImageProvider.TryCacheSingleImage(emote.Id, emote.Url, emote.Animated ? ChatImageProvider.ESCAnimationType.GIF : ChatImageProvider.ESCAnimationType.MAYBE_GIF, (info) =>
+                        {
+                            if (info == null || !font.TryRegisterImageInfo(info, out var character)) {
+                                Logger.Warn($"Failed to register emote \"{emote.Id}\" in font {font.Font.name}.");
+                            }
+                            tcs.SetResult(info);
+                        }, forcedHeight: 110));
+                        tasks.Add(tcs.Task);
+                    });
                 }
             }
 
@@ -60,18 +63,21 @@ namespace EnhancedStreamChat.Chat
                         continue;
                     }
                     if (!font.CharacterLookupTable.ContainsKey(badge.Id)) {
-                        _ = pendingEmoteDownloads.Add(badge.Id);
-                        var tcs = new TaskCompletionSource<EnhancedImageInfo>();
-                        _ = SharedCoroutineStarter.Instance.StartCoroutine(this._chatImageProvider.TryCacheSingleImage(badge.Id, badge.Uri, ChatImageProvider.ESCAnimationType.NONE, (info) =>
+                        await MainThreadInvoker.Invoke(() =>
                         {
-                            if (info != null) {
-                                if (!font.TryRegisterImageInfo(info, out var character)) {
-                                    Logger.Warn($"Failed to register badge \"{badge.Id}\" in font {font.Font.name}.");
+                            _ = pendingEmoteDownloads.Add(badge.Id);
+                            var tcs = new TaskCompletionSource<EnhancedImageInfo>();
+                            _ = SharedCoroutineStarter.Instance.StartCoroutine(this._chatImageProvider.TryCacheSingleImage(badge.Id, badge.Uri, ChatImageProvider.ESCAnimationType.NONE, (info) =>
+                            {
+                                if (info != null) {
+                                    if (!font.TryRegisterImageInfo(info, out var character)) {
+                                        Logger.Warn($"Failed to register badge \"{badge.Id}\" in font {font.Font.name}.");
+                                    }
                                 }
-                            }
-                            tcs.SetResult(info);
-                        }, forcedHeight: 100));
-                        tasks.Add(tcs.Task);
+                                tcs.SetResult(info);
+                            }, forcedHeight: 100));
+                            tasks.Add(tcs.Task);
+                        });
                     }
                 }
             }
