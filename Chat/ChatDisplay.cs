@@ -138,7 +138,9 @@ namespace EnhancedStreamChat.Chat
                 if (rectMask2D) {
                     Destroy(rectMask2D);
                 }
-
+                if (!_chatContainer) {
+                    _chatContainer = new GameObject("chatContainer");
+                }
                 this._chatContainer.transform.SetParent(this._chatScreen.transform, false);
                 this._chatContainer.AddComponent<RectMask2D>().rectTransform.sizeDelta = screenSize;
 
@@ -154,6 +156,9 @@ namespace EnhancedStreamChat.Chat
                 var renderer = this._chatScreen.Handle.gameObject.GetComponent<Renderer>();
                 renderer.material = this._chatMoverMaterial;
                 renderer.material.mainTexture = this._chatMoverMaterial.mainTexture;
+                if (!_rootGameObject) {
+                    _rootGameObject = new GameObject();
+                }
                 this._chatScreen.transform.SetParent(this._rootGameObject.transform);
                 DontDestroyOnLoad(this._rootGameObject);
                 this._chatScreen.ScreenRotation = Quaternion.Euler(this.ChatRotation);
@@ -461,8 +466,6 @@ namespace EnhancedStreamChat.Chat
         // TODO: eventually figure out a way to make this more modular incase we want to create multiple instances of ChatDisplay
         private static readonly ConcurrentQueue<KeyValuePair<DateTime, IESCChatMessage>> s_backupMessageQueue = new ConcurrentQueue<KeyValuePair<DateTime, IESCChatMessage>>();
         private FloatingScreen _chatScreen;
-        private readonly GameObject _chatContainer = new GameObject("chatContainer");
-        private readonly GameObject _rootGameObject = new GameObject();
         private Material _chatMoverMaterial;
         private ImageView _bg;
         private bool _updateMessagePositions = false;
@@ -475,6 +478,9 @@ namespace EnhancedStreamChat.Chat
         private static readonly string s_game = "GameCore";
         private static readonly int s_reconnectDelay = 500;
         private readonly SemaphoreSlim _connectSemaphore = new SemaphoreSlim(1, 1);
+
+        private GameObject _chatContainer;
+        private GameObject _rootGameObject;
         #endregion
         //ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*
         #region // 構築・破棄

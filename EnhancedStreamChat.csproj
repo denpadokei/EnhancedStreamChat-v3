@@ -7,7 +7,7 @@
     <NoWarn>1591</NoWarn>
     <AssemblyName>EnhancedStreamChat</AssemblyName>
     <RootNamespace>EnhancedStreamChat</RootNamespace>
-    <Version>10.0.0</Version>
+    <Version>10.1.0</Version>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <DebugType>embedded</DebugType>
     <AssemblySearchPath>$(ReferencePath)</AssemblySearchPath>
@@ -20,6 +20,11 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <WarningLevel>5</WarningLevel>
+    <DebugType>embedded</DebugType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <Optimize>False</Optimize>
+    <DebugType>embedded</DebugType>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="0Harmony">

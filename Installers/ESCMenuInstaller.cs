@@ -3,7 +3,7 @@ using Zenject;
 
 namespace EnhancedStreamChat.Installers
 {
-    internal class ESCMenuInstaller : MonoInstaller
+    internal class ESCMenuInstaller : Zenject.Installer
     {
         public override void InstallBindings()
         {

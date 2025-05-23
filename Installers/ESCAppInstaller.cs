@@ -9,7 +9,7 @@ using Zenject;
 
 namespace EnhancedStreamChat.Installers
 {
-    internal class ESCAppInstaller : MonoInstaller
+    internal class ESCAppInstaller : Zenject.Installer
     {
         public override void InstallBindings()
         {
@@ -25,7 +25,7 @@ namespace EnhancedStreamChat.Installers
 
         private EnhancedTextMeshProUGUI CreateText(DiContainer container)
         {
-            var result = Instantiate(this._enhancedTextMeshProUGUI).GetComponent<EnhancedTextMeshProUGUI>();
+            var result = Object.Instantiate(this._enhancedTextMeshProUGUI).GetComponent<EnhancedTextMeshProUGUI>();
             result.Constract(container.Resolve<EnhancedImage.Pool>(), container.Resolve<ESCFontManager>());
             return result;
         }
