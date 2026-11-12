@@ -4,7 +4,22 @@
 	<PropertyGroup>
 		<ImportBSMTTargets>True</ImportBSMTTargets>
 		<BSMTProjectType>BSIPA</BSMTProjectType>
+		<!-- Target Beat Saber version. Kept here so CI (nicoco007/setup-beat-saber) can read it before the build target that parses manifest.json runs. -->
+		<GameVersion>1.40.8</GameVersion>
 	</PropertyGroup>
+	<!--
+		Dependencies used by the GitHub Actions build to download reference assemblies from BeatMods.
+		Keep the versions in sync with manifest.json: these are the builds that support Beat Saber 1.40.8.
+		CatCore is intentionally missing here: 2.0.0-alpha1 is a GitHub prerelease and is not on BeatMods yet,
+		so .github/workflows/build.yml downloads it from its GitHub release instead.
+	-->
+	<ItemGroup>
+		<DependsOn Include="BSIPA" Version="4.3.6" />
+		<DependsOn Include="BeatSaberMarkupLanguage" Version="1.12.5" />
+		<DependsOn Include="BS Utils" Version="1.14.2" />
+		<DependsOn Include="SiraUtil" Version="3.2.1" />
+		<DependsOn Include="CameraUtils" Version="1.0.7" />
+	</ItemGroup>
 	<ItemGroup>
 		<OutputCopy Include="$(TargetPath)" OutputPath="Plugins\$(TargetName).dll" />
 		<!--<OutputCopy Include="$(ProjectDir)$(OutputPath)EnhancedStreamChat.pdb" OutputPath="Plugins\$(TargetName).pdb" />-->
