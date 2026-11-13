@@ -1,0 +1,93 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - master
+      - main
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  # CatCore 2.0.0-alpha1 is a GitHub prerelease and is not published to BeatMods yet, so the
+  # reference assembly is downloaded from its release page. Bump CATCORE_VERSION and
+  # CATCORE_ASSET_URL together (the asset name contains the commit hash).
+  CATCORE_VERSION: 2.0.0-alpha1
+  CATCORE_ASSET_URL: https://github.com/denpadokei/CatCore/releases/download/2.0.0-alpha1/CatCore-2.0.0-alpha1-4e3abe1.zip
+
+jobs:
+  build:
+    name: Build plugin
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Beat Saber references
+        uses: nicoco007/setup-beat-saber@v1
+        with:
+          project-path: ${{ github.workspace }}\EnhancedStreamChat.csproj
+          path: ${{ runner.temp }}\BeatSaberReferenceAssemblies
+
+      - name: Install CatCore ${{ env.CATCORE_VERSION }}
+        shell: pwsh
+        run: |
+          $referenceDir = Join-Path $env:RUNNER_TEMP 'BeatSaberReferenceAssemblies'
+          $archive = Join-Path $env:RUNNER_TEMP 'CatCore.zip'
+          $extractDir = Join-Path $env:RUNNER_TEMP 'CatCore'
+          Invoke-WebRequest -Uri $env:CATCORE_ASSET_URL -OutFile $archive
+          Expand-Archive -Path $archive -DestinationPath $extractDir -Force
+          $libsDir = Join-Path $referenceDir 'Libs'
+          New-Item -ItemType Directory -Force -Path $libsDir | Out-Null
+          Copy-Item -Path (Join-Path $extractDir 'Libs\CatCore.dll') -Destination (Join-Path $libsDir 'CatCore.dll') -Force
+          $assembly = [System.Reflection.AssemblyName]::GetAssemblyName((Join-Path $libsDir 'CatCore.dll'))
+          if ($assembly.Version -ne '2.0.0.0') { throw "Unexpected CatCore assembly version: $($assembly.Version)" }
+          Write-Host "CatCore reference: $assembly"
+
+      - name: Verify Beat Saber references
+        shell: pwsh
+        run: |
+          if (-not $env:BeatSaberDir) { throw 'BeatSaberDir was not set by setup-beat-saber. Check DependsOn and GameVersion in Directory.Build.props.' }
+          $required = @(
+            'Libs\CatCore.dll',
+            'Libs\0Harmony.dll',
+            'Libs\Hive.Versioning.dll',
+            'Beat Saber_Data\Managed\Main.dll',
+            'Beat Saber_Data\Managed\IPA.Loader.dll',
+            'Plugins\BSML.dll',
+            'Plugins\SiraUtil.dll',
+            'Plugins\CameraUtils.dll'
+          )
+          $missing = @($required | Where-Object { -not (Test-Path (Join-Path $env:BeatSaberDir $_)) })
+          if ($missing.Count -gt 0) { throw "Missing reference assemblies: $($missing -join ', ')" }
+          Write-Host "Reference assemblies: $env:BeatSaberDir"
+
+      - name: Build Release
+        shell: pwsh
+        run: dotnet build "$env:GITHUB_WORKSPACE\EnhancedStreamChat.csproj" -c Release
+
+      - name: Package plugin
+        id: package
+        shell: pwsh
+        run: |
+          $artifactDir = Join-Path $env:GITHUB_WORKSPACE 'bin\Release\net48\Artifact'
+          if (-not (Test-Path $artifactDir)) { throw "BSMT CI output not found: $artifactDir" }
+          $manifest = Get-Content (Join-Path $env:GITHUB_WORKSPACE 'manifest.json') -Raw | ConvertFrom-Json
+          $zipName = "EnhancedStreamChat-$($manifest.version)-bs$($manifest.gameVersion).zip"
+          $zipPath = Join-Path $env:GITHUB_WORKSPACE $zipName
+          Compress-Archive -Path (Join-Path $artifactDir '*') -DestinationPath $zipPath -Force
+          Get-ChildItem -Recurse $artifactDir | ForEach-Object { Write-Host $_.FullName }
+          Write-Host "Packaged $zipPath"
+          "zip_name=$zipName" >> $env:GITHUB_OUTPUT
+
+      - name: Upload plugin artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ steps.package.outputs.zip_name }}
+          path: ${{ github.workspace }}\${{ steps.package.outputs.zip_name }}
+          if-no-files-found: error
+          retention-days: 14

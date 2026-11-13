@@ -10,6 +10,11 @@ namespace EnhancedStreamChat.Interfaces
         bool IsActionMessage { get; }
         bool IsMentioned { get; }
         bool IsHighlighted { get; }
+        bool IsSharedChatActive { get; }
+        bool IsSharedChatMessage { get; }
+        bool IsGigantifiedEmote { get; }
+        string SourceChannelId { get; }
+        string SourceMessageId { get; }
         string Message { get; }
         string SubMessage { get; }
         IChatUser Sender { get; }

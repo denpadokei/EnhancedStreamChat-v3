@@ -87,6 +87,12 @@ namespace EnhancedStreamChat.Chat
             else if (e.PropertyName == nameof(this.FontSize)) {
                 this._chatConfig.FontSize = this.FontSize;
             }
+            else if (e.PropertyName == nameof(this.ShowSharedChatChannel)) {
+                this._chatConfig.ShowSharedChatChannel = this.ShowSharedChatChannel;
+            }
+            else if (e.PropertyName == nameof(this.GigantifiedEmoteScale)) {
+                this._chatConfig.GigantifiedEmoteScale = this.GigantifiedEmoteScale;
+            }
             else if (e.PropertyName == nameof(this.HighlightColor)) {
                 this._chatConfig.HighlightColor = this.HighlightColor;
             }
@@ -258,6 +264,22 @@ namespace EnhancedStreamChat.Chat
                 _ = this.SetProperty(ref this._fontsize, value);
                 this.UpdateMessages();
             }
+        }
+
+        private bool _showSharedChatChannel;
+        [UIValue("show-shared-chat-channel")]
+        public bool ShowSharedChatChannel
+        {
+            get => this._showSharedChatChannel;
+            set => this.SetProperty(ref this._showSharedChatChannel, value);
+        }
+
+        private int _gigantifiedEmoteScale;
+        [UIValue("gigantified-emote-scale")]
+        public int GigantifiedEmoteScale
+        {
+            get => this._gigantifiedEmoteScale;
+            set => this.SetProperty(ref this._gigantifiedEmoteScale, value);
         }
 
         [UIValue("layer-types")]
@@ -465,6 +487,8 @@ namespace EnhancedStreamChat.Chat
             this.ChatHeight = this._chatConfig.ChatHeight;
             this.ChatWidth = this._chatConfig.ChatWidth;
             this.FontSize = this._chatConfig.FontSize;
+            this.ShowSharedChatChannel = this._chatConfig.ShowSharedChatChannel;
+            this.GigantifiedEmoteScale = this._chatConfig.GigantifiedEmoteScale;
             this.HighlightColor = this._chatConfig.HighlightColor;
             this.PingColor = this._chatConfig.PingColor;
             this.ReverseChatOrder = this._chatConfig.ReverseChatOrder;

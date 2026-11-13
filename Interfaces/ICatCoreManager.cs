@@ -1,9 +1,11 @@
-﻿using CatCore.Models.Twitch.IRC;
+﻿using CatCore.Models.Shared;
+using CatCore.Models.Twitch.IRC;
 using CatCore.Models.Twitch.PubSub.Responses;
 using CatCore.Models.Twitch.PubSub.Responses.ChannelPointsChannelV1;
 using CatCore.Services.Multiplexer;
 using CatCore.Services.Twitch.Interfaces;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace EnhancedStreamChat.Interfaces
@@ -28,6 +30,8 @@ namespace EnhancedStreamChat.Interfaces
         Task IrcStop();
         Task PubSubStart(object instance);
         Task PubSubStop(object instance);
+        Task<IReadOnlyDictionary<string, IChatBadge>> GetChatBadgesAsync(string channelId);
+        Task<string> GetChannelDisplayNameAsync(string channelId);
     }
 
     public delegate void OnRewardRedeemedHandler(string channelId, in RewardRedeemedData data);

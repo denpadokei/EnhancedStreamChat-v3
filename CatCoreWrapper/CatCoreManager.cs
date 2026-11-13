@@ -1,6 +1,9 @@
 ﻿using CatCore;
 using CatCore.Logging;
+using CatCore.Models.Shared;
+using CatCore.Models.Twitch.Helix.Responses.Badges;
 using CatCore.Models.Twitch.IRC;
+using CatCore.Models.Twitch.Media;
 using CatCore.Models.Twitch.PubSub.Responses;
 using CatCore.Models.Twitch.PubSub.Responses.ChannelPointsChannelV1;
 using CatCore.Services.Multiplexer;
@@ -9,6 +12,7 @@ using CatCore.Services.Twitch.Interfaces;
 using EnhancedStreamChat.Interfaces;
 using IPA.Logging;
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using System.Threading.Tasks;
 using Zenject;
@@ -99,6 +103,73 @@ namespace EnhancedStreamChat.CatCoreWrapper
             var task = this._pubsubstop?.Invoke(instance, new object[] { "Forced to go close" });
             return task as Task ?? Task.CompletedTask;
         }
+
+        /// <summary>
+        /// Retrieves the badges that can be displayed in the given channel, including global badges.
+        /// Used to resolve the badges of a message relayed through Twitch Shared Chat.
+        /// </summary>
+        public async Task<IReadOnlyDictionary<string, IChatBadge>> GetChatBadgesAsync(string channelId)
+        {
+            if (string.IsNullOrEmpty(channelId) || this._twitchPratformService == null) {
+                return null;
+            }
+            try {
+                var helixApiService = this._twitchPratformService.GetHelixApiService();
+                var globalBadgesTask = this._globalBadgesTask ??= this.FetchGlobalBadgesAsync(helixApiService);
+                var channelBadgesTask = this.FetchChannelBadgesAsync(helixApiService, channelId);
+                var globalBadges = await globalBadgesTask.ConfigureAwait(false);
+                var channelBadges = await channelBadgesTask.ConfigureAwait(false);
+                if (globalBadges == null) {
+                    // Do not cache a failed request, so that it can be retried by the next message.
+                    this._globalBadgesTask = null;
+                }
+                if (globalBadges == null && channelBadges == null) {
+                    return null;
+                }
+                var badges = new Dictionary<string, IChatBadge>(StringComparer.Ordinal);
+                if (globalBadges != null) {
+                    foreach (var badge in globalBadges) {
+                        badges[badge.Key] = badge.Value;
+                    }
+                }
+                if (channelBadges != null) {
+                    foreach (var badge in channelBadges) {
+                        badges[badge.Key] = badge.Value;
+                    }
+                }
+                return badges;
+            }
+            catch (Exception e) {
+                Logger.Error($"Failed to retrieve chat badges for channel {channelId}. {e}");
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Resolves a channel id to its display name, e.g. for the source channel of a Shared Chat message.
+        /// </summary>
+        public async Task<string> GetChannelDisplayNameAsync(string channelId)
+        {
+            if (string.IsNullOrEmpty(channelId) || this._twitchPratformService == null) {
+                return null;
+            }
+            try {
+                var response = await this._twitchPratformService.GetHelixApiService()
+                    .FetchUserInfo(userIds: new[] { channelId })
+                    .ConfigureAwait(false);
+                if (response.HasValue) {
+                    var users = response.Value.Data;
+                    if (users != null && users.Count > 0) {
+                        var user = users[0];
+                        return user.DisplayName ?? user.LoginName;
+                    }
+                }
+            }
+            catch (Exception e) {
+                Logger.Error($"Failed to resolve the display name of channel {channelId}. {e}");
+            }
+            return null;
+        }
         #endregion
         //ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*
         #region // プライベートメソッド
@@ -155,6 +226,36 @@ namespace EnhancedStreamChat.CatCoreWrapper
             this.OnFollow?.Invoke(arg1, arg2);
         }
 
+        private async Task<IReadOnlyDictionary<string, IChatBadge>> FetchGlobalBadgesAsync(ITwitchHelixApiService helixApiService)
+        {
+            var response = await helixApiService.GetGlobalBadges().ConfigureAwait(false);
+            return response.HasValue ? ParseBadges("TwitchGlobalBadge_", response.Value.Data) : null;
+        }
+
+        private async Task<IReadOnlyDictionary<string, IChatBadge>> FetchChannelBadgesAsync(ITwitchHelixApiService helixApiService, string channelId)
+        {
+            var response = await helixApiService.GetBadgesForChannel(channelId).ConfigureAwait(false);
+            return response.HasValue ? ParseBadges($"TwitchChannelBadge_{channelId}", response.Value.Data) : null;
+        }
+
+        private static IReadOnlyDictionary<string, IChatBadge> ParseBadges(string idPrefix, IReadOnlyList<BadgeData> badgeData)
+        {
+            var badges = new Dictionary<string, IChatBadge>(StringComparer.Ordinal);
+            if (badgeData == null) {
+                return badges;
+            }
+            foreach (var badge in badgeData) {
+                if (badge.Versions == null) {
+                    continue;
+                }
+                foreach (var version in badge.Versions) {
+                    var identifier = $"{badge.SetId}/{version.Id}";
+                    badges[identifier] = new TwitchBadge(idPrefix + identifier, badge.SetId, version.ImageUrl4X);
+                }
+            }
+            return badges;
+        }
+
         private void CatCoreLogHandler(CustomLogLevel logLevel, string context, string message)
         {
             Logger.Log.GetChildLogger("CatCore").Log(
@@ -177,6 +278,7 @@ namespace EnhancedStreamChat.CatCoreWrapper
         private ChatServiceMultiplexer _chatServiceMultiplexer;
         private ITwitchService _twitchPratformService;
         private ITwitchPubSubServiceManager _twitchPubSubServiceManager;
+        private Task<IReadOnlyDictionary<string, IChatBadge>> _globalBadgesTask;
         private bool _disposedValue;
         private object _twitchIrcService;
         private readonly MethodInfo _ircstart = Type.GetType("CatCore.Services.Twitch.TwitchIrcService, CatCore").GetMethod("CatCore.Services.Twitch.Interfaces.ITwitchIrcService.Start", BindingFlags.NonPublic | BindingFlags.Instance);
