@@ -52,6 +52,7 @@ namespace EnhancedStreamChat.Graphics
                     _ = MainThreadInvoker.Invoke(() =>
                     {
                         this.ClearImages();
+                        var baseFontScale = this.GetBaseFontScale();
                         for (var i = 0; i < this.textInfo.characterCount; i++) {
                             var c = this.textInfo.characterInfo[i];
                             if (!c.isVisible || string.IsNullOrEmpty(this.text) || c.index >= this.text.Length) {
@@ -82,6 +83,13 @@ namespace EnhancedStreamChat.Graphics
                                     img.sprite = imageInfo.Sprite;
                                 }
                                 var fontScale = 0.010f * this.fontSize;
+                                if (baseFontScale > 0f) {
+                                    // Account for rich text size tags (e.g. a gigantified emote) so the overlay matches the glyph layout.
+                                    var characterScale = c.scale / baseFontScale;
+                                    if (characterScale > 0f) {
+                                        fontScale *= characterScale;
+                                    }
+                                }
                                 img.rectTransform.localScale = new Vector3(fontScale * 1.08f, fontScale * 1.08f, fontScale * 1.08f);
                                 img.rectTransform.sizeDelta = new Vector2(imageInfo.Width, imageInfo.Height);
                                 img.rectTransform.localPosition = c.topLeft - new Vector3(0, imageInfo.Height * fontScale * 0.558f / 2);
@@ -116,6 +124,15 @@ namespace EnhancedStreamChat.Graphics
         public void RemoveReciver(ILatePreRenderRebuildReciver reciver)
         {
             this.LazyCopyHashSet.Remove(reciver);
+        }
+
+        private float GetBaseFontScale()
+        {
+            var fontAsset = this.font;
+            if (fontAsset == null || fontAsset.faceInfo.pointSize <= 0f) {
+                return 0f;
+            }
+            return this.fontSize / fontAsset.faceInfo.pointSize * fontAsset.faceInfo.scale * (this.isOrthographic ? 1f : 0.1f);
         }
 
         protected void LateUpdate()

@@ -1,5 +1,6 @@
 # EnhancedStreamChat v3
 Enhanced Stream Chat is a rich text chat integration mod for Beat Saber. It supports emotes, emojis, badges, and any other image that may come inline in a chat message through any of the supported services.  
+Twitch Shared Chat messages are labelled with their source channel, and Power-up "Gigantify an Emote" messages render the emote at the size configured in the in-game settings.
   
 # このMODについて  
 このEnhancedStreamChatは日本語を受信したときにスパイクを起こさないように日本人向けに改良されたEnhancedStreamChatです。  
@@ -8,6 +9,7 @@ Enhanced Stream Chat is a rich text chat integration mod for Beat Saber. It supp
   
 また、各自でオリジナルのフォントアセットを作成し読み込むことも可能です。  
 詳しくは[こちら](https://github.com/denpadokei/ESCFontProject)  
+共有チャットのメッセージには送信元チャンネル名が表示され、Power-up「Gigantify an Emote」で拡大されたエモートは設定したサイズで表示されます。
 # Basic Configuration (for users)
 1. Install CatCore **2.0.0-alpha1** (or newer) from https://github.com/denpadokei/CatCore/releases
 2. Grab the latest EnhancedStreamChat release from https://github.com/denpadokei/EnhancedStreamChat-v3/releases
