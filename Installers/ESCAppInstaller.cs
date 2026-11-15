@@ -19,6 +19,7 @@ namespace EnhancedStreamChat.Installers
             _ = this.Container.BindFactory<EnhancedTextMeshProUGUI, EnhancedTextMeshProUGUI.Factory>().FromMethod(this.CreateText);
             _ = this.Container.BindMemoryPool<EnhancedTextMeshProUGUIWithBackground, EnhancedTextMeshProUGUIWithBackground.Pool>().WithInitialSize(64).FromComponentInNewPrefab(this._enhancedTextMeshProUGUIWithBackground);
             _ = this.Container.BindInterfacesAndSelfTo<ChatMessageBuilder>().AsCached().NonLazy();
+            _ = this.Container.BindInterfacesAndSelfTo<SharedChatResolver>().AsSingle().NonLazy();
             _ = this.Container.BindInterfacesAndSelfTo<ESCFontManager>().AsSingle().NonLazy();
             _ = this.Container.BindInterfacesAndSelfTo<ChatImageProvider>().AsSingle();
         }

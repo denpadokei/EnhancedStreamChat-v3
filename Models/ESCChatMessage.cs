@@ -16,6 +16,11 @@ namespace EnhancedStreamChat.Models
         public bool IsActionMessage { get; internal set; }
         public bool IsMentioned { get; internal set; }
         public bool IsHighlighted { get; internal set; }
+        public bool IsSharedChatActive { get; internal set; }
+        public bool IsSharedChatMessage { get; internal set; }
+        public bool IsGigantifiedEmote { get; internal set; }
+        public string SourceChannelId { get; internal set; }
+        public string SourceMessageId { get; internal set; }
         public string Message { get; internal set; } = "";
         public string SubMessage { get; internal set; } = "";
         public IChatUser Sender { get; internal set; }
@@ -31,6 +36,7 @@ namespace EnhancedStreamChat.Models
             if (twitchMessage.Emotes != null) {
                 this.Emotes = twitchMessage.Emotes;
             }
+            this.SetupTwitchFeatureTags();
             if (this.SystemMessageSetup()) {
                 this.SubMessage = twitchMessage.Message;
             }
@@ -54,6 +60,23 @@ namespace EnhancedStreamChat.Models
             this.Message = message;
         }
 
+        private void SetupTwitchFeatureTags()
+        {
+            if (this.Metadata.TryGetValue("source-room-id", out var sourceRoomId) && !string.IsNullOrEmpty(sourceRoomId)) {
+                this.IsSharedChatActive = true;
+                this.SourceChannelId = sourceRoomId;
+                if (this.Metadata.TryGetValue("room-id", out var roomId)) {
+                    this.IsSharedChatMessage = !string.Equals(sourceRoomId, roomId, StringComparison.Ordinal);
+                }
+                if (this.Metadata.TryGetValue("source-id", out var sourceMessageId)) {
+                    this.SourceMessageId = sourceMessageId;
+                }
+            }
+            if (this.Metadata.TryGetValue("msg-id", out var msgId)) {
+                this.IsGigantifiedEmote = string.Equals(msgId, "gigantified-emote-message", StringComparison.Ordinal);
+            }
+        }
+
         private bool SystemMessageSetup()
         {
             var updateMessage = false;
@@ -75,6 +98,11 @@ namespace EnhancedStreamChat.Models
                         this.IsHighlighted = true;
                         this.IsSystemMessage = true;
                         updateMessage = true;
+                        break;
+                    case "gigantified-emote-message":
+                    case "animated-message":
+                        // Twitch Power-up messages carry a msg-id tag but are regular chat messages.
+                        this.IsSystemMessage = false;
                         break;
                     //case "sub":
                     //case "resub":

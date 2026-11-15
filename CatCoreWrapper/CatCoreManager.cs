@@ -1,6 +1,15 @@
 ﻿using CatCore;
 using CatCore.Logging;
+using CatCore.Models.Shared;
+using CatCore.Models.Twitch.EventSub.Channel;
+using CatCore.Models.Twitch.EventSub.ChannelPoints;
+using CatCore.Models.Twitch.EventSub.Charity;
+using CatCore.Models.Twitch.EventSub.Goal;
+using CatCore.Models.Twitch.EventSub.HypeTrain;
+using CatCore.Models.Twitch.EventSub.Moderation;
+using CatCore.Models.Twitch.Helix.Responses.Badges;
 using CatCore.Models.Twitch.IRC;
+using CatCore.Models.Twitch.Media;
 using CatCore.Models.Twitch.PubSub.Responses;
 using CatCore.Models.Twitch.PubSub.Responses.ChannelPointsChannelV1;
 using CatCore.Services.Multiplexer;
@@ -9,6 +18,7 @@ using CatCore.Services.Twitch.Interfaces;
 using EnhancedStreamChat.Interfaces;
 using IPA.Logging;
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using System.Threading.Tasks;
 using Zenject;
@@ -33,6 +43,17 @@ namespace EnhancedStreamChat.CatCoreWrapper
         public event Action<MultiplexedPlatformService, MultiplexedChannel, string> OnChatCleared;
         public event OnRewardRedeemedHandler OnRewardRedeemed;
         public event OnFollowHandler OnFollow;
+        public event Action<string, HypeTrainEvent> OnHypeTrainBegin;
+        public event Action<string, HypeTrainEvent> OnHypeTrainEnd;
+        public event Action<string, GoalEvent> OnGoalBegin;
+        public event Action<string, GoalEvent> OnGoalEnd;
+        public event Action<string, CharityCampaignEvent> OnCharityCampaignStarted;
+        public event Action<string, CharityCampaignEvent> OnCharityCampaignStopped;
+        public event Action<string, ShoutoutReceivedEvent> OnShoutoutReceived;
+        public event Action<string, BanEvent> OnUserBanned;
+        public event Action<string, UnbanEvent> OnUserUnbanned;
+        public event Action<string, AutomaticRewardRedemptionEvent> OnAutomaticRewardRedeemed;
+        public event Action<string, CustomPowerUpRedemptionEvent> OnCustomPowerUpRedeemed;
         #endregion
         //ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*
         #region // コマンド用メソッド
@@ -54,9 +75,25 @@ namespace EnhancedStreamChat.CatCoreWrapper
             this._chatServiceMultiplexer = this._instance.RunAllServices();
             this._twitchPratformService = this._chatServiceMultiplexer.GetTwitchPlatformService();
             this._twitchIrcService = typeof(TwitchService).GetField("_twitchIrcService", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(this._twitchPratformService);
+#pragma warning disable CS0618 // Legacy PubSub is still the only source of follow and custom reward redemption events.
             this._twitchPubSubServiceManager = this._twitchPratformService.GetPubSubService();
             this._twitchPubSubServiceManager.OnFollow += this.OnTwitchPubSubServiceManager_OnFollow;
             this._twitchPubSubServiceManager.OnRewardRedeemed += this.OnTwitchPubSubServiceManager_OnRewardRedeemed;
+#pragma warning restore CS0618
+            this._twitchEventSubService = this._twitchPratformService.GetEventSubService();
+            if (this._twitchEventSubService != null) {
+                this._twitchEventSubService.HypeTrain.OnBegin += this.EventSubHypeTrainOnBegin;
+                this._twitchEventSubService.HypeTrain.OnEnd += this.EventSubHypeTrainOnEnd;
+                this._twitchEventSubService.Goal.OnBegin += this.EventSubGoalOnBegin;
+                this._twitchEventSubService.Goal.OnEnd += this.EventSubGoalOnEnd;
+                this._twitchEventSubService.Charity.OnStarted += this.EventSubCharityOnStarted;
+                this._twitchEventSubService.Charity.OnStopped += this.EventSubCharityOnStopped;
+                this._twitchEventSubService.ChannelActivity.OnShoutoutReceived += this.EventSubChannelActivityOnShoutoutReceived;
+                this._twitchEventSubService.Moderation.OnBanned += this.EventSubModerationOnBanned;
+                this._twitchEventSubService.Moderation.OnUnbanned += this.EventSubModerationOnUnbanned;
+                this._twitchEventSubService.ChannelPoints.OnAutomaticRewardRedeemed += this.EventSubChannelPointsOnAutomaticRewardRedeemed;
+                this._twitchEventSubService.ChannelActivity.OnCustomPowerUpRedeemed += this.EventSubChannelActivityOnCustomPowerUpRedeemed;
+            }
             this._chatServiceMultiplexer.OnAuthenticatedStateChanged += this.ChatServiceMultiplexerOnAuthenticatedStateChanged;
             this._chatServiceMultiplexer.OnChatConnected += this.ChatServiceMultiplexerOnChatConnected;
             this._chatServiceMultiplexer.OnTextMessageReceived += this.ChatServiceMultiplexerOnTextMessageReceived;
@@ -98,6 +135,73 @@ namespace EnhancedStreamChat.CatCoreWrapper
         {
             var task = this._pubsubstop?.Invoke(instance, new object[] { "Forced to go close" });
             return task as Task ?? Task.CompletedTask;
+        }
+
+        /// <summary>
+        /// Retrieves the badges that can be displayed in the given channel, including global badges.
+        /// Used to resolve the badges of a message relayed through Twitch Shared Chat.
+        /// </summary>
+        public async Task<IReadOnlyDictionary<string, IChatBadge>> GetChatBadgesAsync(string channelId)
+        {
+            if (string.IsNullOrEmpty(channelId) || this._twitchPratformService == null) {
+                return null;
+            }
+            try {
+                var helixApiService = this._twitchPratformService.GetHelixApiService();
+                var globalBadgesTask = this._globalBadgesTask ??= this.FetchGlobalBadgesAsync(helixApiService);
+                var channelBadgesTask = this.FetchChannelBadgesAsync(helixApiService, channelId);
+                var globalBadges = await globalBadgesTask.ConfigureAwait(false);
+                var channelBadges = await channelBadgesTask.ConfigureAwait(false);
+                if (globalBadges == null) {
+                    // Do not cache a failed request, so that it can be retried by the next message.
+                    this._globalBadgesTask = null;
+                }
+                if (globalBadges == null && channelBadges == null) {
+                    return null;
+                }
+                var badges = new Dictionary<string, IChatBadge>(StringComparer.Ordinal);
+                if (globalBadges != null) {
+                    foreach (var badge in globalBadges) {
+                        badges[badge.Key] = badge.Value;
+                    }
+                }
+                if (channelBadges != null) {
+                    foreach (var badge in channelBadges) {
+                        badges[badge.Key] = badge.Value;
+                    }
+                }
+                return badges;
+            }
+            catch (Exception e) {
+                Logger.Error($"Failed to retrieve chat badges for channel {channelId}. {e}");
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Resolves a channel id to its display name, e.g. for the source channel of a Shared Chat message.
+        /// </summary>
+        public async Task<string> GetChannelDisplayNameAsync(string channelId)
+        {
+            if (string.IsNullOrEmpty(channelId) || this._twitchPratformService == null) {
+                return null;
+            }
+            try {
+                var response = await this._twitchPratformService.GetHelixApiService()
+                    .FetchUserInfo(userIds: new[] { channelId })
+                    .ConfigureAwait(false);
+                if (response.HasValue) {
+                    var users = response.Value.Data;
+                    if (users != null && users.Count > 0) {
+                        var user = users[0];
+                        return user.DisplayName ?? user.LoginName;
+                    }
+                }
+            }
+            catch (Exception e) {
+                Logger.Error($"Failed to resolve the display name of channel {channelId}. {e}");
+            }
+            return null;
         }
         #endregion
         //ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*
@@ -155,6 +259,91 @@ namespace EnhancedStreamChat.CatCoreWrapper
             this.OnFollow?.Invoke(arg1, arg2);
         }
 
+        private void EventSubHypeTrainOnBegin(string channelId, HypeTrainEvent data)
+        {
+            this.OnHypeTrainBegin?.Invoke(channelId, data);
+        }
+
+        private void EventSubHypeTrainOnEnd(string channelId, HypeTrainEvent data)
+        {
+            this.OnHypeTrainEnd?.Invoke(channelId, data);
+        }
+
+        private void EventSubGoalOnBegin(string channelId, GoalEvent data)
+        {
+            this.OnGoalBegin?.Invoke(channelId, data);
+        }
+
+        private void EventSubGoalOnEnd(string channelId, GoalEvent data)
+        {
+            this.OnGoalEnd?.Invoke(channelId, data);
+        }
+
+        private void EventSubCharityOnStarted(string channelId, CharityCampaignEvent data)
+        {
+            this.OnCharityCampaignStarted?.Invoke(channelId, data);
+        }
+
+        private void EventSubCharityOnStopped(string channelId, CharityCampaignEvent data)
+        {
+            this.OnCharityCampaignStopped?.Invoke(channelId, data);
+        }
+
+        private void EventSubChannelActivityOnShoutoutReceived(string channelId, ShoutoutReceivedEvent data)
+        {
+            this.OnShoutoutReceived?.Invoke(channelId, data);
+        }
+
+        private void EventSubModerationOnBanned(string channelId, BanEvent data)
+        {
+            this.OnUserBanned?.Invoke(channelId, data);
+        }
+
+        private void EventSubModerationOnUnbanned(string channelId, UnbanEvent data)
+        {
+            this.OnUserUnbanned?.Invoke(channelId, data);
+        }
+
+        private void EventSubChannelPointsOnAutomaticRewardRedeemed(string channelId, AutomaticRewardRedemptionEvent data)
+        {
+            this.OnAutomaticRewardRedeemed?.Invoke(channelId, data);
+        }
+
+        private void EventSubChannelActivityOnCustomPowerUpRedeemed(string channelId, CustomPowerUpRedemptionEvent data)
+        {
+            this.OnCustomPowerUpRedeemed?.Invoke(channelId, data);
+        }
+
+        private async Task<IReadOnlyDictionary<string, IChatBadge>> FetchGlobalBadgesAsync(ITwitchHelixApiService helixApiService)
+        {
+            var response = await helixApiService.GetGlobalBadges().ConfigureAwait(false);
+            return response.HasValue ? ParseBadges("TwitchGlobalBadge_", response.Value.Data) : null;
+        }
+
+        private async Task<IReadOnlyDictionary<string, IChatBadge>> FetchChannelBadgesAsync(ITwitchHelixApiService helixApiService, string channelId)
+        {
+            var response = await helixApiService.GetBadgesForChannel(channelId).ConfigureAwait(false);
+            return response.HasValue ? ParseBadges($"TwitchChannelBadge_{channelId}", response.Value.Data) : null;
+        }
+
+        private static IReadOnlyDictionary<string, IChatBadge> ParseBadges(string idPrefix, IReadOnlyList<BadgeData> badgeData)
+        {
+            var badges = new Dictionary<string, IChatBadge>(StringComparer.Ordinal);
+            if (badgeData == null) {
+                return badges;
+            }
+            foreach (var badge in badgeData) {
+                if (badge.Versions == null) {
+                    continue;
+                }
+                foreach (var version in badge.Versions) {
+                    var identifier = $"{badge.SetId}/{version.Id}";
+                    badges[identifier] = new TwitchBadge(idPrefix + identifier, badge.SetId, version.ImageUrl4X);
+                }
+            }
+            return badges;
+        }
+
         private void CatCoreLogHandler(CustomLogLevel logLevel, string context, string message)
         {
             Logger.Log.GetChildLogger("CatCore").Log(
@@ -177,6 +366,8 @@ namespace EnhancedStreamChat.CatCoreWrapper
         private ChatServiceMultiplexer _chatServiceMultiplexer;
         private ITwitchService _twitchPratformService;
         private ITwitchPubSubServiceManager _twitchPubSubServiceManager;
+        private ITwitchEventSubService _twitchEventSubService;
+        private Task<IReadOnlyDictionary<string, IChatBadge>> _globalBadgesTask;
         private bool _disposedValue;
         private object _twitchIrcService;
         private readonly MethodInfo _ircstart = Type.GetType("CatCore.Services.Twitch.TwitchIrcService, CatCore").GetMethod("CatCore.Services.Twitch.Interfaces.ITwitchIrcService.Start", BindingFlags.NonPublic | BindingFlags.Instance);
@@ -205,8 +396,24 @@ namespace EnhancedStreamChat.CatCoreWrapper
                     this._chatServiceMultiplexer.OnMessageDeleted -= this.ChatServiceMultiplexer_OnMessageDeleted;
                     this._chatServiceMultiplexer.OnChatCleared -= this.ChatServiceMultiplexer_OnChatCleared;
 
+#pragma warning disable CS0618 // Legacy PubSub is still the only source of follow and custom reward redemption events.
                     this._twitchPubSubServiceManager.OnFollow -= this.OnTwitchPubSubServiceManager_OnFollow;
                     this._twitchPubSubServiceManager.OnRewardRedeemed -= this.OnTwitchPubSubServiceManager_OnRewardRedeemed;
+#pragma warning restore CS0618
+
+                    if (this._twitchEventSubService != null) {
+                        this._twitchEventSubService.HypeTrain.OnBegin -= this.EventSubHypeTrainOnBegin;
+                        this._twitchEventSubService.HypeTrain.OnEnd -= this.EventSubHypeTrainOnEnd;
+                        this._twitchEventSubService.Goal.OnBegin -= this.EventSubGoalOnBegin;
+                        this._twitchEventSubService.Goal.OnEnd -= this.EventSubGoalOnEnd;
+                        this._twitchEventSubService.Charity.OnStarted -= this.EventSubCharityOnStarted;
+                        this._twitchEventSubService.Charity.OnStopped -= this.EventSubCharityOnStopped;
+                        this._twitchEventSubService.ChannelActivity.OnShoutoutReceived -= this.EventSubChannelActivityOnShoutoutReceived;
+                        this._twitchEventSubService.Moderation.OnBanned -= this.EventSubModerationOnBanned;
+                        this._twitchEventSubService.Moderation.OnUnbanned -= this.EventSubModerationOnUnbanned;
+                        this._twitchEventSubService.ChannelPoints.OnAutomaticRewardRedeemed -= this.EventSubChannelPointsOnAutomaticRewardRedeemed;
+                        this._twitchEventSubService.ChannelActivity.OnCustomPowerUpRedeemed -= this.EventSubChannelActivityOnCustomPowerUpRedeemed;
+                    }
 
                     this._twitchPratformService.OnTextMessageReceived -= this.OnTwitchPratformService_OnTextMessageReceived;
                 }

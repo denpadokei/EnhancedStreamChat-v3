@@ -33,6 +33,8 @@ namespace EnhancedStreamChat.Configuration
         public virtual int ChatWidth { get; set; } = 120;
         public virtual int ChatHeight { get; set; } = 140;
         public virtual float FontSize { get; set; } = 3.4f;
+        public virtual bool ShowSharedChatChannel { get; set; } = true;
+        public virtual int GigantifiedEmoteScale { get; set; } = 300;
         public virtual bool AllowMovement { get; set; } = false;
         public virtual bool SyncOrientation { get; set; } = false;
         public virtual bool ReverseChatOrder { get; set; } = false;

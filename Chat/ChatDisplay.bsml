@@ -18,6 +18,8 @@
             <slider-setting text='Chat Width' min='5' max='1000' increment='5' pref-height='6' value='chat-width' apply-on-change='true' integer-only='true' bind-value='true'></slider-setting>
             <slider-setting text='Chat Height' min='5' max='1000' increment='5' pref-height='6' value='chat-height' apply-on-change='true' integer-only='true' bind-value='true'></slider-setting>
             <slider-setting text='Font Size' min='1' max='20' increment='0.1' pref-height='6' value='font-size' apply-on-change='true' bind-value='true'></slider-setting>
+            <bool-setting text='Show Shared Chat Channel' pref-height='6' value='show-shared-chat-channel' apply-on-change='true' bind-value='true'></bool-setting>
+            <slider-setting text='Gigantified Emote Size (%)' min='100' max='500' increment='25' pref-height='6' value='gigantified-emote-scale' apply-on-change='true' integer-only='true' bind-value='true'></slider-setting>
             <dropdown-list-setting text='Layer' value='layer-type' choices='layer-types' apply-on-change='true' bind-value='true'></dropdown-list-setting>
           </vertical>
         </tab>

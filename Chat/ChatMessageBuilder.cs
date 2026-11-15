@@ -1,5 +1,7 @@
-﻿using CatCore.Models.Twitch.IRC;
+﻿using CatCore.Models.Shared;
+using CatCore.Models.Twitch.IRC;
 using CatCore.Models.Twitch.Media;
+using EnhancedStreamChat.Configuration;
 using EnhancedStreamChat.Graphics;
 using EnhancedStreamChat.Interfaces;
 using EnhancedStreamChat.Utilities;
@@ -17,12 +19,19 @@ namespace EnhancedStreamChat.Chat
     public class ChatMessageBuilder
     {
         private readonly ChatImageProvider _chatImageProvider;
+        private readonly SharedChatResolver _sharedChatResolver;
+        private readonly PluginConfig _config;
         private static readonly ConcurrentDictionary<string, Color> s_senderColor = new ConcurrentDictionary<string, Color>();
         private readonly System.Random _random = new System.Random(Environment.TickCount);
+        private const string SharedChatLabelColor = "#B0B0B0FF";
+        private const char GigantifiedEmoteStart = '\u0001';
+        private const char GigantifiedEmoteEnd = '\u0002';
 
-        public ChatMessageBuilder(ChatImageProvider chatImageProvider)
+        public ChatMessageBuilder(ChatImageProvider chatImageProvider, SharedChatResolver sharedChatResolver, PluginConfig config)
         {
             this._chatImageProvider = chatImageProvider;
+            this._sharedChatResolver = sharedChatResolver;
+            this._config = config;
         }
 
         /// <summary>
@@ -57,28 +66,26 @@ namespace EnhancedStreamChat.Chat
                 }
             }
 
-            if (msg.Sender is TwitchUser twitchUser) {
-                foreach (var badge in twitchUser.Badges) {
-                    if (string.IsNullOrEmpty(badge.Id) || pendingEmoteDownloads.Contains(badge.Id)) {
-                        continue;
-                    }
-                    if (!font.CharacterLookupTable.ContainsKey(badge.Id)) {
-                        await MainThreadInvoker.Invoke(() =>
+            foreach (var badge in await this.GetDisplayBadgesAsync(msg)) {
+                if (string.IsNullOrEmpty(badge.Id) || pendingEmoteDownloads.Contains(badge.Id)) {
+                    continue;
+                }
+                if (!font.CharacterLookupTable.ContainsKey(badge.Id)) {
+                    await MainThreadInvoker.Invoke(() =>
+                    {
+                        _ = pendingEmoteDownloads.Add(badge.Id);
+                        var tcs = new TaskCompletionSource<EnhancedImageInfo>();
+                        _ = SharedCoroutineStarter.Instance.StartCoroutine(this._chatImageProvider.TryCacheSingleImage(badge.Id, badge.Uri, ChatImageProvider.ESCAnimationType.NONE, (info) =>
                         {
-                            _ = pendingEmoteDownloads.Add(badge.Id);
-                            var tcs = new TaskCompletionSource<EnhancedImageInfo>();
-                            _ = SharedCoroutineStarter.Instance.StartCoroutine(this._chatImageProvider.TryCacheSingleImage(badge.Id, badge.Uri, ChatImageProvider.ESCAnimationType.NONE, (info) =>
-                            {
-                                if (info != null) {
-                                    if (!font.TryRegisterImageInfo(info, out var character)) {
-                                        Logger.Warn($"Failed to register badge \"{badge.Id}\" in font {font.Font.name}.");
-                                    }
+                            if (info != null) {
+                                if (!font.TryRegisterImageInfo(info, out var character)) {
+                                    Logger.Warn($"Failed to register badge \"{badge.Id}\" in font {font.Font.name}.");
                                 }
-                                tcs.SetResult(info);
-                            }, forcedHeight: 100));
-                            tasks.Add(tcs.Task);
-                        });
-                    }
+                            }
+                            tcs.SetResult(info);
+                        }, forcedHeight: 100));
+                        tasks.Add(tcs.Task);
+                    });
                 }
             }
             // Wait on all the resources to be ready
@@ -93,17 +100,27 @@ namespace EnhancedStreamChat.Chat
                     Logger.Warn($"Failed to prepare some/all images for msg \"{msg.Message}\"!");
                     //return msg.Message;
                 }
-                var badges = new Stack<EnhancedImageInfo>();
-                if (msg.Sender is TwitchUser twitchUser) {
-                    foreach (var badge in twitchUser.Badges) {
-                        if (!this._chatImageProvider.CachedImageInfo.TryGetValue(badge.Id, out var badgeInfo)) {
-                            Logger.Warn($"Failed to find cached image info for badge \"{badge.Id}\"!");
+                var badgeInfos = new List<EnhancedImageInfo>();
+                foreach (var badge in await this.GetDisplayBadgesAsync(msg)) {
+                    if (!this._chatImageProvider.CachedImageInfo.TryGetValue(badge.Id, out var badgeInfo)) {
+                        Logger.Warn($"Failed to find cached image info for badge \"{badge.Id}\"!");
+                        continue;
+                    }
+                    badgeInfos.Add(badgeInfo);
+                }
+                var sb = buildMessage == BuildMessageTarget.Main ? new StringBuilder(msg.Message) : new StringBuilder(msg.SubMessage);
+                IChatEmote gigantifiedEmote = null;
+                if (msg.IsGigantifiedEmote) {
+                    // Twitch only enlarges the last emote of a gigantified message.
+                    foreach (var emote in msg.Emotes) {
+                        if (emote is TwitchEmote twitchEmote && twitchEmote.Bits > 0) {
                             continue;
                         }
-                        badges.Push(badgeInfo);
+                        if (gigantifiedEmote == null || emote.EndIndex >= gigantifiedEmote.EndIndex) {
+                            gigantifiedEmote = emote;
+                        }
                     }
                 }
-                var sb = buildMessage == BuildMessageTarget.Main ? new StringBuilder(msg.Message) : new StringBuilder(msg.SubMessage); // Replace all instances of < with a zero-width non-breaking character
                 foreach (var emote in msg.Emotes) {
                     if (emote is TwitchEmote twitchEmote && 0 < twitchEmote.Bits) {
                         continue;
@@ -119,6 +136,11 @@ namespace EnhancedStreamChat.Chat
                         continue;
                     }
                     //Logger.Info($"target char {character}");
+                    var emoteText = char.ConvertFromUtf32((int)character);
+                    if (gigantifiedEmote != null && ReferenceEquals(emote, gigantifiedEmote)) {
+                        // Use placeholders here so that the size tag is not affected by the rich text escaping below.
+                        emoteText = $"{GigantifiedEmoteStart}{emoteText}{GigantifiedEmoteEnd}";
+                    }
                     try {
                         // Replace emotes by index, in reverse order (msg.Emotes is sorted by emote.StartIndex in descending order)
                         if (Regex.IsMatch(emote.Id, "^Emoji_")) {
@@ -128,17 +150,23 @@ namespace EnhancedStreamChat.Chat
                             foreach (var emojiChar in emojiChars) {
                                 _ = emojiBuilder.Append(emojiChar);
                             }
-                            _ = sb.Replace(emojiBuilder.ToString(), char.ConvertFromUtf32((int)character));
+                            _ = sb.Replace(emojiBuilder.ToString(), emoteText);
                         }
                         else {
-                            _ = sb.Replace(emote.Name, char.ConvertFromUtf32((int)character));
+                            _ = sb.Replace(emote.Name, emoteText);
                         }
                     }
                     catch (Exception ex) {
                         Logger.Error($"An unknown error occurred while trying to swap emote {emote.Name} into string of length {sb.Length} at location ({emote.StartIndex}, {emote.EndIndex})\r\n{ex}");
                     }
                 }
+                // Replace all instances of < with a zero-width non-breaking character so that user text cannot use rich text tags.
                 _ = sb.Replace("<", "<\u2060");
+                if (gigantifiedEmote != null) {
+                    // Twitch displays the gigantified emote on a new line, separate from the rest of the message.
+                    _ = sb.Replace(GigantifiedEmoteStart.ToString(), $"\n<size={this.GetGigantifiedEmoteScale()}%>");
+                    _ = sb.Replace(GigantifiedEmoteEnd.ToString(), "</size>");
+                }
                 foreach (var emote in msg.Emotes) {
                     if (emote is not TwitchEmote twitchEmote || twitchEmote.Bits == 0) {
                         continue;
@@ -168,6 +196,11 @@ namespace EnhancedStreamChat.Chat
                     _ = sb.Append("</color>");
                 }
                 else {
+                    string sharedChatLabel = null;
+                    if (buildMessage == BuildMessageTarget.Main && msg.IsSharedChatMessage && this._config.ShowSharedChatChannel) {
+                        var sourceChannelName = await this._sharedChatResolver.GetChannelNameAsync(msg.SourceChannelId).ConfigureAwait(false);
+                        sharedChatLabel = $"<color={SharedChatLabelColor}>[{sourceChannelName ?? "shared"}]</color> ";
+                    }
                     var nameColorCode = msg.Sender?.Color;
                     if (ColorUtility.TryParseHtmlString(nameColorCode?.Substring(0, 7), out var nameColor)) {
                         if (nameColor == Color.white && !s_senderColor.TryGetValue(msg.Sender?.UserName, out nameColor)) {
@@ -191,21 +224,23 @@ namespace EnhancedStreamChat.Chat
                         // Insert username w/ color
                         _ = sb.Insert(0, $"<color={nameColorCode}><b>{msg.Sender?.DisplayName}</b></color>: ");
                     }
+                    if (sharedChatLabel != null) {
+                        // Inserted after the username and before the badges so the final order is badges, source channel, username.
+                        _ = sb.Insert(0, sharedChatLabel);
+                    }
                     var parsedBadge = new HashSet<string>();
-                    if (msg.Sender is TwitchUser twitchUser1) {
-                        for (var i = 0; i < twitchUser1.Badges.Count; i++) {
-                            // Insert user badges at the beginning of the string in reverse order
-                            var badge = badges.Pop();
-                            if (parsedBadge.Contains(badge.ImageId)) {
-                                continue;
-                            }
-                            _ = parsedBadge.Add(badge.ImageId);
-                            if (badge != null && font.TryGetCharacter(badge.ImageId, out var character)) {
-                                _ = sb.Insert(0, $"{char.ConvertFromUtf32((int)character)} ");
-                            }
-                            else {
-                                Logger.Warn("Undefind badge");
-                            }
+                    for (var i = badgeInfos.Count - 1; i >= 0; i--) {
+                        // Insert user badges at the beginning of the string in reverse order
+                        var badge = badgeInfos[i];
+                        if (parsedBadge.Contains(badge.ImageId)) {
+                            continue;
+                        }
+                        _ = parsedBadge.Add(badge.ImageId);
+                        if (badge != null && font.TryGetCharacter(badge.ImageId, out var character)) {
+                            _ = sb.Insert(0, $"{char.ConvertFromUtf32((int)character)} ");
+                        }
+                        else {
+                            Logger.Warn("Undefind badge");
                         }
                     }
                 }
@@ -215,6 +250,23 @@ namespace EnhancedStreamChat.Chat
                 Logger.Error($"An exception occurred in ChatMessageBuilder while parsing msg with {msg.Emotes.Count} emotes. Msg: \"{msg.Message}\". {ex}");
             }
             return msg.Message;
+        }
+
+        private async Task<IReadOnlyList<IChatBadge>> GetDisplayBadgesAsync(IESCChatMessage msg)
+        {
+            var sharedChatBadges = await this._sharedChatResolver.GetBadgesAsync(msg).ConfigureAwait(false);
+            if (sharedChatBadges != null) {
+                return sharedChatBadges;
+            }
+            if (msg.Sender is TwitchUser twitchUser) {
+                return twitchUser.Badges;
+            }
+            return Array.Empty<IChatBadge>();
+        }
+
+        private int GetGigantifiedEmoteScale()
+        {
+            return Math.Min(500, Math.Max(100, this._config.GigantifiedEmoteScale));
         }
     }
 }
