@@ -10,7 +10,7 @@
 	<!--
 		Dependencies used by the GitHub Actions build to download reference assemblies from BeatMods.
 		Keep the versions in sync with manifest.json: these are the builds that support Beat Saber 1.40.8.
-		CatCore is intentionally missing here: 2.0.0-alpha1 is a GitHub prerelease and is not on BeatMods yet,
+		CatCore is intentionally missing here: 2.0.0-alpha2 is a GitHub prerelease and is not on BeatMods yet,
 		so .github/workflows/build.yml downloads it from its GitHub release instead.
 	-->
 	<ItemGroup>

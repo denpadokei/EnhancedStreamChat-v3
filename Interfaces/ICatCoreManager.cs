@@ -1,4 +1,10 @@
 ﻿using CatCore.Models.Shared;
+using CatCore.Models.Twitch.EventSub.Channel;
+using CatCore.Models.Twitch.EventSub.ChannelPoints;
+using CatCore.Models.Twitch.EventSub.Charity;
+using CatCore.Models.Twitch.EventSub.Goal;
+using CatCore.Models.Twitch.EventSub.HypeTrain;
+using CatCore.Models.Twitch.EventSub.Moderation;
 using CatCore.Models.Twitch.IRC;
 using CatCore.Models.Twitch.PubSub.Responses;
 using CatCore.Models.Twitch.PubSub.Responses.ChannelPointsChannelV1;
@@ -23,6 +29,17 @@ namespace EnhancedStreamChat.Interfaces
         event Action<MultiplexedPlatformService, MultiplexedChannel> OnRoomStateUpdated;
         event Action<MultiplexedPlatformService, MultiplexedMessage> OnTextMessageReceived;
         event Action<ITwitchService, TwitchMessage> OnTwitchTextMessageReceived;
+        event Action<string, HypeTrainEvent> OnHypeTrainBegin;
+        event Action<string, HypeTrainEvent> OnHypeTrainEnd;
+        event Action<string, GoalEvent> OnGoalBegin;
+        event Action<string, GoalEvent> OnGoalEnd;
+        event Action<string, CharityCampaignEvent> OnCharityCampaignStarted;
+        event Action<string, CharityCampaignEvent> OnCharityCampaignStopped;
+        event Action<string, ShoutoutReceivedEvent> OnShoutoutReceived;
+        event Action<string, BanEvent> OnUserBanned;
+        event Action<string, UnbanEvent> OnUserUnbanned;
+        event Action<string, AutomaticRewardRedemptionEvent> OnAutomaticRewardRedeemed;
+        event Action<string, CustomPowerUpRedemptionEvent> OnCustomPowerUpRedeemed;
 
         void RunService();
         void LaunchWebPortal(bool shouldLaunchPortal = true);

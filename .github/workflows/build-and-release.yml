@@ -26,6 +26,13 @@ on:
 permissions:
   contents: read
 
+env:
+  # CatCore 2.0.0-alpha2 is a GitHub prerelease and is not published to BeatMods yet,
+  # so the reference assembly is downloaded from its release page instead of being
+  # resolved by setup-beat-saber. Bump CATCORE_VERSION and CATCORE_ASSET_URL together.
+  CATCORE_VERSION: 2.0.0-alpha2
+  CATCORE_ASSET_URL: https://github.com/denpadokei/CatCore/releases/download/2.0.0-alpha2/CatCore-2.0.0-alpha2-4868e41.zip
+
 jobs:
   build:
     name: Build
@@ -84,9 +91,22 @@ jobs:
               "SiraUtil": "^3.2.0",
               "BeatSaberMarkupLanguage": "^1.12.5",
               "BS Utils": "^1.14.2",
-              "CatCore": "^1.1.0",
               "CameraUtils": "^1.0.7"
             }
+
+      - name: Install CatCore ${{ env.CATCORE_VERSION }}
+        shell: pwsh
+        run: |
+          $libsDir = Join-Path $env:BeatSaberDir 'Libs'
+          New-Item -ItemType Directory -Force -Path $libsDir | Out-Null
+          $archive = Join-Path $env:RUNNER_TEMP 'CatCore.zip'
+          $extractDir = Join-Path $env:RUNNER_TEMP 'CatCore'
+          Invoke-WebRequest -Uri $env:CATCORE_ASSET_URL -OutFile $archive
+          Expand-Archive -Path $archive -DestinationPath $extractDir -Force
+          Copy-Item -Path (Join-Path $extractDir 'Libs\CatCore.dll') -Destination (Join-Path $libsDir 'CatCore.dll') -Force
+          $assembly = [System.Reflection.AssemblyName]::GetAssemblyName((Join-Path $libsDir 'CatCore.dll'))
+          if ($assembly.Version -ne '2.0.0.0') { throw "Unexpected CatCore assembly version: $($assembly.Version)" }
+          Write-Host "CatCore reference: $assembly"
 
       - name: Build Release
         shell: pwsh

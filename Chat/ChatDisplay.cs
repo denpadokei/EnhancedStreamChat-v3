@@ -2,6 +2,12 @@
 using BeatSaberMarkupLanguage.FloatingScreen;
 using BeatSaberMarkupLanguage.ViewControllers;
 using CameraUtils.Core;
+using CatCore.Models.Twitch.EventSub.Channel;
+using CatCore.Models.Twitch.EventSub.ChannelPoints;
+using CatCore.Models.Twitch.EventSub.Charity;
+using CatCore.Models.Twitch.EventSub.Goal;
+using CatCore.Models.Twitch.EventSub.HypeTrain;
+using CatCore.Models.Twitch.EventSub.Moderation;
 using EnhancedStreamChat.Configuration;
 using EnhancedStreamChat.Graphics;
 using EnhancedStreamChat.Interfaces;
@@ -73,6 +79,17 @@ namespace EnhancedStreamChat.Chat
             this._catCoreManager.OnChatCleared += this.OnCatCoreManager_OnChatCleared;
             this._catCoreManager.OnFollow += this.OnCatCoreManager_OnFollow;
             this._catCoreManager.OnRewardRedeemed += this.OnCatCoreManager_OnRewardRedeemed;
+            this._catCoreManager.OnHypeTrainBegin += this.OnCatCoreManager_OnHypeTrainBegin;
+            this._catCoreManager.OnHypeTrainEnd += this.OnCatCoreManager_OnHypeTrainEnd;
+            this._catCoreManager.OnGoalBegin += this.OnCatCoreManager_OnGoalBegin;
+            this._catCoreManager.OnGoalEnd += this.OnCatCoreManager_OnGoalEnd;
+            this._catCoreManager.OnCharityCampaignStarted += this.OnCatCoreManager_OnCharityCampaignStarted;
+            this._catCoreManager.OnCharityCampaignStopped += this.OnCatCoreManager_OnCharityCampaignStopped;
+            this._catCoreManager.OnShoutoutReceived += this.OnCatCoreManager_OnShoutoutReceived;
+            this._catCoreManager.OnUserBanned += this.OnCatCoreManager_OnUserBanned;
+            this._catCoreManager.OnUserUnbanned += this.OnCatCoreManager_OnUserUnbanned;
+            this._catCoreManager.OnAutomaticRewardRedeemed += this.OnCatCoreManager_OnAutomaticRewardRedeemed;
+            this._catCoreManager.OnCustomPowerUpRedeemed += this.OnCatCoreManager_OnCustomPowerUpRedeemed;
         }
 
         public void OnMessageCleared(string messageId)
@@ -462,6 +479,74 @@ namespace EnhancedStreamChat.Chat
             _ = this.OnTextMessageReceived(mes, DateTime.Now);
         }
 
+        private void OnCatCoreManager_OnHypeTrainBegin(string channelId, HypeTrainEvent data)
+        {
+            this.ShowEventSubMessage(EventSubMessageFormatter.FormatHypeTrainBegin(data));
+        }
+
+        private void OnCatCoreManager_OnHypeTrainEnd(string channelId, HypeTrainEvent data)
+        {
+            this.ShowEventSubMessage(EventSubMessageFormatter.FormatHypeTrainEnd(data));
+        }
+
+        private void OnCatCoreManager_OnGoalBegin(string channelId, GoalEvent data)
+        {
+            this.ShowEventSubMessage(EventSubMessageFormatter.FormatGoalBegin(data));
+        }
+
+        private void OnCatCoreManager_OnGoalEnd(string channelId, GoalEvent data)
+        {
+            this.ShowEventSubMessage(EventSubMessageFormatter.FormatGoalEnd(data));
+        }
+
+        private void OnCatCoreManager_OnCharityCampaignStarted(string channelId, CharityCampaignEvent data)
+        {
+            this.ShowEventSubMessage(EventSubMessageFormatter.FormatCharityCampaignStarted(data));
+        }
+
+        private void OnCatCoreManager_OnCharityCampaignStopped(string channelId, CharityCampaignEvent data)
+        {
+            this.ShowEventSubMessage(EventSubMessageFormatter.FormatCharityCampaignStopped(data));
+        }
+
+        private void OnCatCoreManager_OnShoutoutReceived(string channelId, ShoutoutReceivedEvent data)
+        {
+            this.ShowEventSubMessage(EventSubMessageFormatter.FormatShoutoutReceived(data));
+        }
+
+        private void OnCatCoreManager_OnUserBanned(string channelId, BanEvent data)
+        {
+            this.ShowEventSubMessage(EventSubMessageFormatter.FormatUserBanned(data));
+        }
+
+        private void OnCatCoreManager_OnUserUnbanned(string channelId, UnbanEvent data)
+        {
+            this.ShowEventSubMessage(EventSubMessageFormatter.FormatUserUnbanned(data));
+        }
+
+        private void OnCatCoreManager_OnAutomaticRewardRedeemed(string channelId, AutomaticRewardRedemptionEvent data)
+        {
+            this.ShowEventSubMessage(EventSubMessageFormatter.FormatAutomaticRewardRedeemed(data));
+        }
+
+        private void OnCatCoreManager_OnCustomPowerUpRedeemed(string channelId, CustomPowerUpRedemptionEvent data)
+        {
+            this.ShowEventSubMessage(EventSubMessageFormatter.FormatCustomPowerUpRedeemed(data));
+        }
+
+        private void ShowEventSubMessage(string message)
+        {
+            if (string.IsNullOrEmpty(message)) {
+                return;
+            }
+            var mes = new ESCChatMessage(Guid.NewGuid().ToString(), message)
+            {
+                IsSystemMessage = true,
+                IsHighlighted = true,
+            };
+            _ = this.OnTextMessageReceived(mes, DateTime.Now);
+        }
+
         private bool IsDuplicateSharedChatMessage(IESCChatMessage msg)
         {
             if (!msg.IsSharedChatActive || string.IsNullOrEmpty(msg.SourceMessageId)) {
@@ -536,6 +621,17 @@ namespace EnhancedStreamChat.Chat
                         this._catCoreManager.OnChatCleared -= this.OnCatCoreManager_OnChatCleared;
                         this._catCoreManager.OnFollow -= this.OnCatCoreManager_OnFollow;
                         this._catCoreManager.OnRewardRedeemed -= this.OnCatCoreManager_OnRewardRedeemed;
+                        this._catCoreManager.OnHypeTrainBegin -= this.OnCatCoreManager_OnHypeTrainBegin;
+                        this._catCoreManager.OnHypeTrainEnd -= this.OnCatCoreManager_OnHypeTrainEnd;
+                        this._catCoreManager.OnGoalBegin -= this.OnCatCoreManager_OnGoalBegin;
+                        this._catCoreManager.OnGoalEnd -= this.OnCatCoreManager_OnGoalEnd;
+                        this._catCoreManager.OnCharityCampaignStarted -= this.OnCatCoreManager_OnCharityCampaignStarted;
+                        this._catCoreManager.OnCharityCampaignStopped -= this.OnCatCoreManager_OnCharityCampaignStopped;
+                        this._catCoreManager.OnShoutoutReceived -= this.OnCatCoreManager_OnShoutoutReceived;
+                        this._catCoreManager.OnUserBanned -= this.OnCatCoreManager_OnUserBanned;
+                        this._catCoreManager.OnUserUnbanned -= this.OnCatCoreManager_OnUserUnbanned;
+                        this._catCoreManager.OnAutomaticRewardRedeemed -= this.OnCatCoreManager_OnAutomaticRewardRedeemed;
+                        this._catCoreManager.OnCustomPowerUpRedeemed -= this.OnCatCoreManager_OnCustomPowerUpRedeemed;
                         this.StopAllCoroutines();
                         while (this._messages.TryDequeue(out var msg)) {
                             if (msg) {

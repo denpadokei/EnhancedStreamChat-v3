@@ -12,6 +12,7 @@ Beat Saber のメニューとプレイ中の両方に Twitch チャットを表�
 - ビッツ付きエモートはビット数を色付きで併記する
 - Twitch 共有チャットに対応。他チャンネルからのメッセージには送信元チャンネル名を表示し、送信元チャンネルのバッジで描画する
 - ビッツの Power-up「Gigantify an Emote」に対応。メッセージ内の最後のエモートを拡大して表示する
+- CatCore 2.0.0-alpha2 の EventSub イベントに対応。ハイプトレイン、ゴール、チャリティキャンペーン、シャウトアウト、モデレーション (BAN / 解除)、自動報酬やカスタム Power-up をシステムメッセージとして表示する
 - 送信者ごとの名前色、`/me` 形式のアクションメッセージ、システムメッセージの色分けに対応
 - メッセージ削除、チャットクリア、フォロー、チャンネルポイントの引き換えをシステムメッセージとして表示
 - チャット欄の幅・高さ・フォントサイズ・配色・表示順をゲーム内の設定画面から変更できる。表示レイヤーも UI / HMD のみ / 手動から選択可能
@@ -22,15 +23,15 @@ Beat Saber のメニューとプレイ中の両方に Twitch チャットを表�
 | 項目 | 内容 |
 | --- | --- |
 | Beat Saber | 1.40.8 |
-| 依存 MOD | BSIPA 4.3.6 以上 / BeatSaberMarkupLanguage 1.12.5 以上 / BS Utils 1.14.2 以上 / CatCore 2.0.0-alpha1 以上 / SiraUtil 3.2.1 以上 / CameraUtils 1.0.7 以上 |
+| 依存 MOD | BSIPA 4.3.6 以上 / BeatSaberMarkupLanguage 1.12.5 以上 / BS Utils 1.14.2 以上 / CatCore 2.0.0-alpha2 以上 / SiraUtil 3.2.1 以上 / CameraUtils 1.0.7 以上 |
 
 ## インストール
 
 1. Beat Saber を 1.40.8 に合わせる (BSManager などのバージョン管理ツールを推奨)
-2. BSIPA と上記の依存 MOD をインストールする。CatCore 2.0.0-alpha1 は BeatMods に公開されていないため、[CatCore のリリース](https://github.com/denpadokei/CatCore/releases) から入手する
+2. BSIPA と上記の依存 MOD をインストールする。CatCore 2.0.0-alpha2 は BeatMods に公開されていないため、[CatCore のリリース](https://github.com/denpadokei/CatCore/releases) から入手する
 3. [Releases](https://github.com/denpadokei/EnhancedStreamChat-v3/releases) から `EnhancedStreamChat-11.0.0-bs1.40.8.zip` をダウンロードし、`Plugins` フォルダをゲームフォルダへ上書きコピーする
 
-> CatCore 2.0 では廃止された legacy Twitch PubSub が EventSub に置き換わっているため、CatCore 1.x はこのバージョンでは読み込めません。
+> CatCore 2.0 では廃止された legacy Twitch PubSub が EventSub に置き換わっているため、CatCore 1.x はこのバージョンでは読み込めません。CatCore **2.0.0-alpha2** 以降が必要です。
 
 ## 使い方
 
@@ -85,7 +86,7 @@ cd EnhancedStreamChat-v3
 dotnet build .\EnhancedStreamChat.csproj -c Release
 ```
 
-`BeatSaberDir` に Beat Saber のインストール先を設定すると、ゲームの参照アセンブリを解決できます。CatCore 2.0.0-alpha1 は [リリース](https://github.com/denpadokei/CatCore/releases) の zip から `Libs/CatCore.dll` を `BeatSaberDir\Libs\CatCore.dll` に配置してください。
+`BeatSaberDir` に Beat Saber のインストール先を設定すると、ゲームの参照アセンブリを解決できます。CatCore 2.0.0-alpha2 は [リリース](https://github.com/denpadokei/CatCore/releases) の zip から `Libs/CatCore.dll` を `BeatSaberDir\Libs\CatCore.dll` に配置してください。
 
 GitHub Actions の `build.yml` が PR と `master`/`main` への push でビルドし artifact をアップロードします。`build-and-release.yml` が push ごとにビルドし、`X.X.X` 形式のタグを push するとリリースを作成します。
 
